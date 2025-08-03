@@ -2,29 +2,57 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import *
 from .forms import OrderForm, CreateUserForm
 from django.forms import inlineformset_factory
+from django.contrib import messages
 from .filters import OrderFilter
+from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 def register_page(request):
-    form = CreateUserForm()
-    if request.method == 'POST':
-        form = CreateUserForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('login')
+    if request.user.is_authenticated:
+        return redirect('home')
     else:
-        form = CreateUserForm()
-    context = {'form': form}
-    return render(request, 'accounts/register.html', context)
+        if request.method == 'POST':
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+            user_obj = User.objects.create(first_name=first_name, last_name=last_name, email=email, username=email)
+            user_obj.set_password(password)
+            user_obj.save()
+            messages.success(request, "You Account Created been successfully.")
+            return redirect('login')
+        return render(request, 'accounts/register.html')
 
 
 def login_page(request):
-   
-        
-    context = {}
-    return render(request, 'accounts/login.html')
+    if request.user.is_authenticated:
+        return redirect('home')
+    else:
+        if request.method == 'POST':
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+            user_obj = User.objects.filter(username = email)
+            if not user_obj.exists():
+                messages.warning(request, 'Account not Found')
+                return HttpResponseRedirect(request.path_info)    
+            user_obj = authenticate(username = email , password = password)
+            if user_obj:
+                login(request, user_obj)
+                return redirect('home')
+            messages.warning(request, "invalid Creadentials")
+            return HttpResponseRedirect(request.path_info)
+        return render(request, 'accounts/login.html')
+
+def logout_page(request):
+    logout(request)
+    messages.success(request, "You have been logged out successfully.")
+    return redirect('login')
+
 # this function is used to show the home page
+@login_required(login_url='login')
 def home(request):
     customer = Customer.objects.first()
     orders = Order.objects.all()
@@ -46,10 +74,12 @@ def home(request):
 
     return render(request, 'accounts/dashboard.html', context=context)
 # create a function to show the products
+@login_required(login_url='login')
 def products(request):
     products = Product.objects.all()
     return render(request, 'accounts/products.html', {'products': products})
 # # this function is used to show the customer details and their orders
+@login_required(login_url='login')
 def customer(request, pk):
     customer = Customer.objects.get(id=pk)
     orders = customer.order_set.all()
@@ -64,6 +94,7 @@ def customer(request, pk):
     }
     return render(request, 'accounts/customer.html', context=context)
 # the commit function for just 1 item in the formset create 
+@login_required(login_url='login')
 def createOrder(request, pk):
     OrderFormSet = inlineformset_factory(Customer, Order, fields=('product', 'status') ,extra=6)
     customer = Customer.objects.get(id=pk)
@@ -83,6 +114,7 @@ def createOrder(request, pk):
     return render(request, 'accounts/order_form.html', {'formset': formset})
 
 # this function is used to update the order
+@login_required(login_url='login')
 def updateOrder(request, pk):
     order = Order.objects.get(id=pk)
     form = OrderForm(instance=order)
@@ -97,6 +129,7 @@ def updateOrder(request, pk):
     return render(request, 'accounts/order_form.html', context)
 
 # this function is used to delete the order
+@login_required(login_url='login')
 def delete_order(request, pk):
     order = Order.objects.get(id=pk)
     if request.method == 'POST':
