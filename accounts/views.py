@@ -8,51 +8,65 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from .decorators import unauthenticated_user, allowed_users, admin_only
+from django.contrib.auth.models import Group
 
 # Create your views here.
+@unauthenticated_user
 def register_page(request):
-    if request.user.is_authenticated:
-        return redirect('home')
-    else:
-        if request.method == 'POST':
-            first_name = request.POST.get('first_name')
-            last_name = request.POST.get('last_name')
-            email = request.POST.get('email')
-            password = request.POST.get('password')
-            user_obj = User.objects.create(first_name=first_name, last_name=last_name, email=email, username=email)
-            user_obj.set_password(password)
-            user_obj.save()
-            messages.success(request, "You Account Created been successfully.")
-            return redirect('login')
-        return render(request, 'accounts/register.html')
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        user_obj = User.objects.create(first_name=first_name, last_name=last_name, email=email, username=email)
+        user_obj.set_password(password)
+        user_obj.save()
+        group = Group.objects.get(name='customer')
+        user_obj.groups.add(group)
+        Customer.objects.create(user=user_obj)
+        messages.success(request, "You Account Created been successfully.")
+        return redirect('login')
+    return render(request, 'accounts/register.html')
 
-
+@unauthenticated_user
 def login_page(request):
-    if request.user.is_authenticated:
-        return redirect('home')
-    else:
-        if request.method == 'POST':
-            email = request.POST.get('email')
-            password = request.POST.get('password')
-            user_obj = User.objects.filter(username = email)
-            if not user_obj.exists():
-                messages.warning(request, 'Account not Found')
-                return HttpResponseRedirect(request.path_info)    
-            user_obj = authenticate(username = email , password = password)
-            if user_obj:
-                login(request, user_obj)
-                return redirect('home')
-            messages.warning(request, "invalid Creadentials")
-            return HttpResponseRedirect(request.path_info)
-        return render(request, 'accounts/login.html')
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        user_obj = User.objects.filter(username = email)
+        if not user_obj.exists():
+            messages.warning(request, 'Account not Found')
+            return HttpResponseRedirect(request.path_info)    
+        user_obj = authenticate(username = email , password = password)
+        if user_obj:
+            login(request, user_obj)
+            return redirect('home')
+        messages.warning(request, "invalid Creadentials")
+        return HttpResponseRedirect(request.path_info)
+    return render(request, 'accounts/login.html')
 
 def logout_page(request):
     logout(request)
     messages.success(request, "You have been logged out successfully.")
     return redirect('login')
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['customer'])
+def user_page(request):
+    orders = request.user.customer.order_set.all()
+    total_order = orders.count()
+    delivered = orders.filter(status='Delivered').count()
+    pending = orders.filter(status='Pending').count()
+    print('orders', orders,)
+    context = {'orders': orders,
+               'total_order': total_order,
+               'delivered': delivered,
+               'pending': pending}
+    return render(request, 'accounts/user.html', context)
 
 # this function is used to show the home page
 @login_required(login_url='login')
+@admin_only
 def home(request):
     customer = Customer.objects.first()
     orders = Order.objects.all()
@@ -75,11 +89,13 @@ def home(request):
     return render(request, 'accounts/dashboard.html', context=context)
 # create a function to show the products
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
 def products(request):
     products = Product.objects.all()
     return render(request, 'accounts/products.html', {'products': products})
 # # this function is used to show the customer details and their orders
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
 def customer(request, pk):
     customer = Customer.objects.get(id=pk)
     orders = customer.order_set.all()
