@@ -1,0 +1,45 @@
+{% extends 'accounts/main.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-4 text-center">
+            <h3>Account Settings</h3>
+            <img src="{{ request.user.customer.profile_pic.url }}" alt="Profile Picture"
+                 style="width:200px; height:200px; border-radius: 50%; object-fit: cover;">
+        </div>
+
+        <div class="col-md-8">
+            <a href="{% url 'user-page' %}" class="btn btn-warning mb-3">&lt; Back to Profile</a>
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label>Name</label>
+                    {{ form.name }}
+                </div>
+                <div class="mb-3">
+                    <label>Phone</label>
+                    {{ form.phone }}
+                </div>
+                <div class="mb-3">
+                    <label>Email</label>
+                    {{ form.email }}
+                </div>
+                <div class="mb-3">
+                    <label>Change Profile Picture</label><br>
+                    {{ form.profile_pic }}
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success mt-3">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

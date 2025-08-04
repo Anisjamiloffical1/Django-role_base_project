@@ -5,6 +5,12 @@ from django.contrib.auth.models import User
 class Customer(models.Model):
     user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=200 )
+    profile_pic = models.ImageField(
+        upload_to='profile_pics/',  # Images will be saved in MEDIA_ROOT/profile_pics/
+        null=True,
+        blank=True,
+        default='profile_pics/default.png'  # Default image path
+    )
     phone = models.CharField(max_length=200)
     email = models.CharField(max_length=200)
     date_created = models.DateTimeField(auto_now_add=True, null=True)

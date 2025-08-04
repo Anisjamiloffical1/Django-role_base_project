@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import *
-from .forms import OrderForm, CreateUserForm
+from .forms import CustomerForm, OrderForm, CreateUserForm
 from django.forms import inlineformset_factory
 from django.contrib import messages
 from .filters import OrderFilter
@@ -53,11 +53,11 @@ def logout_page(request):
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['customer'])
 def user_page(request):
+    customer, created = Customer.objects.get_or_create(user=request.user)
     orders = request.user.customer.order_set.all()
     total_order = orders.count()
     delivered = orders.filter(status='Delivered').count()
     pending = orders.filter(status='Pending').count()
-    print('orders', orders,)
     context = {'orders': orders,
                'total_order': total_order,
                'delivered': delivered,
@@ -153,3 +153,19 @@ def delete_order(request, pk):
         return redirect('/')
     context = {'item': order}
     return render(request, 'accounts/delete.html', context)
+
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['customer'])
+def accountSettings(request):
+    customer = request.user.customer
+    form = CustomerForm(instance=customer)
+
+    if request.method == 'POST':
+        form = CustomerForm(request.POST, request.FILES, instance=customer)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profile updated successfully.")
+
+    context = {'form': form}
+    return render(request, 'accounts/account_settings.html', context)
