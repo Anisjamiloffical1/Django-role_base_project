@@ -22,7 +22,7 @@ def register_page(request):
         user_obj = User.objects.create(first_name=first_name, last_name=last_name, email=email, username=email)
         user_obj.set_password(password)
         user_obj.save()
-        group = Group.objects.get(name='customer')
+        group = Group.objects.get(name='customer',)
         user_obj.groups.add(group)
         Customer.objects.create(user=user_obj)
         messages.success(request, "You Account Created been successfully.")
@@ -112,35 +112,39 @@ def customer(request, pk):
 # the commit function for just 1 item in the formset create 
 @login_required(login_url='login')
 def createOrder(request, pk):
-    OrderFormSet = inlineformset_factory(Customer, Order, fields=('product', 'status') ,extra=6)
+    OrderFormSet = inlineformset_factory(
+        Customer,
+        Order,
+        fields=('product', 'order_type', 'status', 'note', 'design_file', 'invoice_file'),
+        extra=6,
+        can_delete=False
+    )
     customer = Customer.objects.get(id=pk)
-    formset = OrderFormSet(queryset=Order.objects.none(), instance=customer) 
-    # form = OrderForm()
+
     if request.method == 'POST':
-        # form = OrderForm(request.POST)
-        formset = OrderFormSet(request.POST, instance=customer)
+        formset = OrderFormSet(request.POST, request.FILES, instance=customer)
         if formset.is_valid():
             formset.save()
             return redirect('/')
-        # if form.is_valid():
-            # form.save()
-            # return redirect('/')
-    else: 
-        form = OrderForm(initial={'customer': customer})
+    else:
+        formset = OrderFormSet(queryset=Order.objects.none(), instance=customer)
+
     return render(request, 'accounts/order_form.html', {'formset': formset})
 
 # this function is used to update the order
 @login_required(login_url='login')
 def updateOrder(request, pk):
     order = Order.objects.get(id=pk)
-    form = OrderForm(instance=order)
+    
     if request.method == 'POST':
-        form = OrderForm(request.POST, instance=order)
+        #  Add request.FILES here to support file upload
+        form = OrderForm(request.POST, request.FILES, instance=order)
         if form.is_valid():
             form.save()
             return redirect('/')
     else:
         form = OrderForm(instance=order)
+
     context = {'form': form}
     return render(request, 'accounts/order_form.html', context)
 
@@ -169,3 +173,5 @@ def accountSettings(request):
 
     context = {'form': form}
     return render(request, 'accounts/account_settings.html', context)
+
+

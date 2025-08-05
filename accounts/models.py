@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 class Customer(models.Model):
     user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=200 )
+    sales_rep = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='assigned_customers')
     profile_pic = models.ImageField(
         upload_to='profile_pics/',  # Images will be saved in MEDIA_ROOT/profile_pics/
         null=True,
@@ -52,12 +53,24 @@ class Order(models.Model):
         ('Out for delivery', 'Out for delivery'),
         ('Delivered', 'Delivered'),
     )
+    ORDER_TYPE = (
+        ('Digitizing', 'Digitizing'),
+        ('Vector', 'Vector'),
+        ('Patch', 'Patch'),
+        ('Quote', 'Quote'),
+    )
     customer = models.ForeignKey(Customer, null=True, on_delete=models.SET_NULL)
     product = models.ForeignKey(Product, null=True, on_delete=models.SET_NULL)
+    order_type = models.CharField(max_length=50, choices=ORDER_TYPE, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
     status = models.CharField(max_length=200, null=True, choices=STATUS)
     note = models.CharField(max_length=1000, null=True, blank=True)
+    design_file = models.FileField(upload_to='designs/', null=True, blank=True)
+    invoice_file = models.FileField(upload_to='invoices/', null=True, blank=True)
+
+
+
     def __str__(self):
-        return self.product.name
+        return f"{self.product.name} ({self.order_type})"
     
     

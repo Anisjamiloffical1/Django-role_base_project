@@ -2,35 +2,64 @@
 {% block content %}
 
 {% include 'accounts/status.html' %}
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card card-body">
+            <h5 class="card-title">🛠️ Customer Actions</h5>
+            <ul class="list-group">
+                <li class="list-group-item"><a href="{% url 'create_order' request.user.customer.id %}">📝 Request Quote</a></li>
+                <li class="list-group-item"><a href="#">🧵 Place Digitizing Order</a></li>
+                <li class="list-group-item"><a href="#">🎨 Place Vector Order</a></li>
+                <li class="list-group-item"><a href="#">🧷 Place Patch Order</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md">
         <div class="card card-body">
-
-            <table class="table table-sm">
-                <tr>
-                    <th>Product</th>
-                    <th>Category</th>
-                    <th>Note</th>
-                    <th>Date Orderd</th>
-                    <th>Status</th>
-                    
-                </tr>
-
-                {% for order in orders %}
-                <tr>
-                    <td>{{order.product}}</td>
-                    <td>{{order.product.category}}</td>
-                    <td class="form-group mr-2">{{order.note}}</td>
-                    <td>{{order.date_created}}</td>
-                    <td>{{order.status}}</td>
-                 
-                    
-                </tr>
-
-
-
-                {% endfor %}
-
+            <h5 class="card-title">📦 Order History</h5>
+            <table class="table table-sm table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Note</th>
+                        <th>Date Ordered</th>
+                        <th>Status</th>
+                        <th>Design File</th>
+                        <th>Invoice</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ order.product }}</td>
+                        <td>{{ order.product.category }}</td>
+                        <td>{{ order.order_type }}</td>
+                        <td>{{ order.note }}</td>
+                        <td>{{ order.date_created }}</td>
+                        <td>{{ order.status }}</td>
+                        <td>
+                            {% if order.design_file %}
+                                <a href="{{ order.design_file.url }}" download>⬇</a>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if order.invoice_file %}
+                                <a href="{{ order.invoice_file.url }}" target="_blank">🧾</a>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
             </table>
         </div>
     </div>

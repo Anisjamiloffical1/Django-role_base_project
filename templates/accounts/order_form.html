@@ -1,33 +1,19 @@
-{% extends 'accounts/main.html' %}
-{% load static %}
-{% block content %}
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ formset.management_form }}
 
-<div class="row">
-    <div class="col-md-12">
-        <div class="card card-body">
-
-            <form method="POST">
-                {% csrf_token %}
-                {{ formset.management_form }}
-
-                <div class="row">
-                    {% for form in formset %}
-                        <div class="col-md-6 mb-3">
-                            <div class="border p-3 rounded">
-                                {{ form }}
-                            </div>
-                        </div>
-                        {% if forloop.counter|divisibleby:2 %}
-                            </div><div class="row">
-                        {% endif %}
-                    {% endfor %}
+    <div class="row">
+        {% for form in formset %}
+            <div class="col-md-6 mb-3">
+                <div class="border p-3 rounded">
+                    {{ form }}
                 </div>
-
-                <input type="submit" class="btn btn-primary mt-3" value="Submit">
-            </form>
-
-        </div>
+            </div>
+            {% if forloop.counter|divisibleby:2 %}
+                </div><div class="row">
+            {% endif %}
+        {% endfor %}
     </div>
-</div>
 
-{% endblock %}
+    <input type="submit" class="btn btn-primary mt-3" value="Submit">
+</form>

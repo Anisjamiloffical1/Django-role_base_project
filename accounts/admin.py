@@ -5,4 +5,8 @@ from .models import *
 admin.site.register(Customer)
 admin.site.register(Product)
 admin.site.register(Tag)
-admin.site.register(Order)
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('customer', 'product', 'order_type', 'status', 'date_created')
+    list_filter = ('status', 'order_type')
