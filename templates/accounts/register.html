@@ -88,11 +88,11 @@
 
                                 <!-- Username -->
                                 <div class="form-outline mb-4">
-                                    
+
                                     <input class="form-control" required placeholder="First Name" name="first_name"
                                         type="text">
-                                        <label class="form-label" for="id_username">First Name</label>
-                                    
+                                    <label class="form-label" for="id_username">First Name</label>
+
                                 </div>
                                 <!-- Email -->
                                 <div class="form-outline mb-4">
@@ -118,6 +118,16 @@
                                         type="password">
                                     <label class="form-label" for="id_password2">Confirm Password</label>
 
+                                </div>
+                                <div class="form-outline mb-4">
+                                    <select name="role" class="form-control" required>
+                                        <option value="">Select Role</option>
+                                        <option value="customer">Customer</option>
+                                        <option value="sales_rep">Sales Representative</option>
+                                        <option value="designer">Designer</option>
+                                        <option value="admin">Administrator</option>
+                                    </select>
+                                    <label class="form-label">Role</label>
                                 </div>
 
                                 <!-- Submit button -->

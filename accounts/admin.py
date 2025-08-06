@@ -5,6 +5,9 @@ from .models import *
 admin.site.register(Customer)
 admin.site.register(Product)
 admin.site.register(Tag)
+admin.site.register(SalesRepresentative)
+admin.site.register(Designer)
+admin.site.register(Admin)
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):

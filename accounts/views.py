@@ -19,13 +19,31 @@ def register_page(request):
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         password = request.POST.get('password')
-        user_obj = User.objects.create(first_name=first_name, last_name=last_name, email=email, username=email)
+        role = request.POST.get('role')  # Get role from form
+
+        user_obj = User.objects.create(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            username=email,
+        )
         user_obj.set_password(password)
         user_obj.save()
-        group = Group.objects.get(name='customer',)
+
+        group = Group.objects.get(name=role)
         user_obj.groups.add(group)
-        Customer.objects.create(user=user_obj)
-        messages.success(request, "You Account Created been successfully.")
+
+        # Create related profile if needed
+        if role == 'customer':
+            Customer.objects.create(user=user_obj)
+        elif role == 'sales_rep':
+            SalesRepresentative.objects.create(user=user_obj)
+        elif role == 'designer':
+            Designer.objects.create(user=user_obj)
+        elif role == 'admin':
+            Admin.objects.create(user=user_obj)
+
+        messages.success(request, "Your account has been created successfully.")
         return redirect('login')
     return render(request, 'accounts/register.html')
 
@@ -34,16 +52,38 @@ def login_page(request):
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
-        user_obj = User.objects.filter(username = email)
-        if not user_obj.exists():
-            messages.warning(request, 'Account not Found')
-            return HttpResponseRedirect(request.path_info)    
-        user_obj = authenticate(username = email , password = password)
+
+        user_obj = User.objects.filter(username=email).first()
+
+        if not user_obj:
+            messages.warning(request, 'Account not found.')
+            return HttpResponseRedirect(request.path_info)
+
+        user_obj = authenticate(username=email, password=password)
+
         if user_obj:
             login(request, user_obj)
-            return redirect('home')
-        messages.warning(request, "invalid Creadentials")
+
+            # 🔐 Redirect based on role
+            group = None
+            if user_obj.groups.exists():
+                group = user_obj.groups.first().name
+
+            if group == 'admin':
+                return redirect('home')
+            elif group == 'customer':
+                return redirect('user-page')
+            elif group == 'sales_rep':
+                return redirect('sales-dashboard')
+            elif group == 'designer':
+                return redirect('designer-dashboard')
+            else:
+                messages.warning(request, "User group is not assigned.")
+                return redirect('login')
+
+        messages.warning(request, "Invalid credentials.")
         return HttpResponseRedirect(request.path_info)
+
     return render(request, 'accounts/login.html')
 
 def logout_page(request):
@@ -175,3 +215,27 @@ def accountSettings(request):
     return render(request, 'accounts/account_settings.html', context)
 
 
+# this function is used to show the sales dashboard for sales representatives
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['sales_rep'])
+def sales_dashboard(request):
+    sales_rep = request.user.salesrepresentative
+    customers = Customer.objects.filter(sales_rep=sales_rep)
+
+    orders = Order.objects.filter(customer__in=customers)
+
+    total_customers = customers.count()
+    total_orders = orders.count()
+    delivered = orders.filter(status='Delivered').count()
+    pending = orders.filter(status='Pending').count()
+
+    context = {
+        'customers': customers,
+        'orders': orders,
+        'total_customers': total_customers,
+        'total_orders': total_orders,
+        'delivered': delivered,
+        'pending': pending,
+    }
+
+    return render(request, 'accounts/sales_dashboard.html', context)

@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 class Customer(models.Model):
     user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=200 )
-    sales_rep = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='assigned_customers')
+    sales_rep = models.ForeignKey('SalesRepresentative', null=True, blank=True, on_delete=models.SET_NULL, related_name='assigned_customers')
     profile_pic = models.ImageField(
         upload_to='profile_pics/',  # Images will be saved in MEDIA_ROOT/profile_pics/
         null=True,
@@ -15,9 +15,23 @@ class Customer(models.Model):
     phone = models.CharField(max_length=200)
     email = models.CharField(max_length=200)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
-# this use for name string like show me customer name in admin panel
+class SalesRepresentative(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     def __str__(self):
-        return self.name or (self.user.username if self.user else "Customer")
+        return self.user.username
+    
+
+class Designer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    def __str__(self):
+        return self.user.username
+
+class Admin(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    def __str__(self):
+        return self.user.username
+# this use for name string like show me customer name in admin panel
+    
 class Tag(models.Model):
     name = models.CharField(max_length=200)
 
