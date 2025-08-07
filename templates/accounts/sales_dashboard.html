@@ -1,12 +1,13 @@
 {% extends 'accounts/main.html' %}
-
 {% block content %}
-<div class="container mt-5">
-    <h2 class="mb-4">Sales Representative Dashboard</h2>
 
+<div class="container mt-5">
+    <h2 class="mb-4">👨‍💼 Sales Representative Dashboard</h2>
+
+    <!-- Overview Cards -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card text-white bg-primary mb-3">
+            <div class="card text-white bg-primary">
                 <div class="card-body">
                     <h5 class="card-title">Total Customers</h5>
                     <p class="card-text">{{ total_customers }}</p>
@@ -14,7 +15,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card text-white bg-success mb-3">
+            <div class="card text-white bg-success">
                 <div class="card-body">
                     <h5 class="card-title">Total Orders</h5>
                     <p class="card-text">{{ total_orders }}</p>
@@ -22,7 +23,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card text-white bg-info mb-3">
+            <div class="card text-white bg-info">
                 <div class="card-body">
                     <h5 class="card-title">Delivered</h5>
                     <p class="card-text">{{ delivered }}</p>
@@ -30,7 +31,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card text-white bg-warning mb-3">
+            <div class="card text-white bg-warning">
                 <div class="card-body">
                     <h5 class="card-title">Pending</h5>
                     <p class="card-text">{{ pending }}</p>
@@ -39,43 +40,94 @@
         </div>
     </div>
 
-    <h4>Assigned Customers</h4>
+    <!-- Sales Rep Tasks -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card card-body">
+                <h5 class="card-title">🛠️ Sales Representative Tasks</h5>
+                <ul class="list-group">
+                    <li class="list-group-item"><a href="{% url 'manage_customers' %}">👥 Manage Assigned Customers</a></li>
+                    <li class="list-group-item"><a href="{% url 'release_projects' %}">📦 Release Completed Projects</a></li>
+                    <li class="list-group-item"><a href="{% url 'monitor_quotes' %}">📨 Monitor Quote Requests</a></li>
+                    <li class="list-group-item"><a href="{% url 'track_orders' %}">📊 Track Active Orders</a></li>
+                    <li class="list-group-item"><a href="{% url 'communicate_designers_admins' %}">💬 Communicate with Designers/Admins</a></li>
+                    <li class="list-group-item"><a href="{% url 'follow_up_payments' %}">💳 Follow-up on File Delivery & Payments</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assigned Customers -->
+    <h4>👥 Assigned Customers</h4>
     {% if customers %}
         <ul class="list-group mb-4">
             {% for customer in customers %}
-                <li class="list-group-item">
-                    {{ customer.name }} | {{ customer.email }}
-                </li>
+                <li class="list-group-item">{{ customer.name }} | {{ customer.email }}</li>
             {% endfor %}
         </ul>
     {% else %}
         <p>No customers assigned.</p>
     {% endif %}
 
-    <h4>Customer Orders</h4>
-    {% if orders %}
-        <table class="table table-bordered">
+    <!-- Orders Table -->
+    <div class="card card-body">
+        <h5 class="card-title">📦 Customer Orders</h5>
+        {% if orders %}
+        <table class="table table-sm table-bordered table-striped">
             <thead class="thead-dark">
                 <tr>
                     <th>Customer</th>
                     <th>Product</th>
+                    <th>Category</th>
+                    <th>Type</th>
                     <th>Status</th>
                     <th>Date</th>
+                    <th>Design File</th>
+                    <th>Invoice</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for order in orders %}
-                    <tr>
-                        <td>{{ order.customer.name }}</td>
-                        <td>{{ order.product.name }}</td>
-                        <td>{{ order.status }}</td>
-                        <td>{{ order.date_created }}</td>
-                    </tr>
+                <tr>
+                    <td>{{ order.customer.name }}</td>
+                    <td>{{ order.product.name }}</td>
+                    <td>{{ order.product.category }}</td>
+                    <td>{{ order.order_type }}</td>
+                    <td>{{ order.status }}</td>
+                    <td>{{ order.date_created }}</td>
+                    <td>
+                        {% if order.design_file %}
+                            <a href="{{ order.design_file.url }}" download>⬇</a>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if order.invoice_file %}
+                            <a href="{{ order.invoice_file.url }}" target="_blank">🧾</a>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if order.status != 'Completed' %}
+                        <form action="{% url 'mark_completed' order.id %}" method="POST">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-success">Mark Complete</button>
+                        </form>
+                        {% else %}
+                            ✅
+                        {% endif %}
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
-    {% else %}
-        <p>No orders found.</p>
-    {% endif %}
+        {% else %}
+            <p>No orders found.</p>
+        {% endif %}
+    </div>
 </div>
+
 {% endblock %}

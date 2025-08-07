@@ -1,0 +1,21 @@
+{% extends 'accounts/main.html' %}
+{% block content %}
+<h2>📦 Release Completed Projects</h2>
+
+{% if completed_orders %}
+<ul class="list-group">
+    {% for order in completed_orders %}
+    <li class="list-group-item">
+        {{ order.product.name }} - {{ order.customer.name }}
+        <form action="{% url 'mark_completed' order.id %}" method="post" class="float-end">
+            {% csrf_token %}
+            <button class="btn btn-success btn-sm">Release</button>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No completed projects to release.</p>
+<p>Completed Orders Count: {{ completed_orders|length }}</p>
+{% endif %}
+{% endblock %}

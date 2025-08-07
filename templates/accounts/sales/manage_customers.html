@@ -1,0 +1,18 @@
+{% extends 'accounts/main.html' %}
+{% block content %}
+<h2>👥 Manage Assigned Customers</h2>
+
+{% if assigned_customers %}
+<ul class="list-group">
+    {% for customer in assigned_customers %}
+    <li class="list-group-item">
+        {{ customer.name }} - {{ customer.email }}
+        <a href="{% url 'customer' customer.id %}" class="btn btn-sm btn-info float-end">View</a>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No customers assigned.</p>
+{% endif %}
+
+{% endblock %}

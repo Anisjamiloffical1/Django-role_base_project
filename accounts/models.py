@@ -81,6 +81,8 @@ class Order(models.Model):
     note = models.CharField(max_length=1000, null=True, blank=True)
     design_file = models.FileField(upload_to='designs/', null=True, blank=True)
     invoice_file = models.FileField(upload_to='invoices/', null=True, blank=True)
+    status = models.CharField(max_length=200, null=True)
+    assigned_to = models.ForeignKey('SalesRepresentative', on_delete=models.SET_NULL, null=True, blank=True)
 
 
 

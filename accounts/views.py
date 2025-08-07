@@ -239,3 +239,58 @@ def sales_dashboard(request):
     }
 
     return render(request, 'accounts/sales_dashboard.html', context)
+
+@login_required
+def mark_completed(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order.status = 'Completed'
+    order.save()
+    return redirect('sales-dashboard')
+
+
+# --------
+@login_required
+def manage_customers(request):
+    try:
+        sales_rep = SalesRepresentative.objects.get(user=request.user)
+    except SalesRepresentative.DoesNotExist:
+        sales_rep = None
+
+    customers = Customer.objects.filter(sales_rep=sales_rep)
+    return render(request, 'accounts/sales/manage_customers.html', {'assigned_customers': customers})
+
+@login_required
+def release_projects(request):
+    sales_rep = get_object_or_404(SalesRepresentative, user=request.user)
+
+    # Filter orders assigned to this sales rep and with status 'Completed'
+    completed_orders = Order.objects.filter(
+        assigned_to=sales_rep,
+        status='Completed'
+    ).order_by('-date_created')
+    print("Logged in as:", request.user)
+    print("Sales Rep:", sales_rep)
+    print("Completed Orders:", completed_orders)
+
+    context = {
+        'completed_orders': completed_orders
+    }
+
+    return render(request, 'accounts/sales/release_projects.html', context)
+
+
+@login_required
+def monitor_quotes(request):
+    return render(request, 'accounts/sales/monitor_quotes.html')
+
+@login_required
+def track_orders(request):
+    return render(request, 'accounts/sales/track_orders.html')
+
+@login_required
+def communicate_designers_admins(request):
+    return render(request, 'accounts/sales/communicate.html')
+
+@login_required
+def follow_up_payments(request):
+    return render(request, 'accounts/sales/follow_up.html')
