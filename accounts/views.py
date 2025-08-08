@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from .decorators import unauthenticated_user, allowed_users, admin_only
 from django.contrib.auth.models import Group
 
+
 # Create your views here.
 @unauthenticated_user
 def register_page(request):
@@ -151,7 +152,7 @@ def customer(request, pk):
     return render(request, 'accounts/customer.html', context=context)
 # the commit function for just 1 item in the formset create 
 @login_required(login_url='login')
-def createOrder(request, pk):
+def createOrder(request, pk, order_type):
     OrderFormSet = inlineformset_factory(
         Customer,
         Order,
@@ -159,17 +160,31 @@ def createOrder(request, pk):
         extra=6,
         can_delete=False
     )
-    customer = Customer.objects.get(id=pk)
+
+    customer = get_object_or_404(Customer, id=pk)
 
     if request.method == 'POST':
         formset = OrderFormSet(request.POST, request.FILES, instance=customer)
         if formset.is_valid():
-            formset.save()
+            orders = formset.save(commit=False)
+            for order in orders:
+                order.order_type = order_type  # force set from URL
+                order.save()
             return redirect('/')
     else:
-        formset = OrderFormSet(queryset=Order.objects.none(), instance=customer)
+        # Pre-fill order_type in empty forms
+        initial_data = [{'order_type': order_type} for _ in range(6)]
+        formset = OrderFormSet(queryset=Order.objects.none(), instance=customer, initial=initial_data)
 
-    return render(request, 'accounts/order_form.html', {'formset': formset})
+        # Optional: hide the order_type field
+        for form in formset.forms:
+            if 'order_type' in form.fields:
+                form.fields['order_type'].widget = form.fields['order_type'].hidden_widget()
+
+    return render(request, 'accounts/order_form.html', {
+        'formset': formset,
+        'order_type': order_type
+    })
 
 # this function is used to update the order
 @login_required(login_url='login')
