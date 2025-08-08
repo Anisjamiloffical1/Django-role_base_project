@@ -1,0 +1,24 @@
+{% extends 'accounts/main.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h3>Order Detail — #{{ order.id }}</h3>
+    <div class="card p-3">
+        <p><strong>Customer:</strong> {{ order.customer }}</p>
+        <p><strong>Product:</strong> {{ order.product }}</p>
+        <p><strong>Order Type:</strong> {{ order.order_type }}</p>
+        <p><strong>Status:</strong> {{ order.status }}</p>
+        <p><strong>Note:</strong> {{ order.note }}</p>
+        <p>
+            {% if order.design_file %}
+                <a href="{% url 'download_design' order.id %}">Download Design</a>
+            {% endif %}
+            {% if order.invoice_file %}
+                | <a href="{% url 'download_invoice' order.id %}">Download Invoice</a>
+            {% endif %}
+            <a href="{% url 'order_invoice' order.id %}" target="_blank">Print Invoice</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

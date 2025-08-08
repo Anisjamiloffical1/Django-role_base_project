@@ -165,26 +165,53 @@ def createOrder(request, pk, order_type):
 
     if request.method == 'POST':
         formset = OrderFormSet(request.POST, request.FILES, instance=customer)
+
+        # Lock the order_type for each form
+        for form in formset:
+            form.instance.order_type = order_type  
+
         if formset.is_valid():
-            orders = formset.save(commit=False)
-            for order in orders:
-                order.order_type = order_type  # force set from URL
-                order.save()
+            formset.save()
             return redirect('/')
     else:
-        # Pre-fill order_type in empty forms
-        initial_data = [{'order_type': order_type} for _ in range(6)]
-        formset = OrderFormSet(queryset=Order.objects.none(), instance=customer, initial=initial_data)
-
-        # Optional: hide the order_type field
-        for form in formset.forms:
-            if 'order_type' in form.fields:
-                form.fields['order_type'].widget = form.fields['order_type'].hidden_widget()
+        # Pre-fill and lock order_type
+        formset = OrderFormSet(
+            queryset=Order.objects.none(),
+            instance=customer,
+            initial=[{'order_type': order_type}] * 6  # pre-fill each form
+        )
+        # Make order_type read-only
+        for form in formset:
+            form.fields['order_type'].disabled = True  
 
     return render(request, 'accounts/order_form.html', {
         'formset': formset,
         'order_type': order_type
     })
+@login_required
+def orderHistory(request):
+    customer = get_object_or_404(Customer, user=request.user)
+    orders = Order.objects.filter(customer=customer).order_by('-date_created')
+    return render(request, 'accounts/order_history.html', {'orders': orders})
+
+@login_required
+def downloadDesign(request, pk):
+    order = get_object_or_404(Order, id=pk, customer__user=request.user)
+    if order.design_file:
+        return redirect(order.design_file.url)
+    return redirect('order_history')
+
+@login_required
+def downloadInvoice(request, pk):
+    order = get_object_or_404(Order, id=pk, customer__user=request.user)
+    if order.invoice_file:
+        return redirect(order.invoice_file.url)
+    return redirect('order_history')
+
+@login_required
+def printInvoice(request, pk):
+    order = get_object_or_404(Order, id=pk, customer__user=request.user)
+    return render(request, 'accounts/print_invoice.html', {'order': order})
 
 # this function is used to update the order
 @login_required(login_url='login')
@@ -212,6 +239,21 @@ def delete_order(request, pk):
         return redirect('/')
     context = {'item': order}
     return render(request, 'accounts/delete.html', context)
+
+def updateCustomer(request, pk):
+    customer = get_object_or_404(Customer, id=pk)
+    form = CustomerForm(instance=customer)
+
+    if request.method == 'POST':
+        form = CustomerForm(request.POST, instance=customer)
+        if form.is_valid():
+            form.save()
+            return redirect('customer', pk=customer.id)  # or your detail view name
+
+    return render(request, 'accounts/customer_form.html', {
+        'form': form,
+        'customer': customer 
+    })
 
 
 @login_required(login_url='login')
