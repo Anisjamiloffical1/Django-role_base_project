@@ -1,21 +1,55 @@
 {% extends 'accounts/main.html' %}
-{% block content %}
-<h2>📦 Release Completed Projects</h2>
+{% load static %}
 
-{% if completed_orders %}
-<ul class="list-group">
-    {% for order in completed_orders %}
-    <li class="list-group-item">
-        {{ order.product.name }} - {{ order.customer.name }}
-        <form action="{% url 'mark_completed' order.id %}" method="post" class="float-end">
-            {% csrf_token %}
-            <button class="btn btn-success btn-sm">Release</button>
-        </form>
-    </li>
-    {% endfor %}
-</ul>
-{% else %}
-<p>No completed projects to release.</p>
-<p>Completed Orders Count: {{ completed_orders|length }}</p>
-{% endif %}
+{% block content %}
+<div class="container mt-4">
+    <h3>✅ Completed Orders Assigned to You</h3>
+
+    {% if completed_orders %}
+    <table class="table table-bordered table-hover mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Product</th>
+                <th>Order Type</th>
+                <th>Files</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in completed_orders %}
+            <tr>
+                <td>#{{ order.id }}</td>
+                <td>{{ order.customer.name }}</td>
+                <td>{{ order.product.name }}</td>
+                <td>{{ order.order_type }}</td>
+                <td>
+                    {% if order.design_file %}
+                    <a href="{{ order.design_file.url }}" class="btn btn-sm btn-primary">Design</a>
+                    {% endif %}
+                    {% if order.invoice_file %}
+                    <a href="{{ order.invoice_file.url }}" class="btn btn-sm btn-secondary">Invoice</a>
+                    {% endif %}
+                    {% if order.invoice_file %}
+                    <a href="{% url 'downloadInvoice' order.id %}" class="btn btn-sm btn-secondary">Download Invoice</a>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-info">View</a>
+                    <form action="{% url 'release_order' order.id %}" method="POST" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-success">Release</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert alert-warning mt-3">
+        No completed orders found.
+    </div>
+    {% endif %}
+</div>
 {% endblock %}

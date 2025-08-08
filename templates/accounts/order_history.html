@@ -34,5 +34,8 @@
             {% endfor %}
         </tbody>
     </table>
+    <a href="{% url 'print_invoice' order.id %}" target="_blank" class="btn btn-primary">
+        🖨 Print Invoice
+    </a>
 </div>
 {% endblock %}

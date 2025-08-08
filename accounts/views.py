@@ -3,6 +3,7 @@ from .models import *
 from .forms import CustomerForm, OrderForm, CreateUserForm
 from django.forms import inlineformset_factory
 from django.contrib import messages
+from django.http import FileResponse
 from .filters import OrderFilter
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.forms import UserCreationForm
@@ -65,7 +66,7 @@ def login_page(request):
         if user_obj:
             login(request, user_obj)
 
-            # 🔐 Redirect based on role
+            #  Redirect based on role
             group = None
             if user_obj.groups.exists():
                 group = user_obj.groups.first().name
@@ -213,6 +214,13 @@ def printInvoice(request, pk):
     order = get_object_or_404(Order, id=pk, customer__user=request.user)
     return render(request, 'accounts/print_invoice.html', {'order': order})
 
+def order_invoice(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    if order.invoice_file:
+        return FileResponse(order.invoice_file.open(), as_attachment=False)
+    else:
+        return HttpResponse("No invoice found", status=404)
+
 # this function is used to update the order
 @login_required(login_url='login')
 def updateOrder(request, pk):
@@ -254,6 +262,17 @@ def updateCustomer(request, pk):
         'form': form,
         'customer': customer 
     })
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
+def createCustomer(request):
+    form = CustomerForm()
+    if request.method == 'POST':
+        form = CustomerForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('manage_customers') 
+    context = {'form': form}
+    return render(request, 'accounts/create_customer_form.html', context)
 
 
 @login_required(login_url='login')
@@ -296,6 +315,20 @@ def sales_dashboard(request):
     }
 
     return render(request, 'accounts/sales_dashboard.html', context)
+@login_required
+def order_detail(request, pk):
+    order = get_object_or_404(Order, id=pk)
+    return render(request, 'accounts/order_detail.html', {'order': order})
+@login_required
+def release_order(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+
+    if request.method == 'POST':
+        order.status = 'Released'  # or whatever status you use
+        order.save()
+        messages.success(request, f"Order #{order.id} has been released successfully!")
+    
+    return redirect('release_projects')  # Redirect back to list
 
 @login_required
 def mark_completed(request, order_id):

@@ -15,6 +15,8 @@ class Customer(models.Model):
     phone = models.CharField(max_length=200)
     email = models.CharField(max_length=200)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
+    def __str__(self):
+        return self.name
 class SalesRepresentative(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     def __str__(self):
@@ -66,12 +68,21 @@ class Order(models.Model):
         ('Pending', 'Pending'),
         ('Out for delivery', 'Out for delivery'),
         ('Delivered', 'Delivered'),
+        ('Quote Requested', 'Quote Requested'),
+        ('Active', 'Active'),
+        ('Completed', 'Completed'),
+        ('Released', 'Released'),
     )
     ORDER_TYPE = (
         ('Digitizing', 'Digitizing'),
         ('Vector', 'Vector'),
         ('Patch', 'Patch'),
         ('Quote', 'Quote'),
+    )
+    PAYMENT_STATUS = (
+        ('Pending', 'Pending'),
+        ('Paid', 'Paid'),
+        ('Refunded', 'Refunded'),
     )
     customer = models.ForeignKey(Customer, null=True, on_delete=models.SET_NULL)
     product = models.ForeignKey(Product, null=True, on_delete=models.SET_NULL)
@@ -83,10 +94,13 @@ class Order(models.Model):
     invoice_file = models.FileField(upload_to='invoices/', null=True, blank=True)
     status = models.CharField(max_length=200, null=True)
     assigned_to = models.ForeignKey('SalesRepresentative', on_delete=models.SET_NULL, null=True, blank=True)
+    released = models.BooleanField(default=False)  # For release_projects
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='Pending')  # For follow-up payments
+    date_completed = models.DateTimeField(null=True, blank=True)  # Optional: track completion time
 
 
 
     def __str__(self):
-        return f"{self.product.name} ({self.order_type})"
+        return f"{self.product.name if self.product else 'No product'} ({self.order_type})"
     
     
