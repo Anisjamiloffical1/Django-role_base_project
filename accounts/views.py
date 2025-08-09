@@ -12,7 +12,7 @@ from django.contrib.auth.decorators import login_required
 from .decorators import unauthenticated_user, allowed_users, admin_only
 from django.contrib.auth.models import Group
 
-
+from django.core.files.uploadedfile import UploadedFile
 # Create your views here.
 @unauthenticated_user
 def register_page(request):
@@ -87,6 +87,45 @@ def login_page(request):
         return HttpResponseRedirect(request.path_info)
 
     return render(request, 'accounts/login.html')
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
+def manage_users(request):
+    users = User.objects.all().order_by('-date_joined')
+    return render(request, 'accounts/admin/manage_users.html', {'users': users})
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
+def edit_user(request, pk):
+    user_obj = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        user_obj.first_name = request.POST.get('first_name')
+        user_obj.last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        if User.objects.exclude(pk=user_obj.pk).filter(username=email).exists():
+            messages.error(request, "Email already in use.")
+        else:
+            user_obj.email = email
+            user_obj.username = email  # keep username synced
+            role = request.POST.get('role')
+            user_obj.groups.clear()
+            group = Group.objects.get(name=role)
+            user_obj.groups.add(group)
+            user_obj.save()
+            messages.success(request, "User updated successfully.")
+            return redirect('manage_users')
+
+    current_role = user_obj.groups.first().name if user_obj.groups.exists() else None
+    return render(request, 'accounts/admin/edit_user.html', {'user_obj': user_obj, 'current_role': current_role})
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
+def delete_user(request, pk):
+    user_obj = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        user_obj.delete()
+        messages.success(request, "User deleted successfully.")
+        return redirect('manage_users')
+    return render(request, 'accounts/admin/delete_user.html', {'user_obj': user_obj})
 
 def logout_page(request):
     logout(request)
@@ -110,25 +149,58 @@ def user_page(request):
 @login_required(login_url='login')
 @admin_only
 def home(request):
+    # Get one customer (just an example)
     customer = Customer.objects.first()
-    orders = Order.objects.all()
-    customers = Customer.objects.all()
-    total_customers = customers.count()
-    total_order = orders.count()
-    delivered = orders.filter(status='Delivered').count()
-    pending = orders.filter(status='Pending').count()
-    context = {
-        'orders': orders,
-        'customers': customers,
-        'total_customers' : total_customers,
-        'total_order' : total_order,
-        'delivered' : delivered,
-        'pending' : pending,
-        'customer': customer
 
+    # Get all orders for that customer, ordered by newest first
+    all_orders = Order.objects.filter(customer=customer).order_by('-date_created')
+
+    # Slice the last 5 orders for showing in template
+    last_five_orders = all_orders[:5]
+
+    # Get all customers and last 5 users (example)
+    customers = Customer.objects.all().order_by('-date_created')[:5]
+    users = User.objects.all().order_by('-date_joined')[:5]
+
+    # Counts on all orders (not sliced)
+    total_orders = all_orders.count()
+    delivered_orders = all_orders.filter(status='Delivered').count()
+    pending_orders = all_orders.filter(status='Pending').count()
+
+    context = {
+        'orders': last_five_orders,    # only last 5 for display
+        'customers': customers,
+        'users': users,
+        'total_customers': customers.count(),
+        'total_order': total_orders,
+        'delivered': delivered_orders,
+        'pending': pending_orders,
+        'customer': customer
     }
 
-    return render(request, 'accounts/dashboard.html', context=context)
+    return render(request, 'accounts/dashboard.html', context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
+def review_file(request, pk):
+    # Import your File model — adjust the name to match your code
+    uploaded_file = get_object_or_404(UploadedFile, id=pk)  
+    order = uploaded_file.order  # assuming FK: UploadedFile.order
+
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        comment = request.POST.get('comment')
+
+        order.review_status = status
+        order.review_comment = comment
+        order.save()
+
+        return redirect('dashboard')  # change to your redirect target
+
+    return render(request, 'accounts/review_file.html', {
+        'order': order,
+        'file': uploaded_file
+    })
 # create a function to show the products
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin'])
@@ -153,7 +225,7 @@ def customer(request, pk):
     return render(request, 'accounts/customer.html', context=context)
 # the commit function for just 1 item in the formset create 
 @login_required(login_url='login')
-def createOrder(request, pk, order_type):
+def createOrder(request, pk, order_type=None):
     OrderFormSet = inlineformset_factory(
         Customer,
         Order,
@@ -167,23 +239,19 @@ def createOrder(request, pk, order_type):
     if request.method == 'POST':
         formset = OrderFormSet(request.POST, request.FILES, instance=customer)
 
-        # Lock the order_type for each form
-        for form in formset:
-            form.instance.order_type = order_type  
-
         if formset.is_valid():
             formset.save()
             return redirect('/')
+
     else:
-        # Pre-fill and lock order_type
+        
+        initial_data = [{'order_type': order_type}] * 6 if order_type else [{}] * 6
+
         formset = OrderFormSet(
             queryset=Order.objects.none(),
             instance=customer,
-            initial=[{'order_type': order_type}] * 6  # pre-fill each form
+            initial=initial_data
         )
-        # Make order_type read-only
-        for form in formset:
-            form.fields['order_type'].disabled = True  
 
     return render(request, 'accounts/order_form.html', {
         'formset': formset,
@@ -371,7 +439,22 @@ def release_projects(request):
 
 @login_required
 def monitor_quotes(request):
-    return render(request, 'accounts/sales/monitor_quotes.html')
+    # Only show orders assigned to the logged-in sales rep
+    quote_requests = Order.objects.filter(
+        assigned_to__user=request.user,
+        status="Quote Requested"
+    ).order_by('-date_created')
+
+    active_orders = Order.objects.filter(
+        assigned_to__user=request.user,
+        status="Active"
+    ).order_by('-date_created')
+
+    context = {
+        'quote_requests': quote_requests,
+        'active_orders': active_orders,
+    }
+    return render(request, 'accounts/sales/monitor_quotes.html', context)
 
 @login_required
 def track_orders(request):

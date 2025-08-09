@@ -1,0 +1,31 @@
+{% extends 'accounts/main.html' %}
+{% block content %}
+<h2>Edit User</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    <div class="form-group">
+        <label>First Name</label>
+        <input type="text" name="first_name" value="{{ user_obj.first_name }}" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label>Last Name</label>
+        <input type="text" name="last_name" value="{{ user_obj.last_name }}" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" value="{{ user_obj.email }}" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label>Role</label>
+        <select name="role" class="form-control" required>
+            <option value="customer" {% if current_role == 'customer' %}selected{% endif %}>Customer</option>
+            <option value="sales_rep" {% if current_role == 'sales_rep' %}selected{% endif %}>Sales Representative</option>
+            <option value="designer" {% if current_role == 'designer' %}selected{% endif %}>Designer</option>
+            <option value="admin" {% if current_role == 'admin' %}selected{% endif %}>Administrator</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a href="{% url 'manage_users' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

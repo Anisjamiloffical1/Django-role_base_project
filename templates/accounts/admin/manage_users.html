@@ -1,0 +1,33 @@
+{% extends 'accounts/main.html' %}
+{% block content %}
+<h2>Manage Users</h2>
+<a href="{% url 'register' %}" class="btn btn-primary mb-3">Create New User</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Date Joined</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for user in users %}
+        <tr>
+            <td>{{ user.first_name }} {{ user.last_name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.groups.first.name }}</td>
+            <td>{{ user.date_joined|date:"Y-m-d" }}</td>
+            <td>
+                <a href="{% url 'edit_user' user.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                <a href="{% url 'delete_user' user.pk %}" class="btn btn-sm btn-danger">Delete</a>
+            </td>
+        </tr>
+    {% empty %}
+        <tr><td colspan="5">No users found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

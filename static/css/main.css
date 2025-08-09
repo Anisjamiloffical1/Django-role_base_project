@@ -33,3 +33,59 @@ body{
     /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
     background: linear-gradient(to right, rgba(132, 250, 176, 1), rgba(143, 211, 244, 1))
     }
+
+/* General styles */
+    .order-box {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+    }
+    .order-box strong {
+      font-size: 1.25rem;
+      color: #333;
+    }
+    .field-row {
+      margin-bottom: 15px;
+    }
+    .item-label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+    }
+    input, select, textarea {
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+      width: 100%;
+      transition: border-color 0.3s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #ffbb33;
+      box-shadow: 0 0 8px #ffbb33;
+    }
+    .text-danger {
+      font-size: 0.875rem;
+      color: #dc3545 !important;
+      margin-top: 5px;
+    }
+    .form-text {
+      font-size: 0.8rem;
+      color: #6c757d;
+    }
+    .btn-warning {
+      background-color: #ffbb33;
+      border: none;
+      font-weight: 600;
+      box-shadow: 0 3px 10px rgb(255 187 51 / 0.4);
+      transition: background-color 0.3s ease;
+    }
+    .btn-warning:hover {
+      background-color: #ffaa00;
+    }
+
+  
