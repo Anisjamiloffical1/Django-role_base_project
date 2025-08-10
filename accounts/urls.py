@@ -5,6 +5,7 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('anis/', views.some_view, name='some_view'),
     path('users/', views.manage_users, name='manage_users'),
     path('users/edit/<int:pk>/', views.edit_user, name='edit_user'),
     path('users/delete/<int:pk>/', views.delete_user, name='delete_user'),
@@ -24,12 +25,15 @@ urlpatterns = [
     path('delete_order/<str:pk>/', views.delete_order, name='delete_order'),
     path('register/', views.register_page, name='register'),
     path('login/', views.login_page, name='login'),
+    path('reports/', views.report_view, name='report_view'),
+    path('reports/export/csv/', views.export_report_csv, name='export_report_csv'),
     path('logout/', views.logout_page, name='logout'),
     path('user/', views.user_page, name='user-page'),
     path('accounts/', views.accountSettings, name='account'),
     path('customer/update/<str:pk>/', views.updateCustomer, name='update_customer'),
     path('sales-dashboard/', views.sales_dashboard, name='sales-dashboard'),
     path('sales/mark-completed/<int:order_id>/', views.mark_completed, name='mark_completed'),
+    path('settings/', views.manage_settings, name='manage_settings'),
     path('manage-customers/', views.manage_customers, name='manage_customers'),
     path('release-projects/', views.release_projects, name='release_projects'),
     path('monitor-quotes/', views.monitor_quotes, name='monitor_quotes'),

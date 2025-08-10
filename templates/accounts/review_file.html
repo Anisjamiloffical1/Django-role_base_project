@@ -1,3 +1,7 @@
+{% extends 'accounts/main.html' %}
+{% load static %}
+
+{% block content %}
 <h3>Review File for Order #{{ order.id }}</h3>
 
 {% if order.design_file %}
@@ -20,3 +24,4 @@
 
     <button type="submit">Save Review</button>
 </form>
+{% endblock %}

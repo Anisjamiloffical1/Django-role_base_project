@@ -1,0 +1,51 @@
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<div class="d-flex flex-column vh-100 bg-dark text-white" style="width: 250px;">
+  <div class="p-3 mb-3 border-bottom">
+    <h4><i class="fa-brands fa-bootstrap me-2"></i>Sidebar</h4>
+  </div>
+
+  <ul class="nav nav-pills flex-column mb-auto px-2">
+    <li class="nav-item mb-2">
+      <a href="{% url 'home' %}" class="nav-link active text-white" aria-current="page">
+        <i class="fa fa-home me-2"></i> Home
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a href="{% url 'home' %}" class="nav-link text-white">
+        <i class="fa fa-tachometer-alt me-2"></i> Dashboard
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a href="" class="nav-link text-white">
+        <i class="fa fa-table me-2"></i> Orders
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a href="{% url 'products' %}" class="nav-link text-white">
+        <i class="fa fa-th-large me-2"></i> Products
+      </a>
+    </li>
+    <li class="nav-item mb-2">
+      <a href="" class="nav-link text-white">
+        <i class="fa fa-user me-2"></i> Customers
+      </a>
+    </li>
+  </ul>
+
+  <hr class="text-secondary mx-2" />
+
+  <div class="dropdown p-3 mt-auto">
+    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
+      <img src="https://github.com/mdo.png" alt="user" width="32" height="32" class="rounded-circle me-2">
+      <strong>mdo</strong>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser">
+      <li><a class="dropdown-item" href="#">Profile</a></li>
+      <li><a class="dropdown-item" href="#">Settings</a></li>
+      <li><hr class="dropdown-divider"></li>
+      <li><a class="dropdown-item" href="{% url 'logout' %}">Sign out</a></li>
+    </ul>
+  </div>
+</div>

@@ -113,3 +113,20 @@ class UploadedFile(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="files")
     file = models.FileField(upload_to='uploads/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"File for {self.order} uploaded at {self.uploaded_at}"
+    
+class SiteSetting(models.Model):
+    site_name = models.CharField(max_length=255, default="My Company")
+    contact_email = models.EmailField(default="info@example.com")
+    logo = models.ImageField(upload_to='settings/', null=True, blank=True)
+    enable_notifications = models.BooleanField(default=True)
+    default_order_status = models.CharField(max_length=100, default='Pending')
+    
+    def __str__(self):
+        return "Site Settings"
+
+    class Meta:
+        verbose_name = "Site Setting"
+        verbose_name_plural = "Site Settings"

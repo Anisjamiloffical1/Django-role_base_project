@@ -1,0 +1,114 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reports</title>
+    <!-- Bootstrap CSS CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+</head>
+<body>
+<div class="container my-5">
+
+    <h1 class="mb-4">Generate Reports</h1>
+
+    <!-- Filter Form -->
+    <form method="get" class="row g-3 mb-4 align-items-end">
+        <div class="col-md-3">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input
+              type="date"
+              class="form-control"
+              id="start_date"
+              name="start_date"
+              value="{{ filters.start_date|default:'' }}"
+            />
+        </div>
+        <div class="col-md-3">
+            <label for="end_date" class="form-label">End Date</label>
+            <input
+              type="date"
+              class="form-control"
+              id="end_date"
+              name="end_date"
+              value="{{ filters.end_date|default:'' }}"
+            />
+        </div>
+        <div class="col-md-3">
+            <label for="sales_rep" class="form-label">Sales Representative</label>
+            <select
+              id="sales_rep"
+              name="sales_rep"
+              class="form-select"
+            >
+                <option value="">All</option>
+                {% for rep in all_sales_reps %}
+                    <option value="{{ rep }}" {% if filters.sales_rep_username == rep %}selected{% endif %}>{{ rep }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+    </form>
+
+    <!-- Export Buttons -->
+    <div class="mb-4">
+        <a href="{% url 'export_report_csv' %}?start_date={{ filters.start_date }}&end_date={{ filters.end_date }}&sales_rep={{ filters.sales_rep_username }}" class="btn btn-success me-2">Export CSV</a>
+        
+    </div>
+
+    <!-- Orders By Status Table -->
+    <h2 class="mb-4">Order Summary by Status</h2>
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Status</th>
+                <th>Number of Orders</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in orders_by_status %}
+            <tr>
+                <td>{{ item.status }}</td>
+                <td>{{ item.count }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="2" class="text-center">No data found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Revenue By Sales Rep Table -->
+    <h2 class="mt-5 mb-4">Revenue and Completed Orders by Sales Representative</h2>
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Sales Representative</th>
+                <th>Completed Orders</th>
+                <th>Total Revenue</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rep in revenue_by_sales_rep %}
+            <tr>
+                <td>{{ rep.user__username }}</td>
+                <td>{{ rep.total_orders|default:"0" }}</td>
+                <td>${{ rep.total_revenue|floatformat:2|default:"0.00" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-center">No data found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+<!-- Bootstrap JS (optional) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,18 +1,23 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import *
-from .forms import CustomerForm, OrderForm, CreateUserForm
+from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm
 from django.forms import inlineformset_factory
 from django.contrib import messages
+from django.utils.dateparse import parse_date
 from django.http import FileResponse
 from .filters import OrderFilter
 from django.http import HttpResponseRedirect, HttpResponse
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .decorators import unauthenticated_user, allowed_users, admin_only
 from django.contrib.auth.models import Group
+from django.db.models import Count, Sum, Q
 
-from django.core.files.uploadedfile import UploadedFile
+from io import BytesIO
+import csv
+
+
 # Create your views here.
 @unauthenticated_user
 def register_page(request):
@@ -87,6 +92,26 @@ def login_page(request):
         return HttpResponseRedirect(request.path_info)
 
     return render(request, 'accounts/login.html')
+# this are the functions to manage the settings of the site
+@login_required(login_url='login')
+@allowed_users(['admin'])
+def manage_settings(request):
+    setting, created = SiteSetting.objects.get_or_create(id=1)
+    
+    if request.method == 'POST':
+        form = SiteSettingForm(request.POST, request.FILES, instance=setting)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Settings updated successfully.")
+            return redirect('manage_settings')
+    else:
+        form = SiteSettingForm(instance=setting)
+
+    return render(request, 'accounts/manage_settings.html', {'form': form})
+def some_view(request):
+    settings = SiteSetting.objects.all().first()
+    return render(request, 'accounts/sitting_template.html', {'settings': settings})
+
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin'])
 def manage_users(request):
@@ -179,13 +204,26 @@ def home(request):
     }
 
     return render(request, 'accounts/dashboard.html', context)
+def upload_file(request, order_id):
+    order = Order.objects.get(id=order_id)
+
+    if request.method == 'POST' and request.FILES.get('file'):
+        file = request.FILES['file']
+        UploadedFile.objects.create(order=order, file=file)
+        return redirect('some_view')
+
+    return render(request, 'upload.html', {'order': order})
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin'])
 def review_file(request, pk):
-    # Import your File model — adjust the name to match your code
-    uploaded_file = get_object_or_404(UploadedFile, id=pk)  
-    order = uploaded_file.order  # assuming FK: UploadedFile.order
+    print(f"Received pk: {pk}")
+    
+    # Get the uploaded file
+    uploaded_file = get_object_or_404(UploadedFile, pk=pk)
+    
+    # Get its parent order
+    order = uploaded_file.order  
 
     if request.method == 'POST':
         status = request.POST.get('status')
@@ -194,8 +232,7 @@ def review_file(request, pk):
         order.review_status = status
         order.review_comment = comment
         order.save()
-
-        return redirect('dashboard')  # change to your redirect target
+        return redirect('home')
 
     return render(request, 'accounts/review_file.html', {
         'order': order,
@@ -241,7 +278,7 @@ def createOrder(request, pk, order_type=None):
 
         if formset.is_valid():
             formset.save()
-            return redirect('/')
+            return redirect('home')
 
     else:
         
@@ -467,3 +504,153 @@ def communicate_designers_admins(request):
 @login_required
 def follow_up_payments(request):
     return render(request, 'accounts/sales/follow_up.html')
+# this area is used to generate reports for admin and sales reps , 
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'sales_rep'])
+def report_view(request):
+    # Get filter inputs from GET params
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    sales_rep_username = request.GET.get('sales_rep')
+
+    orders = Order.objects.all()
+
+    # Filter by date range if provided
+    if start_date:
+        orders = orders.filter(date_created__date__gte=parse_date(start_date))
+    if end_date:
+        orders = orders.filter(date_created__date__lte=parse_date(end_date))
+
+    # Filter by sales rep username if provided
+    if sales_rep_username:
+        orders = orders.filter(assigned_to__user__username=sales_rep_username)
+
+    # Aggregate orders count by status (after filters)
+    orders_by_status = orders.values('status').annotate(count=Count('id'))
+
+    # Build Q filter for revenue_by_sales_rep aggregation
+    filter_q = Q(assigned_customers__order__status='Completed')
+
+    if start_date:
+        filter_q &= Q(assigned_customers__order__date_created__date__gte=parse_date(start_date))
+    if end_date:
+        filter_q &= Q(assigned_customers__order__date_created__date__lte=parse_date(end_date))
+    if sales_rep_username:
+        filter_q &= Q(assigned_customers__order__assigned_to__user__username=sales_rep_username)
+
+    # Aggregate revenue and completed orders by sales rep (after filters)
+    revenue_by_sales_rep = (
+        SalesRepresentative.objects
+        .annotate(
+            total_revenue=Sum('assigned_customers__order__product__price', filter=filter_q),
+            total_orders=Count('assigned_customers__order', filter=filter_q)
+        )
+        .values('user__username', 'total_revenue', 'total_orders')
+    )
+
+    # For filter dropdown, get all sales rep usernames
+    all_sales_reps = SalesRepresentative.objects.all().values_list('user__username', flat=True)
+
+    context = {
+        'orders_by_status': orders_by_status,
+        'revenue_by_sales_rep': revenue_by_sales_rep,
+        'all_sales_reps': all_sales_reps,
+        'filters': {
+            'start_date': start_date,
+            'end_date': end_date,
+            'sales_rep_username': sales_rep_username,
+        }
+    }
+    return render(request, 'accounts/report.html', context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'sales_rep'])
+def export_report_csv(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    sales_rep_username = request.GET.get('sales_rep')
+
+    def clean_val(val):
+        if val and val.lower() != 'none':
+            return val
+        return None
+
+    start_date = clean_val(start_date)
+    end_date = clean_val(end_date)
+    sales_rep_username = clean_val(sales_rep_username)
+
+    orders = Order.objects.all()
+    if start_date:
+        orders = orders.filter(date_created__date__gte=parse_date(start_date))
+    if end_date:
+        orders = orders.filter(date_created__date__lte=parse_date(end_date))
+    if sales_rep_username:
+        orders = orders.filter(assigned_to__user__username=sales_rep_username)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="report.csv"'
+
+    writer = csv.writer(response)
+
+    # Write Report Title & Filter Info
+    writer.writerow(['Order Report'])
+    filters_applied = []
+    if start_date:
+        filters_applied.append(f"Start Date: {start_date}")
+    if end_date:
+        filters_applied.append(f"End Date: {end_date}")
+    if sales_rep_username:
+        filters_applied.append(f"Sales Rep: {sales_rep_username}")
+    writer.writerow(filters_applied)
+    writer.writerow([])
+
+    # Section 1: Orders by Status
+    writer.writerow(['Orders by Status'])
+    writer.writerow(['Status', 'Number of Orders'])
+    orders_by_status = orders.values('status').annotate(count=Count('id')).order_by('status')
+    for item in orders_by_status:
+        writer.writerow([item['status'], item['count']])
+    writer.writerow([])
+
+    # Section 2: Revenue & Completed Orders by Sales Rep
+    writer.writerow(['Sales Representative Summary'])
+    writer.writerow(['Sales Representative', 'Completed Orders', 'Total Revenue'])
+
+    q_filters = Q(assigned_customers__order__status='Completed')
+    if start_date:
+        q_filters &= Q(assigned_customers__order__date_created__gte=parse_date(start_date))
+    if end_date:
+        q_filters &= Q(assigned_customers__order__date_created__lte=parse_date(end_date))
+    if sales_rep_username:
+        q_filters &= Q(assigned_customers__order__assigned_to__user__username=sales_rep_username)
+
+    revenue_by_sales_rep = (
+        SalesRepresentative.objects
+        .annotate(
+            total_revenue=Sum('assigned_customers__order__product__price', filter=q_filters),
+            total_orders=Count('assigned_customers__order', filter=q_filters),
+        )
+        .values('user__username', 'total_revenue', 'total_orders')
+        .order_by('user__username')
+    )
+
+    for rep in revenue_by_sales_rep:
+        writer.writerow([
+            rep['user__username'],
+            rep['total_orders'] or 0,
+            f"${rep['total_revenue']:.2f}" if rep['total_revenue'] else "$0.00",
+        ])
+    writer.writerow([])
+
+    # Section 3: Overall Totals
+    writer.writerow(['Overall Totals'])
+    total_orders = orders.count()
+    total_completed_orders = orders.filter(status='Completed').count()
+    total_revenue = orders.filter(status='Completed').aggregate(
+        total=Sum('product__price')
+    )['total'] or 0
+    writer.writerow(['Total Orders', total_orders])
+    writer.writerow(['Total Completed Orders', total_completed_orders])
+    writer.writerow(['Total Revenue', f"${total_revenue:.2f}"])
+
+    return response

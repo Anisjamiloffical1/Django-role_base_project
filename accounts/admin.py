@@ -8,7 +8,8 @@ admin.site.register(Tag)
 admin.site.register(SalesRepresentative)
 admin.site.register(Designer)
 admin.site.register(Admin)
-
+admin.site.register(UploadedFile)
+admin.site.register(SiteSetting)
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('customer', 'product', 'order_type', 'status', 'date_created')

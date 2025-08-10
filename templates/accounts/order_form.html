@@ -90,6 +90,36 @@
                 </button>
             </div>
         </form>
+
+        <!-- Review Section -->
+        {% if order %}
+        <hr>
+        <h4 class="mt-4">Uploaded Files & Reviews</h4>
+        {% if order.files.all %}
+            <table class="table table-bordered mt-3">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Review Status</th>
+                        <th>Review Comment</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in order.files.all %}
+                    <tr>
+                        <td><a href="{{ file.file.url }}" target="_blank">{{ file.file.name }}</a></td>
+                        <td>{% if file.review_status %}{{ file.review_status }}{% else %}<span class="text-muted">Not Reviewed</span>{% endif %}</td>
+                        <td>{% if file.review_comment %}{{ file.review_comment }}{% else %}<span class="text-muted">No Comments</span>{% endif %}</td>
+                        <td><a href="{% url 'review_file' file.pk %}" class="btn btn-sm btn-primary">Review</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-muted">No files uploaded yet.</p>
+        {% endif %}
+        {% endif %}
     </div>
 </div>
 {% endblock %}
