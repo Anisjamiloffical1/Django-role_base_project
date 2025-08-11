@@ -2,210 +2,230 @@
 
 {% block content %}
 <style>
-  /* Sidebar styling */
-  .sidebar {
-    background-color: #343a40;
-    min-height: 100vh;
-    color: #fff;
-    padding-top: 1rem;
-    position: sticky;
-    top: 0;
-  }
-  .sidebar .nav-link {
-    color: #adb5bd;
-    font-weight: 500;
-    padding: 0.75rem 1rem;
-    transition: background-color 0.3s, color 0.3s;
-  }
-  .sidebar .nav-link:hover,
-  .sidebar .nav-link.active {
-    background-color: #495057;
-    color: #fff;
-    border-radius: 0.375rem;
-  }
+    /* Sidebar styling */
+    .sidebar {
+        background-color: #343a40;
+        min-height: 100vh;
+        color: #fff;
+        padding-top: 1rem;
+        position: sticky;
+        top: 0;
+    }
 
-  /* Card header styling */
-  h5 {
-    font-weight: 600;
-    color: #212529;
-  }
+    .sidebar .nav-link {
+        color: #adb5bd;
+        font-weight: 500;
+        padding: 0.75rem 1rem;
+        transition: background-color 0.3s, color 0.3s;
+    }
 
-  /* Card styling */
-  .card {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    border: none;
-    border-radius: 0.5rem;
-  }
+    .sidebar .nav-link:hover,
+    .sidebar .nav-link.active {
+        background-color: #495057;
+        color: #fff;
+        border-radius: 0.375rem;
+    }
 
-  /* Table styles */
-  table.table {
-    margin-bottom: 0;
-  }
-  table.table th, table.table td {
-    vertical-align: middle;
-  }
+    /* Card header styling */
+    h5 {
+        font-weight: 600;
+        color: #212529;
+    }
 
-  /* Buttons full width on small devices */
-  .btn-block {
-    width: 100%;
-  }
+    /* Card styling */
+    .card {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        border: none;
+        border-radius: 0.5rem;
+    }
 
-  /* Main content padding */
-  main {
-    padding-top: 1.5rem;
-    padding-bottom: 2rem;
-  }
+    /* Table styles */
+    table.table {
+        margin-bottom: 0;
+    }
+
+    table.table th,
+    table.table td {
+        vertical-align: middle;
+    }
+
+    /* Buttons full width on small devices */
+    .btn-block {
+        width: 100%;
+    }
+
+    /* Main content padding */
+    main {
+        padding-top: 1.5rem;
+        padding-bottom: 2rem;
+    }
 </style>
 
 <div class="container-fluid">
-  <div class="row">
+    <div class="row">
 
-    <!-- Sidebar -->
-    <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-      <div class="sidebar-sticky px-2">
-        <ul class="nav flex-column">
-          <li class="nav-item mb-3">
-            <a class="nav-link" href="{% url 'report_view' %}">📈 Generate Reports</a>
-          </li>
-          <li class="nav-item mb-3">
-            <a class="nav-link" href="{% url 'manage_settings' %}">⚙️ Manage Settings</a>
-          </li>
-          <li class="nav-item mb-3">
-            <a class="nav-link" href="{% url 'create_customer' %}">➕ Create Customer</a>
-          </li>
-          <li class="nav-item mb-3">
-            <a class="nav-link" href="{% url 'manage_users' %}">👥 Manage Users</a>
-          </li>
-          <!-- Add more sidebar links here -->
-        </ul>
-      </div>
-    </nav>
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+            <div class="sidebar-sticky px-2">
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'report_view' %}">📈 Generate Reports</a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'manage_settings' %}">⚙️ Manage Settings</a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'create_customer' %}">➕ Create Customer</a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'manage_users' %}">👥 Manage Users</a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a href="{% url 'admin_inbox' %}" class="nav-link">
+                            Inbox
+                            {% if unread_count > 0 %}
+                                <span class="badge bg-danger">{{ unread_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <!-- Add more sidebar links here -->
+                </ul>
+            </div>
+        </nav>
 
-    <!-- Main content -->
-    <main class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-      {% include 'accounts/status.html' %}
-      <br>
+        <!-- Main content -->
+        <main class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+            {% include 'accounts/status.html' %}
+            <br>
 
-      <div class="row g-4">
-          <!-- Customers Section -->
-          <div class="col-md-5">
-              <h5>Customers</h5>
-              <hr>
-              <div class="card card-body">
-                  <a href="{% url 'create_customer' %}" class="btn btn-primary btn-sm btn-block mb-3">Create Customer</a>
-                  <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle">
-                        <thead class="table-light">
-                          <tr>
-                              <th></th>
-                              <th>Customer</th>
-                              <th>Phone</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                        {% for customer in customers %}
-                          <tr>
-                              <td><a class="btn btn-sm btn-info" href="{% url 'customer' customer.id %}">View</a></td>
-                              <td>{{ customer.name }}</td>
-                              <td>{{ customer.phone }}</td>
-                          </tr>
-                        {% empty %}
-                          <tr>
-                            <td colspan="3" class="text-center text-muted">No customers found.</td>
-                          </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                  </div>
-              </div>
-          </div>
+            <div class="row g-4">
+                <!-- Customers Section -->
+                <div class="col-md-5">
+                    <h5>Customers</h5>
+                    <hr>
+                    <div class="card card-body">
+                        <a href="{% url 'create_customer' %}" class="btn btn-primary btn-sm btn-block mb-3">Create
+                            Customer</a>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th></th>
+                                        <th>Customer</th>
+                                        <th>Phone</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for customer in customers %}
+                                    <tr>
+                                        <td><a class="btn btn-sm btn-info"
+                                                href="{% url 'customer' customer.id %}">View</a></td>
+                                        <td>{{ customer.name }}</td>
+                                        <td>{{ customer.phone }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">No customers found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
-          <!-- Last 5 Orders Section -->
-          <div class="col-md-7">
-              <h5>Last 5 Orders</h5>
-              <hr>
-              <div class="card card-body">
-                  <a class="btn btn-primary btn-sm btn-block mb-3" href="{% url 'create_order' customer.id 'design' %}">Create Order</a>
-                  <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle">
-                        <thead class="table-light">
-                          <tr>
-                              <th>Product</th>
-                              <th>Date Ordered</th>
-                              <th>Status</th>
-                              <th>Update</th>
-                              <th>Remove</th>
-                              <th>Review</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                        {% for order in orders %}
-                          <tr>
-                              <td>{{ order.product }}</td>
-                              <td>{{ order.date_created }}</td>
-                              <td>{{ order.status }}</td>
-                              <td><a class="btn btn-sm btn-info" href="{% url 'update_order' order.id %}">Update</a></td>
-                              <td><a class="btn btn-sm btn-danger" href="{% url 'delete_order' order.id %}">Delete</a></td>
-                              <td>
-                                {% for file in order.files.all %}
-                                  <a href="{% url 'review_file' file.id %}" class="btn btn-sm btn-primary mb-1">Review</a>
-                                {% empty %}
-                                  <span class="text-muted">No files</span>
-                                {% endfor %}
-                              </td>
-                          </tr>
-                        {% empty %}
-                          <tr>
-                            <td colspan="6" class="text-center text-muted">No orders found.</td>
-                          </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                  </div>
-              </div>
-          </div>
-      </div>
+                <!-- Last 5 Orders Section -->
+                <div class="col-md-7">
+                    <h5>Last 5 Orders</h5>
+                    <hr>
+                    <div class="card card-body">
+                        <a class="btn btn-primary btn-sm btn-block mb-3"
+                            href="{% url 'create_order' customer.id 'design' %}">Create Order</a>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Date Ordered</th>
+                                        <th>Status</th>
+                                        <th>Update</th>
+                                        <th>Remove</th>
+                                        <th>Review</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                    <tr>
+                                        <td>{{ order.product }}</td>
+                                        <td>{{ order.date_created }}</td>
+                                        <td>{{ order.status }}</td>
+                                        <td><a class="btn btn-sm btn-info"
+                                                href="{% url 'update_order' order.id %}">Update</a></td>
+                                        <td><a class="btn btn-sm btn-danger"
+                                                href="{% url 'delete_order' order.id %}">Delete</a></td>
+                                        <td>
+                                            {% for file in order.files.all %}
+                                            <a href="{% url 'review_file' file.id %}"
+                                                class="btn btn-sm btn-primary mb-1">Review</a>
+                                            {% empty %}
+                                            <span class="text-muted">No files</span>
+                                            {% endfor %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">No orders found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-      <!-- New Users Section -->
-      <div class="row mt-5">
-          <div class="col-12">
-              <h5>Users (Last 5)</h5>
-              <hr>
-              <div class="card card-body">
-                  <a href="{% url 'manage_users' %}" class="btn btn-primary btn-sm mb-3">Manage All Users</a>
-                  <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Edit</th>
-                                <th>Delete</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in users %}
-                            <tr>
-                                <td>{{ user.first_name }} {{ user.last_name }}</td>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.groups.first.name }}</td>
-                                <td><a href="{% url 'edit_user' user.id %}" class="btn btn-sm btn-warning">Edit</a></td>
-                                <td><a href="{% url 'delete_user' user.id %}" class="btn btn-sm btn-danger">Delete</a></td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center text-muted">No users found.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                  </div>
-              </div>
-          </div>
-      </div>
+            <!-- New Users Section -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <h5>Users (Last 5)</h5>
+                    <hr>
+                    <div class="card card-body">
+                        <a href="{% url 'manage_users' %}" class="btn btn-primary btn-sm mb-3">Manage All Users</a>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Edit</th>
+                                        <th>Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr>
+                                        <td>{{ user.first_name }} {{ user.last_name }}</td>
+                                        <td>{{ user.email }}</td>
+                                        <td>{{ user.groups.first.name }}</td>
+                                        <td><a href="{% url 'edit_user' user.id %}"
+                                                class="btn btn-sm btn-warning">Edit</a></td>
+                                        <td><a href="{% url 'delete_user' user.id %}"
+                                                class="btn btn-sm btn-danger">Delete</a></td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">No users found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    </main>
-  </div>
+        </main>
+    </div>
 </div>
 {% endblock %}

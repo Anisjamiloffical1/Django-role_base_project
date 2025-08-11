@@ -29,6 +29,8 @@ urlpatterns = [
     path('reports/export/csv/', views.export_report_csv, name='export_report_csv'),
     path('logout/', views.logout_page, name='logout'),
     path('user/', views.user_page, name='user-page'),
+    path('inbox/', views.admin_inbox, name='admin_inbox'),
+    path('message/<int:pk>/', views.view_message, name='view_message'),
     path('accounts/', views.accountSettings, name='account'),
     path('customer/update/<str:pk>/', views.updateCustomer, name='update_customer'),
     path('sales-dashboard/', views.sales_dashboard, name='sales-dashboard'),
@@ -44,5 +46,13 @@ urlpatterns = [
     path('reset_password_send/', auth_views.PasswordResetDoneView.as_view(template_name="password/password_reset_done.html"), name= 'password_reset_done'),
     path('reset/<uidb64>/<token>', auth_views.PasswordResetConfirmView.as_view(template_name="password/password_reset_confirm.html"), name='password_reset_confirm'),
     path('reset_password_complete/', auth_views.PasswordResetCompleteView.as_view(template_name="password/password_reset_complete.html"), name='password_reset_complete'),
+    path('designer/dashboard/', views.designer_dashboard, name='designer-dashboard'),
+    path('designer/upload/<int:pk>/', views.upload_design, name='upload_design'),
+    path('orders/<int:order_id>/mark-completed/', views.mark_completed, name='mark-completed'),
+    path('orders/<int:order_id>/mark-design-completed/', views.mark_design_completed, name='mark-design-completed'),
+    path('designer/communicate/', views.communicate_with_sales_admin, name='communicate_with_sales_admin'),
+    path('designer/inbox/', views.designer_inbox, name='designer_inbox'),
+    
+    
     
 ]

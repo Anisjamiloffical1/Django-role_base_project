@@ -1,0 +1,11 @@
+{% extends 'accounts/main.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Send Message to Sales/Admin</h3>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Send</button>
+    </form>
+</div>
+{% endblock %}

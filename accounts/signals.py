@@ -16,3 +16,11 @@ def customer_profile(sender, instance, created, **kwargs):
         # Only create Customer, not another User
         Customer.objects.create(user=instance)
         print(f'Customer profile created for: {instance.username}')
+
+def create_designer_group():
+    group_name = "Designer"
+    if not Group.objects.filter(name=group_name).exists():
+        Group.objects.create(name=group_name)
+        print(f"{group_name} group created successfully!")
+    else:
+        print(f"{group_name} group already exists.")

@@ -1,0 +1,88 @@
+{% extends 'accounts/main.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 bg-dark text-white vh-100 p-3">
+            <h4 class="mb-4">Designer Menu</h4>
+            <ul class="nav flex-column">
+                <li class="nav-item mb-2">
+                    <a href="{% url 'designer-dashboard' %}" class="nav-link text-white">
+                        <i class="fas fa-clipboard-list"></i> Assigned Orders
+                    </a>
+                </li>
+                {% for order in orders %}
+                <li class="nav-item mb-2">
+                    <a href="{% url 'upload_design' order.id %}" class="nav-link text-white">
+                        <i class="fas fa-upload"></i> Upload Designs
+                    </a>
+                </li>
+                {% endfor %}
+                <li class="nav-item mb-2">
+                    <a href="{% url 'communicate_with_sales_admin' %}" class="nav-link text-white">
+                        <i class="fas fa-paper-plane"></i> Send Message
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a href="{% url 'designer_inbox' %}" class="nav-link text-white">
+                        <i class="fas fa-inbox"></i> Inbox
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a href="" class="nav-link text-white">
+                        <i class="fas fa-comments"></i> Feedback / Revisions
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Designer Dashboard</h2>
+                <div>
+                    <a href="{% url 'communicate_with_sales_admin' %}" class="btn btn-primary me-2">
+                        <i class="fas fa-paper-plane"></i> Send Message
+                    </a>
+                    <a href="{% url 'designer_inbox' %}" class="btn btn-secondary">
+                        <i class="fas fa-inbox"></i> Inbox
+                    </a>
+                </div>
+            </div>
+            <table class="table table-striped mt-3">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ order.id }}</td>
+                        <td>{{ order.customer.name }}</td>
+                        <td>{{ order.status }}</td>
+                        <td>
+                            <a href="{% url 'upload_design' order.id %}" class="btn btn-primary btn-sm">Upload Design</a>
+
+                            {% if order.status != "Completed" %}
+                                <a href="{% url 'mark-design-completed' order.id %}" class="btn btn-success btn-sm ms-1">
+                                    ✅ Mark Completed
+                                </a>
+                            {% endif %} 
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No assigned orders found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

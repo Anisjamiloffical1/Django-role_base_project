@@ -1,0 +1,32 @@
+{% extends 'accounts/main.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Inbox</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>From</th>
+                <th>Subject</th>
+                <th>Message</th>
+                <th>Order</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for msg in messages %}
+            <tr>
+                <td>{{ msg.sender }}</td>
+                <td>{{ msg.subject }}</td>
+                <td>{{ msg.message }}</td>
+                <td>{{ msg.order }}</td>
+                <td>{{ msg.timestamp|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No messages found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

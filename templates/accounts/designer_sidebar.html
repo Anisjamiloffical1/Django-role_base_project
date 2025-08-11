@@ -1,0 +1,16 @@
+<div class="d-flex flex-column vh-100 bg-dark text-white" style="width: 250px;">
+    <div class="p-3 mb-3 border-bottom">
+        <h4><i class="fas fa-paint-brush"></i> Designer</h4>
+    </div>
+    <nav class="nav flex-column">
+        <a class="nav-link text-white" href="{% url 'designer_assigned_orders' %}">
+            <i class="fas fa-tasks"></i> Assigned Orders
+        </a>
+        <a class="nav-link text-white" href="{% url 'designer_upload_design' %}">
+            <i class="fas fa-upload"></i> Upload Designs
+        </a>
+        <a class="nav-link text-white" href="{% url 'designer_feedback' %}">
+            <i class="fas fa-comments"></i> Feedback & Revisions
+        </a>
+    </nav>
+</div>

@@ -104,6 +104,8 @@ class Order(models.Model):
     date_completed = models.DateTimeField(null=True, blank=True)  # Optional: track completion time
     review_status = models.CharField(max_length=20, choices=REVIEW_STATUS, default='Pending')
     review_comment = models.TextField(blank=True, null=True)
+    design_file = models.FileField(upload_to='designs/', blank=True, null=True)
+    assigned_designer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='designer_orders')
 
 
     def __str__(self):
@@ -130,3 +132,15 @@ class SiteSetting(models.Model):
     class Meta:
         verbose_name = "Site Setting"
         verbose_name_plural = "Site Settings"
+
+class DesignerMessage(models.Model):
+    sender = models.ForeignKey(User, related_name='sent_messages', on_delete=models.CASCADE)
+    receiver = models.ForeignKey(User, related_name='received_messages', on_delete=models.CASCADE)
+    order = models.ForeignKey('Order', on_delete=models.CASCADE, null=True, blank=True)
+    subject = models.CharField(max_length=255)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"From {self.sender} to {self.receiver} - {self.subject}"

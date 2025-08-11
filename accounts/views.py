@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import *
-from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm
+from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm, DesignFileForm,DesignerMessageForm
 from django.forms import inlineformset_factory
 from django.contrib import messages
 from django.utils.dateparse import parse_date
@@ -92,6 +92,29 @@ def login_page(request):
         return HttpResponseRedirect(request.path_info)
 
     return render(request, 'accounts/login.html')
+# admin message recive
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
+def admin_inbox(request):
+    messages_received = DesignerMessage.objects.filter(receiver=request.user).order_by('-timestamp')
+    unread_count = messages_received.filter(is_read=False).count()
+    context = {
+        'messages': messages_received,
+        'unread_count': unread_count,
+    }
+    return render(request, 'accounts/admin_inbox.html', context)
+
+@login_required
+@allowed_users(allowed_roles=['admin'])
+def view_message(request, pk):
+    message = get_object_or_404(DesignerMessage, pk=pk, receiver=request.user)
+
+    # Mark message as read
+    if not message.is_read:
+        message.is_read = True
+        message.save()
+
+    return render(request, 'accounts/view_message.html', {'message': message})
 # this are the functions to manage the settings of the site
 @login_required(login_url='login')
 @allowed_users(['admin'])
@@ -654,3 +677,83 @@ def export_report_csv(request):
     writer.writerow(['Total Revenue', f"${total_revenue:.2f}"])
 
     return response
+
+
+# this function use for designer dashboard
+def create_designer_group():
+    group_name = "Designer"
+    if not Group.objects.filter(name=group_name).exists():
+        Group.objects.create(name=group_name)
+        print(f"{group_name} group created successfully!")
+    else:
+        print(f"{group_name} group already exists.")
+
+def setup_designer(request):
+    # Create group if not exists
+    create_designer_group()
+
+    # Example: Assign the first user to designer group
+    user = User.objects.first()
+    designer_group = Group.objects.get(name="Designer")
+    user.groups.add(designer_group)
+
+    return render(request, "accounts/setup_success.html")
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['designer'])
+def designer_dashboard(request):
+    orders = Order.objects.filter(assigned_designer=request.user)
+    context = {'orders': orders}
+    return render(request, 'accounts/designer_dashboard.html', context)
+
+@allowed_users(allowed_roles=['designer'])
+def upload_design(request, pk):
+    order = get_object_or_404(Order, id=pk, assigned_designer=request.user)
+
+    if request.method == 'POST':
+        form = DesignFileForm(request.POST, request.FILES, instance=order)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Design file uploaded successfully!')
+            return redirect('designer-dashboard')  # Match URL name here
+    else:
+        form = DesignFileForm(instance=order)
+
+    return render(request, 'accounts/upload_design.html', {'form': form, 'order': order})
+@login_required
+def mark_completed(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order.status = 'Completed'
+    order.save()
+    return redirect('sales-dashboard')
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['designer'])
+def mark_design_completed(request, order_id):
+    order = get_object_or_404(Order, id=order_id, assigned_designer=request.user)
+    order.status = 'Completed'
+    order.save()
+    messages.success(request, f"Order #{order.id} marked as completed!")
+    return redirect('designer-dashboard')
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['designer'])
+def communicate_with_sales_admin(request):
+    if request.method == 'POST':
+        form = DesignerMessageForm(request.POST)
+        if form.is_valid():
+            msg = form.save(commit=False)
+            msg.sender = request.user
+            msg.save()
+            return redirect('designer_inbox')
+    else:
+        form = DesignerMessageForm()
+
+    return render(request, 'designer/communicate.html', {'form': form})
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['designer'])
+def designer_inbox(request):
+    messages = DesignerMessage.objects.filter(receiver=request.user).order_by('-timestamp')
+    return render(request, 'designer/inbox.html', {'messages': messages})
+
