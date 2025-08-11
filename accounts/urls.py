@@ -29,7 +29,7 @@ urlpatterns = [
     path('reports/export/csv/', views.export_report_csv, name='export_report_csv'),
     path('logout/', views.logout_page, name='logout'),
     path('user/', views.user_page, name='user-page'),
-    path('inbox/', views.admin_inbox, name='admin_inbox'),
+    path('admin-inbox/', views.admin_inbox, name='admin_inbox'),
     path('message/<int:pk>/', views.view_message, name='view_message'),
     path('accounts/', views.accountSettings, name='account'),
     path('customer/update/<str:pk>/', views.updateCustomer, name='update_customer'),
@@ -52,6 +52,9 @@ urlpatterns = [
     path('orders/<int:order_id>/mark-design-completed/', views.mark_design_completed, name='mark-design-completed'),
     path('designer/communicate/', views.communicate_with_sales_admin, name='communicate_with_sales_admin'),
     path('designer/inbox/', views.designer_inbox, name='designer_inbox'),
+    path('admin-send-message/', views.admin_send_message, name='admin_send_message'),
+    path('notifications/', views.view_notifications, name='view-notifications'),
+    path('notifications/<int:pk>/read/', views.mark_notification_read, name='mark-notification-read'),
     
     
     

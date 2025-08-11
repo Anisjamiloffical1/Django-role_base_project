@@ -140,7 +140,21 @@ class DesignerMessage(models.Model):
     subject = models.CharField(max_length=255)
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+    attachment = models.FileField(upload_to='message_attachments/', null=True, blank=True) 
     is_read = models.BooleanField(default=False)
 
     def __str__(self):
         return f"From {self.sender} to {self.receiver} - {self.subject}"
+    
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    order = models.ForeignKey(Order, null=True, blank=True, on_delete=models.SET_NULL)
+
+def get_unread_notifications_count(self):
+    return self.notification_set.filter(is_read=False).count()
+
+User.add_to_class('unread_notifications_count', property(get_unread_notifications_count))
+    

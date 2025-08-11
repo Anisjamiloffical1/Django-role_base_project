@@ -1,17 +1,19 @@
+from django.utils import timezone 
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import *
-from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm, DesignFileForm,DesignerMessageForm
+from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm, DesignFileForm,DesignerMessageForm,AdminSendMessageForm
 from django.forms import inlineformset_factory
 from django.contrib import messages
 from django.utils.dateparse import parse_date
-from django.http import FileResponse
+from django.http import FileResponse, JsonResponse
 from .filters import OrderFilter
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.forms import UserCreationForm 
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from .decorators import unauthenticated_user, allowed_users, admin_only
 from django.contrib.auth.models import Group
+from .notifications import notify_user
 from django.db.models import Count, Sum, Q
 
 from io import BytesIO
@@ -105,7 +107,7 @@ def admin_inbox(request):
     return render(request, 'accounts/admin_inbox.html', context)
 
 @login_required
-@allowed_users(allowed_roles=['admin'])
+@allowed_users(allowed_roles=['admin', 'designer'])
 def view_message(request, pk):
     message = get_object_or_404(DesignerMessage, pk=pk, receiver=request.user)
 
@@ -285,6 +287,7 @@ def customer(request, pk):
     return render(request, 'accounts/customer.html', context=context)
 # the commit function for just 1 item in the formset create 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['customer', 'admin'])
 def createOrder(request, pk, order_type=None):
     OrderFormSet = inlineformset_factory(
         Customer,
@@ -702,24 +705,53 @@ def setup_designer(request):
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['designer'])
 def designer_dashboard(request):
+    status = request.GET.get('status', None)
     orders = Order.objects.filter(assigned_designer=request.user)
-    context = {'orders': orders}
-    return render(request, 'accounts/designer_dashboard.html', context)
+    
+    if status:
+        orders = orders.filter(status=status)
+    
+    counts = {
+        'total': orders.count(),
+        'pending': orders.filter(status='Pending').count(),
+        'completed': orders.filter(status='Completed').count()
+    }
+    
+    return render(request, 'accounts/designer_dashboard.html', {
+        'orders': orders,
+        'counts': counts,
+        'status_filter': status
+    })
 
 @allowed_users(allowed_roles=['designer'])
 def upload_design(request, pk):
     order = get_object_or_404(Order, id=pk, assigned_designer=request.user)
-
+    
     if request.method == 'POST':
-        form = DesignFileForm(request.POST, request.FILES, instance=order)
+        form = DesignFileForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Design file uploaded successfully!')
-            return redirect('designer-dashboard')  # Match URL name here
+            file = request.FILES['design_file']
+            if not file.name.lower().endswith(('.ai', '.eps', '.svg')):
+                messages.error(request, "Only AI/EPS/SVG files allowed!")
+            else:
+                # Save to UploadedFile for history
+                UploadedFile.objects.create(
+                    order=order,
+                    file=file,
+                    uploaded_by=request.user
+                )
+                # Update main design reference
+                order.design_file = file
+                order.save()
+                messages.success(request, "Design uploaded successfully!")
+                return redirect('designer-order-detail', pk=order.id)
     else:
-        form = DesignFileForm(instance=order)
-
-    return render(request, 'accounts/upload_design.html', {'form': form, 'order': order})
+        form = DesignFileForm()
+    
+    return render(request, 'accounts/upload_design.html', {
+        'form': form,
+        'order': order
+    })
 @login_required
 def mark_completed(request, order_id):
     order = get_object_or_404(Order, id=order_id)
@@ -731,29 +763,152 @@ def mark_completed(request, order_id):
 @allowed_users(allowed_roles=['designer'])
 def mark_design_completed(request, order_id):
     order = get_object_or_404(Order, id=order_id, assigned_designer=request.user)
+    
+    if not order.design_file:
+        messages.error(request, "Upload design file first!")
+        return redirect('upload-design', pk=order.id)
+    
     order.status = 'Completed'
+    order.date_completed = timezone.now()
     order.save()
-    messages.success(request, f"Order #{order.id} marked as completed!")
+    
+    # Notify sales rep
+    if order.assigned_to:
+        notify_user(
+            user=order.assigned_to.user,
+            message=f"Order #{order.id} was completed by designer"
+        )
+    
+    messages.success(request, "Order marked as completed!")
     return redirect('designer-dashboard')
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['designer'])
-def communicate_with_sales_admin(request):
+def communicate_with_sales_admin(request, order_id=None):
+    order = get_object_or_404(Order, pk=order_id) if order_id else None
+    
     if request.method == 'POST':
-        form = DesignerMessageForm(request.POST)
+        form = DesignerMessageForm(request.POST, request.FILES, user=request.user)
         if form.is_valid():
             msg = form.save(commit=False)
             msg.sender = request.user
+            if order:  # Auto-set order if coming from order page
+                msg.order = order
+                if order.assigned_to:  # Auto-set receiver to sales rep
+                    msg.receiver = order.assigned_to.user
             msg.save()
+            messages.success(request, "Message sent successfully!")
             return redirect('designer_inbox')
     else:
-        form = DesignerMessageForm()
+        initial = {'order': order.id} if order else {}
+        form = DesignerMessageForm(user=request.user, initial=initial)
+    
+    return render(request, 'designer/communicate.html', {
+        'form': form,
+        'order': order
+    })
 
-    return render(request, 'designer/communicate.html', {'form': form})
+def is_admin(user):
+    return user.is_superuser or user.groups.filter(name='admin').exists()
+
+@login_required
+@user_passes_test(is_admin)
+def admin_send_message(request):
+    if request.method == 'POST':
+        form = AdminSendMessageForm(request.POST)
+        if form.is_valid():
+            receiver = form.cleaned_data['receiver']
+            content = form.cleaned_data['content']
+            DesignerMessage.objects.create(
+                sender=request.user,
+                receiver=receiver,
+                message=content,
+            )
+            return redirect('admin_inbox')  # Redirect to inbox or wherever you want
+    else:
+        form = AdminSendMessageForm()
+
+    context = {'form': form}
+    return render(request, 'accounts/admin_send_message.html', context)
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['designer'])
 def designer_inbox(request):
-    messages = DesignerMessage.objects.filter(receiver=request.user).order_by('-timestamp')
-    return render(request, 'designer/inbox.html', {'messages': messages})
+    order_id = request.GET.get('order_id')
+    messages = DesignerMessage.objects.filter(receiver=request.user)
+    
+    if order_id:
+        messages = messages.filter(order__id=order_id)
+    
+    return render(request, 'designer/inbox.html', {
+        'messages': messages.order_by('-timestamp'),
+        'order_filter': order_id
+    })
+@login_required
 
+@allowed_users(allowed_roles=['designer'])
+def message_thread(request, order_id):
+    order = get_object_or_404(Order, pk=order_id, assigned_designer=request.user)
+    messages = DesignerMessage.objects.filter(order=order).order_by('timestamp')
+    
+    if request.method == 'POST':
+        form = DesignerMessageForm(request.POST, request.FILES, user=request.user)
+        if form.is_valid():
+            msg = form.save(commit=False)
+            msg.sender = request.user
+            msg.receiver = order.assigned_to.user  # Auto-set to sales rep
+            msg.order = order
+            msg.save()
+            
+            # Notify recipient
+            notify_user(
+                user=msg.receiver,
+                message=f"New message about Order #{order.id}",
+                order=order
+            )
+            
+            return redirect('message-thread', order_id=order.id)
+    else:
+        form = DesignerMessageForm(user=request.user)
+    
+    return render(request, 'designer/message_thread.html', {
+        'order': order,
+        'messages': messages,
+        'form': form
+    })
+
+@login_required
+@allowed_users(allowed_roles=['admin', 'designer'])
+def view_message(request, pk):
+    message = get_object_or_404(DesignerMessage, pk=pk, receiver=request.user)
+
+    # Mark message as read
+    if not message.is_read:
+        message.is_read = True
+        message.save()
+
+    return render(request, 'designer/view_message.html', {'message': message})
+
+# this function is used to show the notifications for the user
+@login_required
+def view_notifications(request):
+    notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'accounts/notifications.html', {'notifications': notifications})
+
+@login_required
+def mark_notification_read(request, pk):
+    notification = get_object_or_404(Notification, pk=pk, user=request.user)
+    notification.is_read = True
+    notification.save()
+    return JsonResponse({'status': 'ok'})
+
+@login_required
+@allowed_users(allowed_roles=['designer'])
+def mark_thread_read(request, order_id):
+    # Mark all messages in thread as read
+    DesignerMessage.objects.filter(
+        order_id=order_id,
+        receiver=request.user,
+        is_read=False
+    ).update(is_read=True)
+    return JsonResponse({'status': 'success'})

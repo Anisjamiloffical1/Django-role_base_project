@@ -1,0 +1,138 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="card">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <h3 class="mb-0">
+        {% if order %}
+          Conversation About Order #{{ order.id }}
+        {% else %}
+          Message Thread
+        {% endif %}
+      </h3>
+      <a href="{% if order %}{% url 'designer-order-detail' pk=order.id %}{% else %}{% url 'designer-dashboard' %}{% endif %}" 
+         class="btn btn-sm btn-light">
+        <i class="fas fa-arrow-left me-1"></i> Back
+      </a>
+    </div>
+    
+    <div class="card-body message-thread">
+      {% for message in messages %}
+      <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %} mb-4">
+        <div class="message-header d-flex justify-content-between mb-2">
+          <strong>
+            {% if message.sender == request.user %}
+              You
+            {% else %}
+              {{ message.sender.get_full_name|default:message.sender.username }}
+            {% endif %}
+          </strong>
+          <small class="text-muted">{{ message.timestamp|date:"M d, Y H:i" }}</small>
+        </div>
+        
+        <div class="message-body p-3 rounded">
+          {% if message.subject %}<h5>{{ message.subject }}</h5>{% endif %}
+          <p class="mb-2">{{ message.message }}</p>
+          
+          {% if message.attachment %}
+          <div class="attachment mt-2">
+            <a href="{{ message.attachment.url }}" target="_blank" class="d-inline-flex align-items-center text-decoration-none">
+              <i class="fas fa-paperclip me-2"></i>
+              {{ message.attachment.name|cut:"message_attachments/" }}
+              <span class="badge bg-secondary ms-2">
+                {{ message.attachment.size|filesizeformat }}
+              </span>
+            </a>
+            
+            {% if message.attachment.url|lower|slice:"-4:" in ".jpg,.png,.jpeg,.gif" %}
+            <div class="mt-2">
+              <a href="{{ message.attachment.url }}" target="_blank">
+                <img src="{{ message.attachment.url }}" alt="Attachment" class="img-thumbnail" style="max-height: 200px;">
+              </a>
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    
+    <div class="card-footer bg-light">
+      <form method="post" enctype="multipart/form-data" class="reply-form">
+        {% csrf_token %}
+        <input type="hidden" name="order" value="{{ order.id|default:'' }}">
+        
+        <div class="mb-3">
+          <label class="form-label">Reply Message</label>
+          <textarea name="message" class="form-control" rows="3" required></textarea>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label">Attachment (Optional)</label>
+          <input type="file" name="attachment" class="form-control">
+          <div class="form-text">Max 5MB. Allowed: PDF, JPG, PNG, AI, EPS</div>
+        </div>
+        
+        <div class="d-flex justify-content-end">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-reply me-1"></i> Send Reply
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .message-thread {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 15px;
+  }
+  
+  .message.sent .message-body {
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196F3;
+  }
+  
+  .message.received .message-body {
+    background-color: #f1f1f1;
+    border-left: 4px solid #9E9E9E;
+  }
+  
+  .message-header {
+    font-size: 0.9rem;
+  }
+  
+  .attachment {
+    border-top: 1px dashed #ccc;
+    padding-top: 10px;
+  }
+  
+  .reply-form {
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+  }
+</style>
+
+<script>
+// Auto-scroll to bottom of message thread
+window.onload = function() {
+  const thread = document.querySelector('.message-thread');
+  thread.scrollTop = thread.scrollHeight;
+  
+  // Mark messages as read when viewed
+  fetch("{% url 'mark_thread_read' order.id %}", {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Accept': 'application/json'
+    }
+  });
+}
+</script>
+{% endblock %}

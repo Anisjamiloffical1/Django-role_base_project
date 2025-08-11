@@ -1,0 +1,24 @@
+{% extends 'accounts/main.html' %}
+{% block content %}
+<h2>Your Notifications</h2>
+<ul class="notification-list">
+  {% for notification in notifications %}
+  <li class="{% if not notification.is_read %}unread{% endif %}">
+    <a href="{% url 'mark-notification-read' pk=notification.id %}" 
+       class="mark-read" data-id="{{ notification.id }}">
+      ×
+    </a>
+    {% if notification.order %}
+    <a href="{% url 'order-detail' pk=notification.order.id %}">
+      {{ notification.message }}
+    </a>
+    {% else %}
+    {{ notification.message }}
+    {% endif %}
+    <small>{{ notification.created_at|timesince }} ago</small>
+  </li>
+  {% empty %}
+  <li>No notifications</li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -16,7 +16,9 @@
                 </tr>
             </thead>
             <tbody>
+                
                 {% for msg in messages %}
+                <a href="{% url 'view_message' msg.id %}">
                 <tr class="{% if not msg.is_read %}table-warning{% endif %}">
                     <td>{{ msg.sender.get_full_name|default:msg.sender.username }}</td>
                     <td>
@@ -26,6 +28,7 @@
                             N/A
                         {% endif %}
                     </td>
+                    
                     <td>{{ msg.subject }}</td>
                     <td>{{ msg.timestamp|date:"Y-m-d H:i" }}</td>
                     <td>
@@ -38,8 +41,11 @@
                     <td>
                         <a href="{% url 'view_message' msg.id %}" class="btn btn-sm btn-primary">View</a>
                     </td>
+                </a>
+               
                 </tr>
                 {% endfor %}
+            
             </tbody>
         </table>
     {% else %}

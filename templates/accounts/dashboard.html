@@ -16,7 +16,7 @@
         color: #adb5bd;
         font-weight: 500;
         padding: 0.75rem 1rem;
-        transition: background-color 0.3s, color 0.3s;
+        transition: background-color 0.3s, color 0.3s;  
     }
 
     .sidebar .nav-link:hover,
@@ -69,6 +69,7 @@
             <div class="sidebar-sticky px-2">
                 <ul class="nav flex-column">
                     <li class="nav-item mb-3">
+                        <i class="bi bi-chat-text"></i>
                         <a class="nav-link" href="{% url 'report_view' %}">📈 Generate Reports</a>
                     </li>
                     <li class="nav-item mb-3">
@@ -80,9 +81,18 @@
                     <li class="nav-item mb-3">
                         <a class="nav-link" href="{% url 'manage_users' %}">👥 Manage Users</a>
                     </li>
+
+                    <!-- Send Message link -->
+                    <li class="nav-item mb-3">
+                        <a href="{% url 'admin_send_message' %}" class="nav-link">
+                            <i class="bi bi-envelope-fill"></i> Send Message
+                        </a>
+                    </li>
+
+                    <!-- Inbox link with unread badge -->
                     <li class="nav-item mb-3">
                         <a href="{% url 'admin_inbox' %}" class="nav-link">
-                            Inbox
+                            <i class="bi bi-chat-text"></i> Inbox
                             {% if unread_count > 0 %}
                                 <span class="badge bg-danger">{{ unread_count }}</span>
                             {% endif %}
@@ -98,14 +108,20 @@
             {% include 'accounts/status.html' %}
             <br>
 
+            <!-- Send Message button in main area -->
+            <div class="mb-4">
+                <a href="{% url 'admin_send_message' %}" class="btn btn-success">
+                    📤 Send New Message
+                </a>
+            </div>
+
             <div class="row g-4">
                 <!-- Customers Section -->
                 <div class="col-md-5">
                     <h5>Customers</h5>
                     <hr>
                     <div class="card card-body">
-                        <a href="{% url 'create_customer' %}" class="btn btn-primary btn-sm btn-block mb-3">Create
-                            Customer</a>
+                        <a href="{% url 'create_customer' %}" class="btn btn-primary btn-sm btn-block mb-3">Create Customer</a>
                         <div class="table-responsive">
                             <table class="table table-sm table-hover align-middle">
                                 <thead class="table-light">

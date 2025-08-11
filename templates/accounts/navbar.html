@@ -8,55 +8,112 @@
     color: #0d6efd !important;
     text-transform: uppercase;
   }
+
   .hello-msg {
     font-size: 16px;
-    color: #ffc107;             /* warm amber color for highlight */
+    color: #ffc107;
     font-weight: 600;
     margin-left: 15px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    /* subtle glow */
     user-select: none;
     white-space: nowrap;
   }
+
   .navbar-dark .navbar-nav .nav-link {
-    color: rgba(255,255,255,0.9);
+    color: rgba(255, 255, 255, 0.9);
     text-transform: capitalize;
   }
+
   .navbar-dark .navbar-nav .nav-link:hover {
     color: #0d6efd;
   }
+
   .logout-link {
     color: white;
     font-weight: 500;
     text-decoration: none;
     white-space: nowrap;
   }
+
   .logout-link:hover {
     color: #dc3545;
   }
+
+  /* Notification badge styling */
+  .notification-badge {
+    position: relative;
+    margin-right: 15px;
+  }
+
+  .notification-badge .badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 0.6rem;
+    padding: 3px 6px;
+  }
 </style>
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <a class="navbar-brand" href="{% url 'home' %}">Digitizar</a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" 
-      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav"
+    aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav">
-        {% if request.user.is_staff %}
-        <li class="nav-item active">
-          <a class="nav-link" href="{% url 'home' %}">Dashboard</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'products' %}">products</a>
-        </li>
-        {% else %}
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'account' %}">Settings</a>
-          </li>
+
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav">
+      {% if request.user.groups.all.0.name == 'admin' %}
+      <li class="nav-item active">
+        <a class="nav-link" href="{% url 'home' %}">Dashboard</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'products' %}">Products</a>
+      </li>
+
+      {% elif request.user.groups.all.0.name == 'designer' %}
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'designer-dashboard' %}">Dashboard</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'designer_inbox' %}">Messages</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'view-notifications' %}">
+          Notifications
+          {% if request.user.unread_notifications_count > 0 %}
+          <span class="badge bg-danger">
+            {{ request.user.unread_notifications_count }}
+          </span>
+          {% endif %}
+        </a>
+      </li>
+
+      {% else %}
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'account' %}">Settings</a>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <div class="d-flex align-items-center">
+    {% if user.is_authenticated %}
+    {% if request.user.groups.all.0.name == 'designer' %}
+    <div class="notification-badge me-3">
+      <a href="{% url 'view-notifications' %}" class="nav-link p-0">
+        <i class="fas fa-bell"></i>
+        {% if request.user.unread_notifications > 0 %}
+        <span class="badge bg-danger">
+          {{ request.user.unread_notifications }}
+        </span>
         {% endif %}
-      </ul>
+      </a>
     </div>
+    {% endif %}
     <span class="hello-msg">Hello, {{ user.first_name }}!</span>
-    <span class="hello-msg"><a href="{% url 'logout' %}">Logout</a></span>
-  </nav>
+    <span class="hello-msg"><a class="logout-link" href="{% url 'logout' %}">Logout</a></span>
+    {% endif %}
+  </div>
+
+</nav>

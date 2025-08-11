@@ -1,0 +1,20 @@
+{% extends 'accounts/main.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Message Detail</h2>
+    <p><strong>From:</strong> {{ message.sender.get_full_name|default:message.sender.username }}</p>
+    <p><strong>Subject:</strong> {{ message.subject }}</p>
+    <p><strong>Order:</strong>
+        {% if message.order %}
+            <a href="{% url 'order_detail' message.order.id %}">{{ message.order.id }}</a>
+        {% else %}
+            N/A
+        {% endif %}
+    </p>
+    <p><strong>Sent At:</strong> {{ message.timestamp|date:"Y-m-d H:i" }}</p>
+    <hr>
+    <p>{{ message.message|linebreaks }}</p>
+    <a href="{% url 'designer_inbox' %}" class="btn btn-secondary mt-3">Back to Inbox</a>
+</div>
+{% endblock %}

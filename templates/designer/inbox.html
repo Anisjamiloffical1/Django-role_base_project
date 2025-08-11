@@ -1,32 +1,49 @@
 {% extends 'accounts/main.html' %}
+
 {% block content %}
 <div class="container mt-4">
-    <h3>Inbox</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>From</th>
-                <th>Subject</th>
-                <th>Message</th>
-                <th>Order</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for msg in messages %}
-            <tr>
-                <td>{{ msg.sender }}</td>
-                <td>{{ msg.subject }}</td>
-                <td>{{ msg.message }}</td>
-                <td>{{ msg.order }}</td>
-                <td>{{ msg.timestamp|date:"Y-m-d H:i" }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" class="text-center">No messages found.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h2>Admin Inbox</h2>
+    {% if messages %}
+        <table class="table table-hover mt-3">
+            <thead>
+                <tr>
+                    <th>From</th>
+                    <th>Order ID</th>
+                    <th>Subject</th>
+                    <th>Received At</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for msg in messages %}
+                <tr class="{% if not msg.is_read %}table-warning{% endif %}">
+                    <td>{{ msg.sender.get_full_name|default:msg.sender.username }}</td>
+                    <td>
+                        {% if msg.order %}
+                            <a href="{% url 'order_detail' msg.order.id %}">{{ msg.order.id }}</a>
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>{{ msg.subject }}</td>
+                    <td>{{ msg.timestamp|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        {% if msg.is_read %}
+                            <span class="badge bg-success">Read</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Unread</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'view_message' msg.id %}" class="btn btn-sm btn-primary">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No messages found.</p>
+    {% endif %}
 </div>
 {% endblock %}
