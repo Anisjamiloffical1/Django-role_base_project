@@ -14,6 +14,10 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .decorators import unauthenticated_user, allowed_users, admin_only
 from django.contrib.auth.models import Group
 from .notifications import notify_user
+from django.template.loader import render_to_string
+from weasyprint import HTML
+import os
+from django.conf import settings
 from django.db.models import Count, Sum, Q
 
 from io import BytesIO
@@ -199,33 +203,29 @@ def user_page(request):
 @login_required(login_url='login')
 @admin_only
 def home(request):
-    # Get one customer (just an example)
-    customer = Customer.objects.first()
+    # Get all orders, newest first
+    all_orders = Order.objects.all().order_by('-date_created')
 
-    # Get all orders for that customer, ordered by newest first
-    all_orders = Order.objects.filter(customer=customer).order_by('-date_created')
+    # Limit to last 5 orders for dashboard
+    recent_orders = all_orders[:5]
 
-    # Slice the last 5 orders for showing in template
-    last_five_orders = all_orders[:5]
-
-    # Get all customers and last 5 users (example)
-    customers = Customer.objects.all().order_by('-date_created')[:5]
+    # Get all customers and last 5 users
+    customers = Customer.objects.all().order_by('-date_created')
     users = User.objects.all().order_by('-date_joined')[:5]
 
-    # Counts on all orders (not sliced)
+    # Counts on all orders
     total_orders = all_orders.count()
     delivered_orders = all_orders.filter(status='Delivered').count()
     pending_orders = all_orders.filter(status='Pending').count()
 
     context = {
-        'orders': last_five_orders,    # only last 5 for display
+        'orders': recent_orders,         # ✅ only last 5 orders
         'customers': customers,
         'users': users,
         'total_customers': customers.count(),
         'total_order': total_orders,
         'delivered': delivered_orders,
         'pending': pending_orders,
-        'customer': customer
     }
 
     return render(request, 'accounts/dashboard.html', context)
@@ -271,29 +271,52 @@ def products(request):
     return render(request, 'accounts/products.html', {'products': products})
 # # this function is used to show the customer details and their orders
 @login_required(login_url='login')
-@allowed_users(allowed_roles=['admin'])
-def customer(request, pk):
-    customer = Customer.objects.get(id=pk)
-    orders = customer.order_set.all()
-    order_counter = orders.count()
-    myFilter = OrderFilter(request.GET, queryset=orders)
-    orders = myFilter.qs  # Apply the filter to the queryset
-    context ={
+@allowed_users(allowed_roles=['admin', 'customer'])
+def customer(request, pk, order_type):
+    customer = get_object_or_404(Customer, id=pk)
+    orders = Order.objects.filter(customer=customer, order_type=order_type)
+    total_order = orders.count()
+    
+    context = {
         'customer': customer,
-        'orders' : orders,
-        'order_counter': order_counter,
-        'myFilter': myFilter
+        'orders': orders,
+        'order_type': order_type,
+        'total_order': total_order
     }
-    return render(request, 'accounts/customer.html', context=context)
+    return render(request, 'accounts/customer.html', context)
+
+def order_detail(request, pk):
+    order = get_object_or_404(Order, id=pk)
+    return render(request, 'accounts/order_detail.html', {'order': order})
 # the commit function for just 1 item in the formset create 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['customer', 'admin'])
 def createOrder(request, pk, order_type=None):
+    # Inline formset with all relevant fields from your new Order model
     OrderFormSet = inlineformset_factory(
         Customer,
         Order,
-        fields=('product', 'order_type', 'status', 'note', 'design_file', 'invoice_file'),
-        extra=6,
+        fields=(
+            'product',
+            'order_type',
+            'quantity',
+            'urgent',
+            'Required_Format',
+            'turnaround_time',
+            'fabric_material',
+            'total_colors',
+            'placement',
+            'price',
+            'status',
+            'Additional_information',
+            'design_file',
+            'assigned_to',         # Sales Representative
+            'assigned_designer',   # Designer
+            'payment_status',
+            'review_status',
+            'review_comment',
+        ),
+        extra=1,
         can_delete=False
     )
 
@@ -301,15 +324,46 @@ def createOrder(request, pk, order_type=None):
 
     if request.method == 'POST':
         formset = OrderFormSet(request.POST, request.FILES, instance=customer)
-
         if formset.is_valid():
-            formset.save()
+            orders = formset.save()
+
+            for order in orders:
+                order.customer = customer
+                # Ensure defaults for required fields
+                if not order.status:
+                    order.status = 'Pending'
+                if not order.price:
+                    order.price = 0
+                if not order.payment_status:
+                    order.payment_status = 'Pending'
+                if not order.review_status:
+                    order.review_status = 'Pending'
+                order.save()
+                # Generate invoice number
+                invoice_number = f"INV-{order.id:05d}"
+
+                # Render invoice HTML
+                html_string = render_to_string('accounts/invoice_template.html', {
+                    'order': order,
+                    'customer': customer,
+                    'invoice_number': invoice_number
+                })
+
+                # Save invoice PDF
+                invoice_dir = os.path.join(settings.MEDIA_ROOT, 'invoices')
+                os.makedirs(invoice_dir, exist_ok=True)
+                pdf_path = os.path.join(invoice_dir, f"{invoice_number}.pdf")
+
+                HTML(string=html_string).write_pdf(pdf_path)
+
+                # Save file path to model
+                order.invoice_file.name = f"invoices/{invoice_number}.pdf"
+                order.save()
+
             return redirect('home')
 
     else:
-        
-        initial_data = [{'order_type': order_type}] * 6 if order_type else [{}] * 6
-
+        initial_data = [{'order_type': order_type}] if order_type else [{}]
         formset = OrderFormSet(
             queryset=Order.objects.none(),
             instance=customer,
@@ -318,7 +372,8 @@ def createOrder(request, pk, order_type=None):
 
     return render(request, 'accounts/order_form.html', {
         'formset': formset,
-        'order_type': order_type
+        'order_type': order_type,
+        'customer': customer
     })
 @login_required
 def orderHistory(request):
@@ -449,7 +504,11 @@ def sales_dashboard(request):
 @login_required
 def order_detail(request, pk):
     order = get_object_or_404(Order, id=pk)
-    return render(request, 'accounts/order_detail.html', {'order': order})
+    context = {
+        'customer': order.customer,
+        'order': order
+    }
+    return render(request, 'accounts/order_detail.html', context=context)
 @login_required
 def release_order(request, pk):
     order = get_object_or_404(Order, pk=pk)
@@ -744,7 +803,7 @@ def upload_design(request, pk):
                 order.design_file = file
                 order.save()
                 messages.success(request, "Design uploaded successfully!")
-                return redirect('designer-order-detail', pk=order.id)
+                return redirect('designer-dashboard')
     else:
         form = DesignFileForm()
     
@@ -766,7 +825,7 @@ def mark_design_completed(request, order_id):
     
     if not order.design_file:
         messages.error(request, "Upload design file first!")
-        return redirect('upload-design', pk=order.id)
+        return redirect('upload_design', pk=order.id)
     
     order.status = 'Completed'
     order.date_completed = timezone.now()

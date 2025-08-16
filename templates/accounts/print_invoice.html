@@ -75,7 +75,7 @@
         <div class="invoice-header">
             <h1>Invoice #{{ order.id }}</h1>
             <div class="company-details">
-                <strong>Your Company Name</strong><br>
+                <strong>Elite Digitizers</strong><br>
                 123 Business Street, City<br>
                 Email: info@company.com | Phone: +123 456 789
             </div>
@@ -105,6 +105,34 @@
                     <th>Status</th>
                     <td>{{ order.status }}</td>
                 </tr>
+                <tr>
+                    <th>Fabric</th>
+                    <td>{{order.fabric_material}} </td>
+                </tr>
+                <tr>
+                    <th>Format</th>
+                    <td>{{order.Required_Format}}</td>
+                </tr>
+                <tr>
+                    <th>Placement</th>
+                    <td>{{order.placement}}</td>
+                </tr>
+                <tr>
+                    <th>Price</th>
+                    <td>${{ order.price }}</td>
+                </tr>
+                <th>Payment Status</th>
+            <td>
+                {% if order.payment_status == "Paid" %}
+                    ✅ Paid
+                {% elif order.payment_status == "Pending" %}
+                    ⏳ Pending
+                {% elif order.payment_status == "Failed" %}
+                    ❌ Failed
+                {% else %}
+                    {{ order.payment_status }}
+                {% endif %}
+            </td>
             </table>
         </div>
 

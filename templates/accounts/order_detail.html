@@ -1,79 +1,33 @@
 {% extends 'accounts/main.html' %}
-{% load static %}
-
 {% block content %}
-<div class="container mt-5">
-
-    <div class="invoice-wrapper shadow p-5 bg-white rounded"
-        style="max-width:900px; margin:auto; border:1px solid #ddd;">
-
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
-            <div>
-                <h2 style="color:#4CAF50; font-weight:bold;">Digitzer</h2>
-                <p class="mb-0">123 Business Street, City, Country</p>
-                <p class="mb-0">Email: info@company.com | Phone: +123 456 789</p>
-            </div>
-            <div class="text-end">
-                <h4 class="mb-0 text-muted">Invoice</h4>
-                <h5 class="fw-bold">#{{ order.id }}</h5>
-                <small class="text-muted">{{ order.date_created|date:"F j, Y" }}</small>
-            </div>
-        </div>
-
-        <!-- Customer Details -->
-        <div class="mb-4">
-            <h6 class="fw-bold text-uppercase text-secondary">Bill To:</h6>
-            <p class="mb-1"><strong>{{ order.customer }}</strong></p>
-            <p class="mb-0">{{ order.customer.email }}</p>
-            <p class="mb-0">{{ order.customer.phone }}</p>
-        </div>
-
-        <!-- Order Details Table -->
-        <table class="table table-bordered">
-            <thead class="table-light">
-                <tr>
-                    <th>Product</th>
-                    <th>Order Type</th>
-                    <th>Status</th>
-                    <th>Notes</th>
-                    <th>Review Status</th>
-                    <th>Review Comment</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>{{ order.product }}</td>
-                    <td>{{ order.order_type }}</td>
-                    <td>{{ order.status }}</td>
-                    <td>{{ order.note|default:"—" }}</td>
-                    <td>{{ order.review_status|default:"Not reviewed yet" }}</td>
-                    <td>{{ order.review_comment|default:"No comments" }}</td>
-
-                </tr>
-            </tbody>
-        </table>
-
-        <!-- Files -->
-        <div class="mt-4">
-            {% if order.design_file %}
-            <a href="{% url 'download_design' order.id %}" class="btn btn-sm btn-primary">Download Design</a>
-            {% endif %}
-            {% if order.invoice_file %}
-            <a href="{% url 'download_invoice' order.id %}" class="btn btn-sm btn-secondary">Download Invoice</a>
-            {% endif %}
-            <a href="{% url 'order_invoice' order.id %}" target="_blank" class="btn btn-sm btn-success">Print
-                Invoice</a>
-        </div>
-
-        <!-- Footer -->
-        <div class="mt-5 text-center border-top pt-3">
-            <small class="text-muted">
-                Thank you for your business!
-                This is a computer-generated invoice and does not require a signature.
-            </small>
-        </div>
+<div class="order-detail">
+    <h2>Order #{{ order.id }}</h2>
+    
+    <div class="order-info">
+        <p><strong>Customer:</strong> {{ order.customer.user.get_full_name }}</p>
+        <p><strong>Product:</strong> {{ order.product.name }}</p>
+        <p><strong>Status:</strong> {{ order.status }}</p>
+        <p><strong>Date Created:</strong> {{ order.date_created }}</p>
+        <p><strong>Notes:</strong> {{ order.note }}</p>
     </div>
 
+    <div class="files">
+        <h3>Attachments</h3>
+        <ul>
+            {% if order.design_file %}
+                <li><a href="{{ order.design_file.url }}">Download Design</a></li>
+            {% endif %}
+            {% if order.invoice_file %}
+                <li><a href="{{ order.invoice_file.url }}">Download Invoice</a></li>
+            {% endif %}
+            {% for file in uploaded_files %}
+                <li><a href="{{ file.file.url }}">{{ file.file.name }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% if can_edit %}
+        <a href="{% url 'update_order' order.id %}" class="btn btn-primary">Edit Order</a>
+    {% endif %}
 </div>
 {% endblock %}

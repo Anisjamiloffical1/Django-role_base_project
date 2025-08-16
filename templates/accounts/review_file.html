@@ -2,26 +2,43 @@
 {% load static %}
 
 {% block content %}
-<h3>Review File for Order #{{ order.id }}</h3>
+<div class="container mt-4">
+    <h3 class="mb-4">📝 Review File for Order #{{ order.id }}</h3>
 
-{% if order.design_file %}
-    <p><a href="{{ order.design_file.url }}" target="_blank">View Design File</a></p>
-{% else %}
-    <p>No design file uploaded.</p>
-{% endif %}
+    <!-- Design File Preview -->
+    {% if order.design_file %}
+        <div class="mb-3">
+            <strong>Design File:</strong> 
+            <a href="{{ order.design_file.url }}" target="_blank" class="btn btn-outline-primary btn-sm ms-2">
+                View / Download
+            </a>
+        </div>
+    {% else %}
+        <div class="alert alert-warning p-2">No design file uploaded.</div>
+    {% endif %}
 
-<form method="post">
-    {% csrf_token %}
-    <label>Status:</label>
-    <select name="status">
-        <option value="Pending" {% if order.review_status == 'Pending' %}selected{% endif %}>Pending</option>
-        <option value="Approved" {% if order.review_status == 'Approved' %}selected{% endif %}>Approved</option>
-        <option value="Rejected" {% if order.review_status == 'Rejected' %}selected{% endif %}>Rejected</option>
-    </select>
+    <!-- Review Form -->
+    <form method="post" class="card p-3 shadow-sm" style="max-width: 500px;">
+        {% csrf_token %}
 
-    <label>Comment:</label>
-    <textarea name="comment">{{ order.review_comment }}</textarea>
+        <div class="mb-3">
+            <label for="status" class="form-label">Review Status</label>
+            <select id="status" name="status" class="form-select">
+                <option value="Pending" {% if order.review_status == 'Pending' %}selected{% endif %}>Pending</option>
+                <option value="Approved" {% if order.review_status == 'Approved' %}selected{% endif %}>Approved</option>
+                <option value="Rejected" {% if order.review_status == 'Rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+        </div>
 
-    <button type="submit">Save Review</button>
-</form>
+        <div class="mb-3">
+            <label for="comment" class="form-label">Review Comment</label>
+            <textarea id="comment" name="comment" rows="4" class="form-control" placeholder="Write your feedback here...">{{ order.review_comment }}</textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">💾 Save Review</button>
+            <a href="{% url 'home' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
 {% endblock %}

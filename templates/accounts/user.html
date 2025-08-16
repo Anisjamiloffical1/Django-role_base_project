@@ -1,66 +1,187 @@
 {% extends 'accounts/main.html' %}
 {% block content %}
 
-{% include 'accounts/status.html' %}
+<style>
+    /* Sidebar adjustments if needed */
+    .sidebar {
+        background-color: #36454F;
+        /* matching your sidebar color */
+        color: white;
+        min-height: 100vh;
+    }
 
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card card-body">
-            <h5 class="card-title">🛠️ Customer Actions</h5>
-            <ul class="list-group">
-                <li class="list-group-item"><a href="{% url 'create_order' request.user.customer.id 'Quote'  %}">📝 Request Quote</a></li>
-                <li class="list-group-item"><a href="{% url 'create_order' request.user.customer.id 'Digitizing' %}">🧵 Place Digitizing Order</a></li>
-                <li class="list-group-item"><a href="{% url 'create_order' request.user.customer.id 'Vector' %}">🎨 Place Vector Order</a></li>
-                <li class="list-group-item"><a href="{% url 'create_order' request.user.customer.id 'Patch' %}">🧷 Place Patch Order</a></li>
+    .sidebar a {
+        color: white;
+        text-decoration: none;
+    }
+
+    .sidebar a:hover {
+        background-color: #0f2c4f;
+    }
+
+    /* Container & Grid */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    /* Card Style */
+    .dashboard-card {
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 20px;
+        height: 160px;
+        position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Icon Area */
+    .dashboard-card .icon {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    /* Bottom Label */
+    .dashboard-card .label {
+        background-color: rgba(255, 255, 255, 0.1);
+        text-align: center;
+        padding: 8px;
+        border-radius: 5px;
+        font-weight: 500;
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        font-size: 0.95rem;
+    }
+
+    .dashboard-card a {
+        color: inherit;
+        text-decoration: none;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2 sidebar p-3">
+            <h5>Customer Panel</h5>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" href="#">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link"
+                        href="{% url 'customer_orders' request.user.customer.id 'Patch' %}">Patches Orders</a></li>
+                <li class="nav-item"><a class="nav-link"
+                        href="{% url 'customer_orders' request.user.customer.id 'Digitizing' %}">Digitizing Orders</a>
+                </li>
+                <li class="nav-item"><a class="nav-link"
+                        href="{% url 'customer_orders' request.user.customer.id 'Quote' %}">Quotes Orders</a></li>
+                <li class="nav-item"><a class="nav-link"
+                        href="{% url 'customer_orders' request.user.customer.id 'Vector' %}">Vectors Orders</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Invoices</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">My Profile</a></li>
             </ul>
         </div>
-    </div>
-</div>
 
-<div class="row">
-    <div class="col-md">
-        <div class="card card-body">
-            <h5 class="card-title">📦 Order History</h5>
-            <table class="table table-sm table-bordered table-striped">
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>Category</th>
-                        <th>Type</th>
-                        <th>Note</th>
-                        <th>Date Ordered</th>
-                        <th>Status</th>
-                        <th>Design File</th>
-                        <th>Invoice</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in orders %}
-                    <tr>
-                        <td>{{ order.product }}</td>
-                        <td>{{ order.product.category }}</td>
-                        <td>{{ order.order_type }}</td>
-                        <td>{{ order.note }}</td>
-                        <td>{{ order.date_created }}</td>
-                        <td>{{ order.status }}</td>
-                        <td>
-                            {% if order.design_file %}
-                                <a href="{{ order.design_file.url }}" download>⬇</a>
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if order.invoice_file %}
-                                <a href="{{ order.invoice_file.url }}" target="_blank">🧾</a>
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- Main Dashboard -->
+        <div class="col-md-10">
+            <div class="dashboard-grid">
+                <!-- Place Digitizing Order -->
+                <a href="{% url 'create_order' request.user.customer.id 'Digitizing' %}">
+                    <div class="dashboard-card">
+                        <div class="icon">💰</div>
+                        <div class="label">Place Digitizing Order</div>
+                    </div>
+                </a>
+
+                <!-- Place Vector Order -->
+                <a href="{% url 'create_order' request.user.customer.id 'Vector' %}">
+                    <div class="dashboard-card">
+                        <div class="icon">✏️</div>
+                        <div class="label">Place Vector Order</div>
+                    </div>
+                </a>
+
+                <!-- Place Patch Order -->
+                <a href="{% url 'create_order' request.user.customer.id 'Patch' %}">
+                    <div class="dashboard-card">
+                        <div class="icon">🧷</div>
+                        <div class="label">Place Patch Order</div>
+                    </div>
+                </a>
+
+                <!-- Digitizing Records -->
+
+
+                <a href="{% url 'customer_orders' request.user.customer.id 'Digitizing' %}"
+                    style="text-decoration: none; color: inherit;">
+                    <div class="dashboard-card">
+                        <div class="icon">📄</div>
+                        <div class="label">Digitizing Records</div>
+                    </div>
+                </a>
+
+
+                <!-- Vector Records -->
+                <a href="{% url 'customer_orders' request.user.customer.id 'Vector' %}">
+                    <div class="dashboard-card">
+                        <div class="icon">📄</div>
+                        <div class="label">Vector Records</div>
+                    </div>
+                </a>
+
+                <!-- Patch Records -->
+                <a href="{% url 'customer_orders' request.user.customer.id 'Patch' %}">
+                    <div class="dashboard-card">
+                        <div class="icon">📄</div>
+                        <div class="label">Patch Records</div>
+                    </div>
+                </a>
+
+                <!-- Send Quote -->
+                <a href="{% url 'create_order' request.user.customer.id 'Quote' %}">
+                    <div class="dashboard-card">
+                        <div class="icon">💬</div>
+                        <div class="label">Send Quote</div>
+                    </div>
+                </a>
+
+                <!-- Quote Records -->
+
+                <a href="{% url 'customer_orders' request.user.customer.id 'Quote' %}">
+                    <div class="dashboard-card">
+                        <div class="icon">📄</div>
+                        <div class="label">Quote Records</div>
+                    </div>
+                </a>
+                <a href="{% url 'print_invoice' request.user.customer.id %}">
+                    <div class="dashboard-card">
+                        <div class="icon">🧾</div>
+                        <div class="label">Invoices</div>
+                    </div>
+                </a>
+
+
+                <!-- Profile -->
+                <a href="#">
+                    <div class="dashboard-card">
+                        <div class="icon">👤</div>
+                        <div class="label">Profile</div>
+                    </div>
+                </a>
+            </div>
         </div>
     </div>
 </div>

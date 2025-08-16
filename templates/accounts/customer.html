@@ -1,105 +1,233 @@
 {% extends 'accounts/main.html' %}
-<!DOCTYPE html>
-<html lang="en">
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
+{% block content %}
+<br>
 
-<body>
-    {% block content %}
-    <br>
+<div class="container-fluid">
 
-    <div class="row">
+    <!-- Customer Summary -->
+    <div class="row g-3">
         <div class="col-md">
-            <div class="card card-body">
-                <h5>Customer:</h5>
-                <hr>
-                
-                <a class="btn btn-outline-info btn-sm btn-block" href="{% url 'update_customer' customer.id %}">Update Customer</a>
-                <a class="btn btn-outline-info btn-sm btn-block" href="{% url 'create_order' customer.id 'design' %}">Place Order</a>
-                
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>Customer:</h5>
+                    <hr>
+                    {% if request.user.is_staff or request.user.is_superuser %}
+                    <a class="btn btn-outline-info btn-sm w-100 mb-2"
+                        href="{% url 'update_customer' customer.id %}">Update Customer</a>
+                    {% endif %}
+                    <a class="btn btn-outline-info btn-sm w-100"
+                        href="{% url 'create_order' customer.id 'design' %}">Place Order</a>
+                </div>
             </div>
         </div>
 
         <div class="col-md">
-            <div class="card card-body">
-                <h5>Contact Information</h5>
-                <hr>
-                <p>Email: {{customer.email}} </p>
-                <p>Phone: {{customer.phone}}</p>
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>Contact Information</h5>
+                    <hr>
+                    <p>Email: {{customer.email}}</p>
+                    <p>Phone: {{customer.phone}}</p>
+                </div>
             </div>
         </div>
 
         <div class="col-md">
-            <div class="card card-body">
-                <h5>Total Orders</h5>
-                <hr>
-                <h1 style="text-align: center; padding: 10px;">{{order_counter}}</h1>
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h5>Total Orders</h5>
+                    <h1 class="py-2">{{total_order}}</h1>
+                </div>
             </div>
         </div>
     </div>
 
     <br>
 
+    <!-- Filter/Search -->
     <div class="row">
         <div class="col">
-            <div class="card card-body">
-                <form method="get" class="form-inline d-flex align-items-center">
-                    {% for field in myFilter.form %}
-                        <div class="form-group mr-2">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="get" class="row g-2">
+                        {% for field in myFilter.form %}
+                        <div class="col-md-3">
                             {{ field.label_tag }}
                             {{ field }}
                         </div>
-                    {% endfor %}
-                    <button class="btn btn-primary ml-2" type="submit">Search</button>
-                </form>
+                        {% endfor %}
+                        {% if request.user.is_staff or request.user.is_superuser %}
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" type="submit">Search</button>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
             </div>
         </div>
     </div>
+
     <br>
+
+    <!-- Orders with Tabs -->
     <div class="row">
         <div class="col-md">
-            <div class="card card-body">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="orderTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="general-tab" data-bs-toggle="tab" href="#general"
+                                role="tab">General Info</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="files-tab" data-bs-toggle="tab" href="#files" role="tab">Files</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="payment-tab" data-bs-toggle="tab" href="#payment" role="tab">Payment
+                                & Review</a>
+                        </li>
+                    </ul>
 
-                <table class="table table-sm">
-                    <tr>
-                        <th>Product</th>
-                        <th>Category</th>
-                        <th>Note</th>
-                        <th>Date Orderd</th>
-                        <th>Status</th>
-                        <th>Update</th>
-                        <th>Remove</th>
-                    </tr>
+                    <div class="tab-content mt-3">
+                        <!-- General Info -->
+                        <div class="tab-pane fade show active" id="general" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered align-middle">
+                                    <thead class="table-light text-center">
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Order Type</th>
+                                            <th>Quantity</th>
+                                            <th>Fabric</th>
+                                            <th>Format</th>
+                                            <th>Height</th>
+                                            <th>Width</th>
+                                            <th>Colors</th>
+                                            <th>Placement</th>
+                                            <th>Payment Status</th>
+                                            <th>Urgent</th>
+                                            <th>Turnaround</th>
+                                            <th>Price</th>
+                                            <th>Status</th>
+                                            <th>Date Ordered</th>
+                                            <th>Date Completed</th>
+                                            <th>Assigned To</th>
+                                            <th>Assigned Designer</th>
+                                            <th>Update</th>
+                                            <th>Remove</th>
+                                            <th>Inovice</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for order in orders %}
+                                        <tr>
+                                            <td>{{ order.product }}</td>
+                                            <td>{{ order.order_type }}</td>
+                                            <td>{{ order.quantity }}</td>
+                                            <td>{{ order.fabric_material }}</td>
+                                            <td>{{ order.Required_Format }}</td>
+                                            <td>{{ order.Height }}</td>
+                                            <td>{{ order.Width }}</td>
+                                            <td>{{ order.total_colors }}</td>
+                                            <td>{{ order.placement }}</td>
+                                            
+                                            <td>
+                                                {% if order.payment_status == "Paid" %}
+                                                ✅ Paid
+                                                {% elif order.payment_status == "Pending" %}
+                                                ⏳ Pending
+                                                {% elif order.payment_status == "Failed" %}
+                                                ❌ Failed
+                                                {% else %}
+                                                {{ order.payment_status }}
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">{% if order.urgent %}✅{% else %}❌{% endif %}</td>
+                                            <td>{{ order.turnaround_time }}</td>
+                                            <td>${{ order.price }}</td>
+                                            <td>{{ order.status }}</td>
+                                            <td>{{ order.date_created }}</td>
+                                            <td>{{ order.date_completed }}</td>
+                                            <td>{{ order.assigned_to }}</td>
+                                            <td>{{ order.assigned_designer }}</td>
+                                            <td><a class="btn btn-sm btn-info"
+                                                    href="{% url 'update_order' order.id %}">Update</a></td>
+                                            <td><a class="btn btn-sm btn-danger"
+                                                    href="{% url 'delete_order' order.id %}">Remove</a></td>
+                                            <td><a class="btn btn-sm btn-secondary"
+                                                    href="{% url 'print_invoice' order.id %}">Invoice</a></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
 
-                    {% for order in orders %}
-                    <tr>
-                        <td>{{order.product}}</td>
-                        <td>{{order.product.category}}</td>
-                        <td class="form-group mr-2">{{order.note}}</td>
-                        <td>{{order.date_created}}</td>
-                        <td>{{order.status}}</td>
-                        <td><a class="btn btn-sm btn-info" href="{% url 'update_order' order.id %}">Update</a></td>
-                        <td><a class="btn btn-sm btn-danger" href="{% url 'delete_order' order.id %}">Remove</a></td>
-                        
-                    </tr>
+                        <!-- Files -->
+                        <div class="tab-pane fade" id="files" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered align-middle">
+                                    <thead class="table-light text-center">
+                                        <tr>
+                                            <th>Additional Info</th>
+                                            <th>Design File</th>
+                                            <th>Invoice File</th>
+                                            <th>Released</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for order in orders %}
+                                        <tr>
+                                            <td>{{ order.Additional_information }}</td>
+                                            <td>
+                                                {% if order.design_file %}
+                                                <a href="{{ order.design_file.url }}" target="_blank">Download</a>
+                                                {% else %} N/A {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if order.invoice_file %}
+                                                <a href="{{ order.invoice_file.url }}" target="_blank">Download</a>
+                                                {% else %} N/A {% endif %}
+                                            </td>
+                                            <td class="text-center">{% if order.released %}✅ Released{% else %}⏳
+                                                Pending{% endif %}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
 
+                        <!-- Payment & Review -->
+                        <div class="tab-pane fade" id="payment" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered align-middle">
+                                    <thead class="table-light text-center">
+                                        <tr>
+                                            <th>Payment Status</th>
+                                            <th>Review Status</th>
+                                            <th>Review Comment</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for order in orders %}
+                                        <tr>
+                                            <td>{{ order.payment_status }}</td>
+                                            <td>{{ order.review_status }}</td>
+                                            <td>{{ order.review_comment }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
 
-
-                    {% endfor %}
-
-                </table>
+                    </div><!-- tab-content -->
+                </div>
             </div>
         </div>
     </div>
-
-
-
-
-    {% endblock %}
-</body>
-
-</html>
+</div>
+{% endblock %}

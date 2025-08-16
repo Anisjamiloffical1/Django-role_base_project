@@ -88,16 +88,79 @@ class Order(models.Model):
     ('Pending', 'Pending'),
     ('Approved', 'Approved'),
     ('Rejected', 'Rejected'),
-)
-    customer = models.ForeignKey(Customer, null=True, on_delete=models.SET_NULL)
+    )
+    PLACEMENT_CHOICES = [
+
+        ('Apron', 'Apron'),
+        ('Bags', 'Bags'),
+        ('Cap', 'Cap'),
+        ('Cap Side', 'Cap Side'),
+        ('Cap Back', 'Cap Back'),
+        ('Chest', 'Chest'),
+        ('Gloves', 'Gloves'),
+        ('Jacket Back', 'Jacket Back'),
+        ('Patches', 'Patches'),
+        ('Sleeve', 'Sleeve'),
+        ('Towel', 'Towel'),
+        ('Visor', 'Visor'),
+        ('Other', 'Other'),
+    ]
+    FABRIC_CHOICES = [
+        ('Blanket', 'Blanket'),
+        ('Canvas', 'Canvas'),
+        ('Canis', 'Canis'),
+        ('Cotton Woven', 'Cotton Woven'),
+        ('Denim', 'Denim'),
+        ('Felt', 'Felt'),
+        ('Flannel', 'Flannel'),
+        ('Fleece', 'Fleece'),
+        ('Leather', 'Leather'),
+        ('Nylon', 'Nylon'),
+        ('Pique', 'Pique'),
+        ('Polyester', 'Polyester'),
+        ('Silk', 'Silk'),
+        ('Single Jersey', 'Single Jersey'),
+        ('Towel', 'Towel'),
+        ('Twill', 'Twill'),
+        ('Other', 'Other'),
+    ]
+    FORMAT_CHOICES = [
+        ('100', '100'),
+        ('cdr', 'cdr'),
+        ('cdn', 'cdn'),
+        ('dsb', 'dsb'),
+        ('dst', 'dst'),
+        ('dsz', 'dsz'),
+        ('emb', 'emb'),
+        ('exp', 'exp'),
+        ('jef', 'jef'),
+        ('ksm', 'ksm'),
+        ('ofm', 'ofm'),
+        ('pes', 'pes'),
+        ('pxf', 'pxf'),
+        ('pof', 'pof'),
+        ('tap', 'tap'),
+        ('xxx', 'xxx'),
+        ('other', 'Other'),
+    ]
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, null=True, on_delete=models.SET_NULL)
     order_type = models.CharField(max_length=50, choices=ORDER_TYPE, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
     status = models.CharField(max_length=200, null=True, choices=STATUS)
-    note = models.CharField(max_length=1000, null=True, blank=True)
+    Additional_information = models.TextField(blank=True, null=True)
     design_file = models.FileField(upload_to='designs/', null=True, blank=True)
     invoice_file = models.FileField(upload_to='invoices/', null=True, blank=True)
-    
+    quantity = models.PositiveIntegerField(default=1)
+    fabric_material = models.CharField(max_length=100, blank=True, null=True, choices=FABRIC_CHOICES)
+    Required_Format = models.CharField(max_length=100, blank=True, null=True, default='DST', choices=FORMAT_CHOICES)
+    urgent = models.BooleanField(default=False)
+    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, default=0.00)
+    Height = models.CharField(max_length=100, blank=True, null=True, default='standard')
+    Width = models.CharField(max_length=100, blank=True, null=True, default='standard')
+    total_colors = models.PositiveIntegerField(null=True ,blank=True)
+    turnaround_time = models.CharField(max_length=100, blank=True, null=True)
+    placement = models.CharField(max_length=100, blank=True, null=True, choices=PLACEMENT_CHOICES)
     assigned_to = models.ForeignKey('SalesRepresentative', on_delete=models.SET_NULL, null=True, blank=True)
     released = models.BooleanField(default=False)  # For release_projects
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='Pending')  # For follow-up payments
@@ -111,10 +174,15 @@ class Order(models.Model):
     def __str__(self):
         return f"{self.product.name if self.product else 'No product'} ({self.order_type})"
     
+# class Invoice(models.Model):
+#     order = models.ForeignKey(related_name='')
+#     file_ppath = models.CharField
+    
 class UploadedFile(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="files")
     file = models.FileField(upload_to='uploads/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return f"File for {self.order} uploaded at {self.uploaded_at}"

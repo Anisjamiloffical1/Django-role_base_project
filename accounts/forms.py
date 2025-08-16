@@ -28,11 +28,10 @@ class SiteSettingForm(forms.ModelForm):
         fields = '__all__'
 
 
-
 class DesignFileForm(forms.ModelForm):
     class Meta:
         model = Order
-        fields = ['design_file', 'status']
+        fields = ['design_file', 'status',]
 
 class DesignerMessageForm(forms.ModelForm):
     class Meta:

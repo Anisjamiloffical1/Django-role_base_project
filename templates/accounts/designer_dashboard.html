@@ -12,6 +12,7 @@
                         <i class="fas fa-clipboard-list"></i> Assigned Orders
                     </a>
                 </li>
+                <!-- same in this this cant work with out loop -->
                 {% for order in orders %}
                 <li class="nav-item mb-2">
                     <a href="{% url 'upload_design' order.id %}" class="nav-link text-white">

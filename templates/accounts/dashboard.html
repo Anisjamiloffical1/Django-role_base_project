@@ -16,7 +16,7 @@
         color: #adb5bd;
         font-weight: 500;
         padding: 0.75rem 1rem;
-        transition: background-color 0.3s, color 0.3s;  
+        transition: background-color 0.3s, color 0.3s;
     }
 
     .sidebar .nav-link:hover,
@@ -65,11 +65,10 @@
     <div class="row">
 
         <!-- Sidebar -->
-        <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar">
             <div class="sidebar-sticky px-2">
                 <ul class="nav flex-column">
                     <li class="nav-item mb-3">
-                        <i class="bi bi-chat-text"></i>
                         <a class="nav-link" href="{% url 'report_view' %}">📈 Generate Reports</a>
                     </li>
                     <li class="nav-item mb-3">
@@ -81,34 +80,27 @@
                     <li class="nav-item mb-3">
                         <a class="nav-link" href="{% url 'manage_users' %}">👥 Manage Users</a>
                     </li>
-
-                    <!-- Send Message link -->
                     <li class="nav-item mb-3">
-                        <a href="{% url 'admin_send_message' %}" class="nav-link">
-                            <i class="bi bi-envelope-fill"></i> Send Message
-                        </a>
+                        <a href="{% url 'admin_send_message' %}" class="nav-link">📤 Send Message</a>
                     </li>
-
-                    <!-- Inbox link with unread badge -->
                     <li class="nav-item mb-3">
                         <a href="{% url 'admin_inbox' %}" class="nav-link">
-                            <i class="bi bi-chat-text"></i> Inbox
+                            📥 Inbox
                             {% if unread_count > 0 %}
                                 <span class="badge bg-danger">{{ unread_count }}</span>
                             {% endif %}
                         </a>
                     </li>
-                    <!-- Add more sidebar links here -->
                 </ul>
             </div>
         </nav>
 
         <!-- Main content -->
-        <main class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <main class="col-md-9 col-lg-10 px-md-4">
             {% include 'accounts/status.html' %}
             <br>
 
-            <!-- Send Message button in main area -->
+            <!-- Send Message button -->
             <div class="mb-4">
                 <a href="{% url 'admin_send_message' %}" class="btn btn-success">
                     📤 Send New Message
@@ -134,8 +126,7 @@
                                 <tbody>
                                     {% for customer in customers %}
                                     <tr>
-                                        <td><a class="btn btn-sm btn-info"
-                                                href="{% url 'customer' customer.id %}">View</a></td>
+                                        <td><a class="btn btn-sm btn-info" href="{% url 'customer_orders' customer.id 'all' %}">View</a></td>
                                         <td>{{ customer.name }}</td>
                                         <td>{{ customer.phone }}</td>
                                     </tr>
@@ -155,8 +146,9 @@
                     <h5>Last 5 Orders</h5>
                     <hr>
                     <div class="card card-body">
-                        <a class="btn btn-primary btn-sm btn-block mb-3"
-                            href="{% url 'create_order' customer.id 'design' %}">Create Order</a>
+                        {% if customer.id %}
+                        <a class="btn btn-primary btn-sm btn-block mb-3" href="{% url 'create_order' customer.id 'design' %}">Create Order</a>
+                        {% endif %}
                         <div class="table-responsive">
                             <table class="table table-sm table-hover align-middle">
                                 <thead class="table-light">
@@ -175,14 +167,11 @@
                                         <td>{{ order.product }}</td>
                                         <td>{{ order.date_created }}</td>
                                         <td>{{ order.status }}</td>
-                                        <td><a class="btn btn-sm btn-info"
-                                                href="{% url 'update_order' order.id %}">Update</a></td>
-                                        <td><a class="btn btn-sm btn-danger"
-                                                href="{% url 'delete_order' order.id %}">Delete</a></td>
+                                        <td><a class="btn btn-sm btn-info" href="{% url 'update_order' order.id %}">Update</a></td>
+                                        <td><a class="btn btn-sm btn-danger" href="{% url 'delete_order' order.id %}">Delete</a></td>
                                         <td>
                                             {% for file in order.files.all %}
-                                            <a href="{% url 'review_file' file.id %}"
-                                                class="btn btn-sm btn-primary mb-1">Review</a>
+                                            <a href="{% url 'review_file' file.id %}" class="btn btn-sm btn-primary mb-1">Review</a>
                                             {% empty %}
                                             <span class="text-muted">No files</span>
                                             {% endfor %}
@@ -200,7 +189,7 @@
                 </div>
             </div>
 
-            <!-- New Users Section -->
+            <!-- Users Section -->
             <div class="row mt-5">
                 <div class="col-12">
                     <h5>Users (Last 5)</h5>
@@ -224,10 +213,8 @@
                                         <td>{{ user.first_name }} {{ user.last_name }}</td>
                                         <td>{{ user.email }}</td>
                                         <td>{{ user.groups.first.name }}</td>
-                                        <td><a href="{% url 'edit_user' user.id %}"
-                                                class="btn btn-sm btn-warning">Edit</a></td>
-                                        <td><a href="{% url 'delete_user' user.id %}"
-                                                class="btn btn-sm btn-danger">Delete</a></td>
+                                        <td><a href="{% url 'edit_user' user.id %}" class="btn btn-sm btn-warning">Edit</a></td>
+                                        <td><a href="{% url 'delete_user' user.id %}" class="btn btn-sm btn-danger">Delete</a></td>
                                     </tr>
                                     {% empty %}
                                     <tr>
