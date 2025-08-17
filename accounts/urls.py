@@ -56,6 +56,7 @@ urlpatterns = [
     path('admin-send-message/', views.admin_send_message, name='admin_send_message'),
     path('notifications/', views.view_notifications, name='view-notifications'),
     path('notifications/<int:pk>/read/', views.mark_notification_read, name='mark-notification-read'),
+    path("customer/released-orders/", views.customer_orders, name="customer_orders"),
     
     
     

@@ -1,0 +1,38 @@
+{% extends "accounts/main.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3>📂 Your Released Orders</h3>
+
+    {% if released_orders %}
+    <table class="table table-striped mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>Order ID</th>
+                <th>Product</th>
+                <th>Released On</th>
+                <th>Files</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in released_orders %}
+            <tr>
+                <td>#{{ order.id }}</td>
+                <td>{{ order.product.name }}</td>
+                <td>{{ order.date_created|date:"M d, Y H:i" }}</td>
+                <td>
+                    {% if order.design_file %}
+                        <a href="{{ order.design_file.url }}" class="btn btn-sm btn-primary">Design File</a>
+                    {% endif %}
+                    {% if order.invoice_file %}
+                        <a href="{{ order.invoice_file.url }}" class="btn btn-sm btn-secondary">Invoice</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert alert-warning">You don’t have any released orders yet.</div>
+    {% endif %}
+</div>
+{% endblock %}

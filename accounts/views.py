@@ -16,6 +16,7 @@ from django.contrib.auth.models import Group
 from .notifications import notify_user
 from django.template.loader import render_to_string
 from weasyprint import HTML
+from django.core.mail import send_mail
 import os
 from django.conf import settings
 from django.db.models import Count, Sum, Q
@@ -376,6 +377,15 @@ def createOrder(request, pk, order_type=None):
         'customer': customer
     })
 @login_required
+def customer_orders(request):
+    customer = get_object_or_404(Customer, user=request.user)
+    released_orders = Order.objects.filter(customer=customer, status="Released").order_by('-date_created')
+
+    return render(request, "accounts/released_orders.html", {
+        "released_orders": released_orders
+    })
+
+@login_required
 def orderHistory(request):
     customer = get_object_or_404(Customer, user=request.user)
     orders = Order.objects.filter(customer=customer).order_by('-date_created')
@@ -490,14 +500,16 @@ def sales_dashboard(request):
     total_orders = orders.count()
     delivered = orders.filter(status='Delivered').count()
     pending = orders.filter(status='Pending').count()
+    completed = orders.filter(status='Completed').count()  # ✅ Add this
 
     context = {
         'customers': customers,
-        'orders': orders,
+        'orders': orders,   # this still has ALL orders
         'total_customers': total_customers,
         'total_orders': total_orders,
         'delivered': delivered,
         'pending': pending,
+        'completed': completed,  # ✅ send to template
     }
 
     return render(request, 'accounts/sales_dashboard.html', context)
@@ -511,14 +523,30 @@ def order_detail(request, pk):
     return render(request, 'accounts/order_detail.html', context=context)
 @login_required
 def release_order(request, pk):
-    order = get_object_or_404(Order, pk=pk)
+    sales_rep = get_object_or_404(SalesRepresentative, user=request.user)
+    order = get_object_or_404(Order, id=pk, assigned_to=sales_rep, status="Completed")
 
-    if request.method == 'POST':
-        order.status = 'Released'  # or whatever status you use
+    if request.method == "POST":
+        order.status = "Released"
         order.save()
-        messages.success(request, f"Order #{order.id} has been released successfully!")
-    
-    return redirect('release_projects')  # Redirect back to list
+
+        # Send email to customer with file links
+        if order.customer.email:
+            subject = f"Your Order #{order.id} Has Been Released"
+            message = f"Hello {order.customer.name},\n\n" \
+                      f"Your order #{order.id} has been completed and released.\n"
+
+            if order.design_file:
+                message += f"\nDesign File: {request.build_absolute_uri(order.design_file.url)}"
+            if order.invoice_file:
+                message += f"\nInvoice: {request.build_absolute_uri(order.invoice_file.url)}"
+
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [order.customer.email])
+
+        messages.success(request, f"Order #{order.id} released to {order.customer.name}.")
+        return redirect("release_projects")
+
+    return redirect("release_projects")
 
 @login_required
 def mark_completed(request, order_id):
@@ -543,19 +571,36 @@ def manage_customers(request):
 def release_projects(request):
     sales_rep = get_object_or_404(SalesRepresentative, user=request.user)
 
-    # Filter orders assigned to this sales rep and with status 'Completed'
+    # Completed orders waiting to be released
     completed_orders = Order.objects.filter(
         assigned_to=sales_rep,
         status='Completed'
     ).order_by('-date_created')
-    print("Logged in as:", request.user)
-    print("Sales Rep:", sales_rep)
-    print("Completed Orders:", completed_orders)
+
+    if request.method == "POST":
+        order_id = request.POST.get("order_id")
+        order = get_object_or_404(Order, id=order_id, assigned_to=sales_rep, status="Completed")
+
+        # Mark as released
+        order.status = "Released"
+        order.save()
+
+        # Send email to customer (if email exists)
+        if order.customer.email:
+            subject = f"Your Order #{order.id} is Ready"
+            message = "Dear {},\n\nYour design has been completed and released by our team.".format(order.customer.name)
+            email_from = settings.DEFAULT_FROM_EMAIL
+            recipient_list = [order.customer.email]
+
+            # Optionally include file link
+            if order.design_file:
+                message += f"\n\nYou can download your design here: {request.build_absolute_uri(order.design_file.url)}"
+
+            send_mail(subject, message, email_from, recipient_list)
 
     context = {
         'completed_orders': completed_orders
     }
-
     return render(request, 'accounts/sales/release_projects.html', context)
 
 

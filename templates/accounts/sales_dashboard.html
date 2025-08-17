@@ -6,7 +6,7 @@
 
     <!-- Overview Cards -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card text-white bg-primary">
                 <div class="card-body">
                     <h5 class="card-title">Total Customers</h5>
@@ -14,7 +14,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card text-white bg-success">
                 <div class="card-body">
                     <h5 class="card-title">Total Orders</h5>
@@ -22,7 +22,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card text-white bg-info">
                 <div class="card-body">
                     <h5 class="card-title">Delivered</h5>
@@ -30,11 +30,19 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card text-white bg-warning">
                 <div class="card-body">
                     <h5 class="card-title">Pending</h5>
                     <p class="card-text">{{ pending }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-white bg-secondary">
+                <div class="card-body">
+                    <h5 class="card-title">Completed</h5>
+                    <p class="card-text">{{ completed }}</p>
                 </div>
             </div>
         </div>
@@ -70,10 +78,11 @@
         <p>No customers assigned.</p>
     {% endif %}
 
-    <!-- Orders Table -->
-    <div class="card card-body">
-        <h5 class="card-title">📦 Customer Orders</h5>
-        {% if orders %}
+    <!-- Pending Orders -->
+    <div class="card card-body mb-4">
+        <h5 class="card-title">📦 Pending Orders</h5>
+        {% with orders|dictsort:"date_created" as sorted_orders %}
+        {% if sorted_orders %}
         <table class="table table-sm table-bordered table-striped">
             <thead class="thead-dark">
                 <tr>
@@ -89,44 +98,96 @@
                 </tr>
             </thead>
             <tbody>
-                {% for order in orders %}
-                <tr>
-                    <td>{{ order.customer.name }}</td>
-                    <td>{{ order.product.name }}</td>
-                    <td>{{ order.product.category }}</td>
-                    <td>{{ order.order_type }}</td>
-                    <td>{{ order.status }}</td>
-                    <td>{{ order.date_created }}</td>
-                    <td>
-                        {% if order.design_file %}
-                            <a href="{{ order.design_file.url }}" download>⬇</a>
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if order.invoice_file %}
-                            <a href="{{ order.invoice_file.url }}" target="_blank">🧾</a>
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if order.status != 'Completed' %}
-                        <form action="{% url 'mark_completed' order.id %}" method="POST">
-                            {% csrf_token %}
-                            <button class="btn btn-sm btn-success">Mark Complete</button>
-                        </form>
-                        {% else %}
-                            ✅
-                        {% endif %}
-                    </td>
-                </tr>
+                {% for order in sorted_orders %}
+                    {% if order.status == "Pending" %}
+                    <tr>
+                        <td>{{ order.customer.name }}</td>
+                        <td>{{ order.product.name }}</td>
+                        <td>{{ order.product.category }}</td>
+                        <td>{{ order.order_type }}</td>
+                        <td>{{ order.status }}</td>
+                        <td>{{ order.date_created|date:"M d, Y H:i" }}</td>
+                        <td>
+                            {% if order.design_file %}
+                                <a href="{{ order.design_file.url }}" download>⬇</a>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if order.invoice_file %}
+                                <a href="{{ order.invoice_file.url }}" target="_blank">🧾</a>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form action="{% url 'mark_completed' order.id %}" method="POST">
+                                {% csrf_token %}
+                                <button class="btn btn-sm btn-success" onclick="return confirm('Mark this order as completed?');">
+                                    Mark Complete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endif %}
                 {% endfor %}
             </tbody>
         </table>
         {% else %}
-            <p>No orders found.</p>
+            <p>No pending orders found.</p>
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Completed Orders -->
+    <div class="card card-body">
+        <h5 class="card-title">✅ Completed Orders</h5>
+        {% if orders %}
+        <table class="table table-sm table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Customer</th>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Design File</th>
+                    <th>Invoice</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                    {% if order.status == "Completed" %}
+                    <tr>
+                        <td>{{ order.customer.name }}</td>
+                        <td>{{ order.product.name }}</td>
+                        <td>{{ order.product.category }}</td>
+                        <td>{{ order.order_type }}</td>
+                        <td>{{ order.status }}</td>
+                        <td>{{ order.date_created|date:"M d, Y H:i" }}</td>
+                        <td>
+                            {% if order.design_file %}
+                                <a href="{{ order.design_file.url }}" download>⬇</a>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if order.invoice_file %}
+                                <a href="{{ order.invoice_file.url }}" target="_blank">🧾</a>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>No completed orders found.</p>
         {% endif %}
     </div>
 </div>
