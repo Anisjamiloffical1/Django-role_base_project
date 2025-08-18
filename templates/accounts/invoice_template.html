@@ -1,43 +1,153 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Invoice {{ invoice_number }}</title>
+    <meta charset="utf-8">
+    <title>Invoice #{{ order.id }}</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 14px; }
-        h1 { color: #f57c00; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 8px; border: 1px solid #ddd; }
-        th { background-color: #f7f7f7; }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        .invoice-container {
+            max-width: 800px;
+            margin: 30px auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.15);
+        }
+        .invoice-header {
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .invoice-header h1 {
+            margin: 0;
+            color: #4CAF50;
+        }
+        .company-details {
+            text-align: right;
+            font-size: 14px;
+            color: #555;
+        }
+        .section-title {
+            background: #4CAF50;
+            color: white;
+            padding: 8px;
+            margin-top: 30px;
+            font-size: 16px;
+            border-radius: 4px;
+        }
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .details-table th, .details-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
+        .details-table th {
+            background: #f4f4f4;
+            text-align: left;
+        }
+        .notes {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+            font-style: italic;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            margin-top: 40px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
     </style>
 </head>
-<body>
-    <h1>Invoice {{ invoice_number }}</h1>
-    <p><strong>Customer:</strong> {{ customer.name }}</p>
-    <p><strong>Order ID:</strong> {{ order.id }}</p>
-    <p><strong>Product:</strong> {{ order.product }}</p>
-    <p><strong>Status:</strong> {{ order.status }}</p>
-    <p><strong>Date:</strong> {{ order.created_at }}</p>
+<body onload="window.print();">
+    <div class="invoice-container">
+        <!-- Header -->
+        <div class="invoice-header">
+            <h1>Invoice #{{ order.id }}</h1>
+            <div class="company-details">
+                <strong>Elite Digitizers</strong><br>
+                123 Business Street, City<br>
+                Email: info@company.com | Phone: +123 456 789
+            </div>
+        </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Product</th>
-                <th>Order Type</th>
-                <th>Status</th>
-                <th>Note</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>{{ order.product }}</td>
-                <td>{{ order.order_type }}</td>
-                <td>{{ order.status }}</td>
-                <td>{{ order.Additional_information }}</td>
-            </tr>
-        </tbody>
-    </table>
+        <!-- Invoice Info -->
+        <div>
+            <div class="section-title">Customer & Order Details</div>
+            <table class="details-table">
+                <tr>
+                    <th>Customer</th>
+                    <td>{{ order.customer }}</td>
+                </tr>
+                <tr>
+                    <th>Order Date</th>
+                    <td>{{ order.date_created|date:"Y-m-d H:i" }}</td>
+                </tr>
+                <tr>
+                    <th>Order Type</th>
+                    <td>{{ order.order_type }}</td>
+                </tr>
+                <tr>
+                    <th>Product</th>
+                    <td>{{ order.product }}</td>
+                </tr>
+                <tr>
+                    <th>Status</th>
+                    <td>{{ order.status }}</td>
+                </tr>
+                <tr>
+                    <th>Fabric</th>
+                    <td>{{order.fabric_material}} </td>
+                </tr>
+                <tr>
+                    <th>Format</th>
+                    <td>{{order.Required_Format}}</td>
+                </tr>
+                <tr>
+                    <th>Placement</th>
+                    <td>{{order.placement}}</td>
+                </tr>
+                <tr>
+                    <th>Price</th>
+                    <td>${{ order.price }}</td>
+                </tr>
+                <th>Payment Status</th>
+            <td>
+                {% if order.payment_status == "Paid" %}
+                    ✅ Paid
+                {% elif order.payment_status == "Pending" %}
+                    ⏳ Pending
+                {% elif order.payment_status == "Failed" %}
+                    ❌ Failed
+                {% else %}
+                    {{ order.payment_status }}
+                {% endif %}
+            </td>
+            </table>
+        </div>
 
-    <!-- <p><strong>Total:</strong> $100</p> You can calculate dynamically -->
+        <!-- Notes -->
+        {% if order.note %}
+        <div class="notes">
+            <strong>Notes:</strong> {{ order.note }}
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="footer">
+            Thank you for your business!  
+            This is a computer-generated invoice and does not require a signature.
+        </div>
+    </div>
 </body>
 </html>

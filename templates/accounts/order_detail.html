@@ -15,10 +15,10 @@
         <h3>Attachments</h3>
         <ul>
             {% if order.design_file %}
-                <li><a href="{{ order.design_file.url }}">Download Design</a></li>
+                <li><a class="btn btn-success" href="{{ order.design_file.url }}">Download Design</a></li><br>
             {% endif %}
             {% if order.invoice_file %}
-                <li><a href="{{ order.invoice_file.url }}">Download Invoice</a></li>
+                <li><a class="btn btn-info" href="{{ order.invoice_file.url }}">Download Invoice</a></li>
             {% endif %}
             {% for file in uploaded_files %}
                 <li><a href="{{ file.file.url }}">{{ file.file.name }}</a></li>

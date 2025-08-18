@@ -63,9 +63,13 @@ def register_page(request):
 
 @unauthenticated_user
 def login_page(request):
+    remembered_email = request.COOKIES.get('remembered_email', '')
+    remembered_password = request.COOKIES.get('remembered_password', '')
+
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
+        remember = request.POST.get('rememberMe')  # checkbox value
 
         user_obj = User.objects.filter(username=email).first()
 
@@ -78,27 +82,43 @@ def login_page(request):
         if user_obj:
             login(request, user_obj)
 
-            #  Redirect based on role
+            # Handle redirect by role
             group = None
             if user_obj.groups.exists():
                 group = user_obj.groups.first().name
 
+            # ✅ Prepare response with cookies
             if group == 'admin':
-                return redirect('home')
+                response = redirect('home')
             elif group == 'customer':
-                return redirect('user-page')
+                response = redirect('user-page')
             elif group == 'sales_rep':
-                return redirect('sales-dashboard')
+                response = redirect('sales-dashboard')
             elif group == 'designer':
-                return redirect('designer-dashboard')
+                response = redirect('designer-dashboard')
             else:
                 messages.warning(request, "User group is not assigned.")
                 return redirect('login')
 
+            # ✅ Handle remember me
+            if remember:
+                response.set_cookie('remembered_email', email, max_age=60*60*24*30)
+                response.set_cookie('remembered_password', password, max_age=60*60*24*30)
+                request.session.set_expiry(60 * 60 * 24 * 30)  # session 30 days
+            else:
+                response.delete_cookie('remembered_email')
+                response.delete_cookie('remembered_password')
+                request.session.set_expiry(0)  # until browser closes
+
+            return response
+
         messages.warning(request, "Invalid credentials.")
         return HttpResponseRedirect(request.path_info)
 
-    return render(request, 'accounts/login.html')
+    return render(request, 'accounts/login.html', {
+        'remembered_email': remembered_email,
+        'remembered_password': remembered_password
+    })
 # admin message recive
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin'])

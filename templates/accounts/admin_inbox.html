@@ -10,27 +10,37 @@
                     <th>From</th>
                     <th>Order ID</th>
                     <th>Subject</th>
+                    <th>Attachment</th>
                     <th>Received At</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                
                 {% for msg in messages %}
-                <a href="{% url 'view_message' msg.id %}">
                 <tr class="{% if not msg.is_read %}table-warning{% endif %}">
                     <td>{{ msg.sender.get_full_name|default:msg.sender.username }}</td>
+                    
                     <td>
                         {% if msg.order %}
-                            <a href="{% url 'order_detail' msg.order.id %}">{{ msg.order.id }}</a>
+                            <a class="btn btn-sm btn-outline-info" href="{% url 'order_detail' msg.order.id %}">No : {{ msg.order.id }}</a>
                         {% else %}
                             N/A
                         {% endif %}
                     </td>
-                    
+
                     <td>{{ msg.subject }}</td>
+
+                    <td>
+                        {% if msg.attachment %}
+                            <a class="btn btn-sm btn-outline-info" href="{{ msg.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-info">Download</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
                     <td>{{ msg.timestamp|date:"Y-m-d H:i" }}</td>
+
                     <td>
                         {% if msg.is_read %}
                             <span class="badge bg-success">Read</span>
@@ -38,14 +48,12 @@
                             <span class="badge bg-warning text-dark">Unread</span>
                         {% endif %}
                     </td>
+
                     <td>
                         <a href="{% url 'view_message' msg.id %}" class="btn btn-sm btn-primary">View</a>
                     </td>
-                </a>
-               
                 </tr>
                 {% endfor %}
-            
             </tbody>
         </table>
     {% else %}
