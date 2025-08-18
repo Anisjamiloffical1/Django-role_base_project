@@ -1,194 +1,127 @@
 {% extends 'accounts/main.html' %}
 {% block content %}
 
-<div class="container mt-5">
-    <h2 class="mb-4">👨‍💼 Sales Representative Dashboard</h2>
-
-    <!-- Overview Cards -->
-    <div class="row mb-4">
-        <div class="col-md-2">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h5 class="card-title">Total Customers</h5>
-                    <p class="card-text">{{ total_customers }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h5 class="card-title">Total Orders</h5>
-                    <p class="card-text">{{ total_orders }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-white bg-info">
-                <div class="card-body">
-                    <h5 class="card-title">Delivered</h5>
-                    <p class="card-text">{{ delivered }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-white bg-warning">
-                <div class="card-body">
-                    <h5 class="card-title">Pending</h5>
-                    <p class="card-text">{{ pending }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-white bg-secondary">
-                <div class="card-body">
-                    <h5 class="card-title">Completed</h5>
-                    <p class="card-text">{{ completed }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sales Rep Tasks -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card card-body">
-                <h5 class="card-title">🛠️ Sales Representative Tasks</h5>
-                <ul class="list-group">
-                    <li class="list-group-item"><a href="{% url 'report_view' %}">📈 Generate Reports</a></li>
-                    <li class="list-group-item"><a href="{% url 'manage_customers' %}">👥 Manage Assigned Customers</a></li>
-                    <li class="list-group-item"><a href="{% url 'release_projects' %}">📦 Release Completed Projects</a></li>
-                    <li class="list-group-item"><a href="{% url 'monitor_quotes' %}">📨 Monitor Quote Requests</a></li>
-                    <li class="list-group-item"><a href="{% url 'track_orders' %}">📊 Track Active Orders</a></li>
-                    <li class="list-group-item"><a href="{% url 'communicate_designers_admins' %}">💬 Communicate with Designers/Admins</a></li>
-                    <li class="list-group-item"><a href="{% url 'follow_up_payments' %}">💳 Follow-up on File Delivery & Payments</a></li>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar shadow-sm">
+            <div class="sidebar-sticky px-3 py-4">
+                <h5 class="text-dark fw-bold mb-4">📊 Sales Panel</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'sales-dashboard' %}">🏠 Dashboard</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'manage_customers' %}">👥 My Customers</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'monitor_quotes' %}">📦 Active Orders</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'track_orders' %}">📝 Quote Requests</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'release_projects' %}">✅ Released Projects</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <!-- the sale message function not created  -->
+                        <a class="nav-link" href="">
+                            📥 Messages
+                            {% if unread_count > 0 %}
+                                <span class="badge bg-danger">{{ unread_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
                 </ul>
             </div>
-        </div>
-    </div>
+        </nav>
 
-    <!-- Assigned Customers -->
-    <h4>👥 Assigned Customers</h4>
-    {% if customers %}
-        <ul class="list-group mb-4">
-            {% for customer in customers %}
-                <li class="list-group-item">{{ customer.name }} | {{ customer.email }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No customers assigned.</p>
-    {% endif %}
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+            <h2 class="mb-4">👨‍💼 Sales Representative Dashboard</h2>
 
-    <!-- Pending Orders -->
-    <div class="card card-body mb-4">
-        <h5 class="card-title">📦 Pending Orders</h5>
-        {% with orders|dictsort:"date_created" as sorted_orders %}
-        {% if sorted_orders %}
-        <table class="table table-sm table-bordered table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Customer</th>
-                    <th>Product</th>
-                    <th>Category</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th>Design File</th>
-                    <th>Invoice</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for order in sorted_orders %}
-                    {% if order.status == "Pending" %}
-                    <tr>
-                        <td>{{ order.customer.name }}</td>
-                        <td>{{ order.product.name }}</td>
-                        <td>{{ order.product.category }}</td>
-                        <td>{{ order.order_type }}</td>
-                        <td>{{ order.status }}</td>
-                        <td>{{ order.date_created|date:"M d, Y H:i" }}</td>
-                        <td>
-                            {% if order.design_file %}
-                                <a href="{{ order.design_file.url }}" download>⬇</a>
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if order.invoice_file %}
-                                <a href="{{ order.invoice_file.url }}" target="_blank">🧾</a>
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-                        <td>
-                            <form action="{% url 'mark_completed' order.id %}" method="POST">
-                                {% csrf_token %}
-                                <button class="btn btn-sm btn-success" onclick="return confirm('Mark this order as completed?');">
-                                    Mark Complete
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endif %}
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-            <p>No pending orders found.</p>
-        {% endif %}
-        {% endwith %}
-    </div>
+            <!-- Overview Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-white bg-primary shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Customers</h5>
+                            <p class="card-text fs-4">{{ customers_count }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-warning shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Quote Requests</h5>
+                            <p class="card-text fs-4">{{ quote_requests_count }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-success shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Active Orders</h5>
+                            <p class="card-text fs-4">{{ active_orders_count }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-info shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">Released Projects</h5>
+                            <p class="card-text fs-4">{{ released_projects_count }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Completed Orders -->
-    <div class="card card-body">
-        <h5 class="card-title">✅ Completed Orders</h5>
-        {% if orders %}
-        <table class="table table-sm table-bordered table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Customer</th>
-                    <th>Product</th>
-                    <th>Category</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th>Design File</th>
-                    <th>Invoice</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for order in orders %}
-                    {% if order.status == "Completed" %}
-                    <tr>
-                        <td>{{ order.customer.name }}</td>
-                        <td>{{ order.product.name }}</td>
-                        <td>{{ order.product.category }}</td>
-                        <td>{{ order.order_type }}</td>
-                        <td>{{ order.status }}</td>
-                        <td>{{ order.date_created|date:"M d, Y H:i" }}</td>
-                        <td>
-                            {% if order.design_file %}
-                                <a href="{{ order.design_file.url }}" download>⬇</a>
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if order.invoice_file %}
-                                <a href="{{ order.invoice_file.url }}" target="_blank">🧾</a>
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endif %}
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-            <p>No completed orders found.</p>
-        {% endif %}
+            <!-- Recent Orders -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    Recent Orders
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.customer.name }}</td>
+                                    <td>
+                                        {% if order.status == "Completed" %}
+                                            <span class="badge bg-success">{{ order.status }}</span>
+                                        {% elif order.status == "Pending" %}
+                                            <span class="badge bg-warning">{{ order.status }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ order.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ order.date_created|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'sales_order_detail' order.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">No recent orders available.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
     </div>
 </div>
 

@@ -159,6 +159,7 @@
                                         <th>Update</th>
                                         <th>Remove</th>
                                         <th>Review</th>
+                                        <th>info</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -176,8 +177,9 @@
                                             <span class="text-muted">No files</span>
                                             {% endfor %}
                                         </td>
-                                        <td> <a class="btn btn-outline-info" id="general-tab" data-bs-toggle="tab" href="{% url 'customer_orders' %}"
-                                            role="tab">Order Info</a></td>
+                                        <td>
+                                            <a class="btn btn-outline-info"  href="{% url 'customer_orders'  %}">info</a>
+                                        </td>
                                     </tr>
                                     {% empty %}
                                     <tr>
