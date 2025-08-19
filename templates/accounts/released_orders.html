@@ -12,6 +12,7 @@
                 <th>Order Type</th>
                 <th>Released On</th>
                 <th>Files</th>
+                <th>Actions</th> <!-- Added actions column -->
             </tr>
         </thead>
         <tbody>
@@ -19,7 +20,7 @@
             <tr>
                 <td>#{{ order.id }}</td>
                 <td>{{ order.product.name }}</td>
-                <td>{{order.order_type}}</td>
+                <td>{{ order.order_type }}</td>
                 <td>{{ order.date_created|date:"M d, Y H:i" }}</td>
                 <td>
                     {% if order.design_file %}
@@ -28,6 +29,12 @@
                     {% if order.invoice_file %}
                         <a href="{{ order.invoice_file.url }}" class="btn btn-sm btn-secondary">Invoice</a>
                     {% endif %}
+                </td>
+                <td>
+                    <!-- Feedback button -->
+                    <a href="{% url 'submit_feedback' order.id %}" class="btn btn-sm btn-warning">
+                        <i class="fas fa-comment"></i> Give Feedback
+                    </a>
                 </td>
             </tr>
             {% endfor %}

@@ -6,6 +6,7 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path("manage-orders/", views.manage_orders, name="manage_orders"),
     path('anis/', views.some_view, name='some_view'),# ths is for testing purpose
     path('users/', views.manage_users, name='manage_users'),
     path('users/edit/<int:pk>/', views.edit_user, name='edit_user'),
@@ -13,6 +14,7 @@ urlpatterns = [
     path('products/', views.products, name='products'),
     path('review-file/<int:pk>/', views.review_file, name='review_file'),
     path('customer/<int:pk>/<str:order_type>/', views.customer, name='customer_orders'),
+    path("designer/manage-orders/", views.designer_manage_orders, name="design_manage_orders"),   #this
     path('customer/create/', views.createCustomer, name='create_customer'),
     path('orders/<int:pk>/', views.order_detail, name='order_detail'),
     path('sales/release/<int:pk>/', views.release_order, name='release_order'),
@@ -56,8 +58,9 @@ urlpatterns = [
     path('admin-send-message/', views.admin_send_message, name='admin_send_message'),
     path('notifications/', views.view_notifications, name='view-notifications'),
     path('notifications/<int:pk>/read/', views.mark_notification_read, name='mark-notification-read'),
-    path("customer/released-orders/", views.customer_orders, name="customer_orders"),
-    
+    path("customer/released-orders/", views.customer_orders, name="released_orders"),
+    path("designer/feedback/", views.designer_feedback, name="designer_feedback"),
+    path("customer/order/<int:order_id>/feedback/", views.submit_feedback, name="submit_feedback"),
     
     
     

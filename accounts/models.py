@@ -225,4 +225,10 @@ def get_unread_notifications_count(self):
     return self.notification_set.filter(is_read=False).count()
 
 User.add_to_class('unread_notifications_count', property(get_unread_notifications_count))
-    
+
+# for feed back 
+class Feedback(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="feedbacks")
+    customer = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)

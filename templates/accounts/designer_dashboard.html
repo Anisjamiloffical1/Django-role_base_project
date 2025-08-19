@@ -12,7 +12,6 @@
                         <i class="fas fa-clipboard-list"></i> Assigned Orders
                     </a>
                 </li>
-                <!-- same in this this cant work with out loop -->
                 {% for order in orders %}
                 <li class="nav-item mb-2">
                     <a href="{% url 'upload_design' order.id %}" class="nav-link text-white">
@@ -26,7 +25,7 @@
                     </a>
                 </li>
                 <li class="nav-item mb-2">
-                    <a href="" class="nav-link text-white">
+                    <a href="{% url 'designer_feedback' %}" class="nav-link text-white">
                         <i class="fas fa-comments"></i> Feedback / Revisions
                     </a>
                 </li>
@@ -46,6 +45,36 @@
                     </a>
                 </div>
             </div>
+
+            <!-- Status Counters -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card text-white bg-primary shadow">
+                        <div class="card-body text-center">
+                            <h5>Total Orders</h5>
+                            <h3>{{ counts.total }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-warning shadow">
+                        <div class="card-body text-center">
+                            <h5>Pending</h5>
+                            <h3>{{ counts.pending }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-success shadow">
+                        <div class="card-body text-center">
+                            <h5>Completed</h5>
+                            <h3>{{ counts.completed }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
             <table class="table table-striped mt-3">
                 <thead>
                     <tr>
@@ -56,19 +85,26 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for order in orders %}
+                    {% for order in orders|slice:":5" %}
                     <tr>
                         <td>{{ order.id }}</td>
                         <td>{{ order.customer.name }}</td>
-                        <td>{{ order.status }}</td>
+                        <td>
+                            {% if order.status == "Pending" %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% elif order.status == "Completed" %}
+                                <span class="badge bg-success">Completed</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ order.status }}</span>
+                            {% endif %}
+                        </td>
                         <td>
                             <a href="{% url 'upload_design' order.id %}" class="btn btn-primary btn-sm">Upload Design</a>
-
                             {% if order.status != "Completed" %}
                                 <a href="{% url 'mark-design-completed' order.id %}" class="btn btn-success btn-sm ms-1">
                                     ✅ Mark Completed
                                 </a>
-                            {% endif %} 
+                            {% endif %}
                         </td>
                     </tr>
                     {% empty %}
@@ -78,6 +114,13 @@
                     {% endfor %}
                 </tbody>
             </table>
+
+            <!-- View All Button -->
+            <div class="text-end mt-3">
+                <a href="{% url 'design_manage_orders' %}" class="btn btn-outline-primary">
+                    View All Orders →
+                </a>
+            </div>
         </div>
     </div>
 </div>

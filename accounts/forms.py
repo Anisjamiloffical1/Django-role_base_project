@@ -80,3 +80,13 @@ class DesignerMessageForm(forms.ModelForm):
 class AdminSendMessageForm(forms.Form):
     receiver = forms.ModelChoiceField(queryset=User.objects.filter(groups__name='designer'), label="Send To")
     content = forms.CharField(widget=forms.Textarea, label="Message")
+
+
+
+class FeedbackForm(forms.ModelForm):
+    class Meta:
+        model = Feedback
+        fields = ['message']
+        widgets = {
+            'message': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Write your feedback...'})
+        }

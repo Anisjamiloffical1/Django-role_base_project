@@ -1,7 +1,7 @@
 from django.utils import timezone 
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import *
-from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm, DesignFileForm,DesignerMessageForm,AdminSendMessageForm
+from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm, DesignFileForm,DesignerMessageForm,AdminSendMessageForm, FeedbackForm
 from django.forms import inlineformset_factory
 from django.contrib import messages
 from django.utils.dateparse import parse_date
@@ -250,6 +250,17 @@ def home(request):
     }
 
     return render(request, 'accounts/dashboard.html', context)
+
+@admin_only
+def manage_orders(request):
+    # ✅ Show all orders
+    all_orders = Order.objects.all().order_by('-date_created')
+
+    context = {
+        'orders': all_orders
+    }
+    return render(request, 'accounts/manage_orders.html', context)
+
 def upload_file(request, order_id):
     order = Order.objects.get(id=order_id)
 
@@ -295,9 +306,14 @@ def products(request):
 @allowed_users(allowed_roles=['admin', 'customer'])
 def customer(request, pk, order_type):
     customer = get_object_or_404(Customer, id=pk)
-    orders = Order.objects.filter(customer=customer, order_type=order_type)
+
+    if order_type == "all":
+        orders = Order.objects.filter(customer=customer).order_by('-date_created')
+    else:
+        orders = Order.objects.filter(customer=customer, order_type=order_type).order_by('-date_created')
+
     total_order = orders.count()
-    
+
     context = {
         'customer': customer,
         'orders': orders,
@@ -337,7 +353,7 @@ def createOrder(request, pk, order_type=None):
             'review_status',
             'review_comment',
         ),
-        extra=1,
+        extra=1,          # always show 1 extra blank row for new order
         can_delete=False
     )
 
@@ -360,6 +376,7 @@ def createOrder(request, pk, order_type=None):
                 if not order.review_status:
                     order.review_status = 'Pending'
                 order.save()
+
                 # Generate invoice number
                 invoice_number = f"INV-{order.id:05d}"
 
@@ -385,8 +402,9 @@ def createOrder(request, pk, order_type=None):
 
     else:
         initial_data = [{'order_type': order_type}] if order_type else [{}]
+        # ✅ Show ALL existing orders for this customer, not just 5
         formset = OrderFormSet(
-            queryset=Order.objects.none(),
+            queryset=Order.objects.filter(customer=customer),
             instance=customer,
             initial=initial_data
         )
@@ -828,21 +846,30 @@ def setup_designer(request):
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['designer'])
+@login_required
 def designer_dashboard(request):
     status = request.GET.get('status', None)
-    orders = Order.objects.filter(assigned_designer=request.user)
-    
+
+    # All orders assigned to this designer
+    all_orders = Order.objects.filter(assigned_designer=request.user).order_by('-date_created')
+
+    # Filter if a status is selected
     if status:
-        orders = orders.filter(status=status)
-    
+        all_orders = all_orders.filter(status=status)
+
+    # Slice only the latest 5 for the dashboard preview
+    recent_orders = all_orders[:5]
+
+    # Counts for cards
     counts = {
-        'total': orders.count(),
-        'pending': orders.filter(status='Pending').count(),
-        'completed': orders.filter(status='Completed').count()
+        'total': all_orders.count(),
+        'pending': all_orders.filter(status='Pending').count(),
+        'completed': all_orders.filter(status='Completed').count()
     }
-    
+
     return render(request, 'accounts/designer_dashboard.html', {
-        'orders': orders,
+        'orders': recent_orders,     # dashboard shows latest 5
+        'all_orders': all_orders,    # sidebar can loop through all
         'counts': counts,
         'status_filter': status
     })
@@ -876,6 +903,35 @@ def upload_design(request, pk):
         'form': form,
         'order': order
     })
+
+@login_required
+def designer_manage_orders(request):
+    # Get all orders assigned to this designer
+    all_orders = Order.objects.filter(assigned_designer=request.user)
+
+    # Get status filter
+    status = request.GET.get('status', None)
+    orders = all_orders.order_by('-date_created')
+
+    if status:
+        orders = orders.filter(status=status)
+
+    # Add counters (always based on all orders, not the filtered set)
+    counts = {
+        'total': all_orders.count(),
+        'pending': all_orders.filter(status='Pending').count(),
+        'completed': all_orders.filter(status='Completed').count()
+    }
+
+    return render(request, 'accounts/design_manage_orders.html', {
+        'orders': orders,
+        'status_filter': status,
+        'counts': counts
+    })
+
+
+
+
 @login_required
 def mark_completed(request, order_id):
     order = get_object_or_404(Order, id=order_id)
@@ -1036,3 +1092,26 @@ def mark_thread_read(request, order_id):
         is_read=False
     ).update(is_read=True)
     return JsonResponse({'status': 'success'})
+
+@login_required
+def designer_feedback(request):
+    feedbacks = Feedback.objects.filter(order__assigned_designer=request.user).order_by('-created_at')
+    return render(request, "accounts/designer_feedback.html", {"feedbacks": feedbacks})
+
+@login_required
+def submit_feedback(request, order_id):
+    order = get_object_or_404(Order, id=order_id, customer__user=request.user)
+
+    if request.method == "POST":
+        form = FeedbackForm(request.POST)
+        if form.is_valid():
+            feedback = form.save(commit=False)
+            feedback.order = order
+            feedback.customer = request.user
+            feedback.save()
+            messages.success(request, "Your feedback has been submitted.")
+            return redirect('released_orders')  # redirect back to released orders page
+    else:
+        form = FeedbackForm()
+
+    return render(request, "accounts/submit_feedback.html", {"form": form, "order": order})
