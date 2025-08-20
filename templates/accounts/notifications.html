@@ -1,24 +1,74 @@
 {% extends 'accounts/main.html' %}
 {% block content %}
-<h2>Your Notifications</h2>
-<ul class="notification-list">
+
+<h2>Your Notifications 
+  <span id="notif-count" class="badge bg-danger">{{ unread_count }}</span>
+</h2>
+
+<ul class="notification-list list-group mt-3">
   {% for notification in notifications %}
-  <li class="{% if not notification.is_read %}unread{% endif %}">
-    <a href="{% url 'mark-notification-read' pk=notification.id %}" 
-       class="mark-read" data-id="{{ notification.id }}">
+  <li id="notif-{{ notification.id }}" 
+      class="list-group-item d-flex justify-content-between align-items-center {% if not notification.is_read %}unread{% endif %}">
+    
+    <div>
+      {% if notification.order %}
+        <a href="{% url 'order-detail' pk=notification.order.id %}">
+          {{ notification.message }}
+        </a>
+      {% else %}
+        {{ notification.message }}
+      {% endif %}
+      <br>
+      <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+    </div>
+
+    {% if not notification.is_read %}
+    <button class="btn btn-sm btn-outline-secondary mark-read" 
+            data-id="{{ notification.id }}" 
+            data-url="{% url 'mark_notification_read' pk=notification.id %}">
       ×
-    </a>
-    {% if notification.order %}
-    <a href="{% url 'order-detail' pk=notification.order.id %}">
-      {{ notification.message }}
-    </a>
-    {% else %}
-    {{ notification.message }}
+    </button>
     {% endif %}
-    <small>{{ notification.created_at|timesince }} ago</small>
   </li>
   {% empty %}
-  <li>No notifications</li>
+  <li class="list-group-item">No notifications</li>
   {% endfor %}
 </ul>
+
+<style>
+  .unread {
+    background-color: #f8f9fa;
+    font-weight: bold;
+  }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll(".mark-read").forEach(btn => {
+    btn.addEventListener("click", function(e) {
+      e.preventDefault();
+      let id = this.dataset.id;
+      let url = this.dataset.url;
+
+      fetch(url, {
+        method: "POST",
+        headers: { "X-CSRFToken": "{{ csrf_token }}" }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "ok") {
+          let li = document.getElementById(`notif-${id}`);
+          li.classList.remove("unread");
+          this.remove();
+
+          let countEl = document.getElementById("notif-count");
+          let current = parseInt(countEl.innerText);
+          if (current > 0) countEl.innerText = current - 1;
+        }
+      });
+    });
+  });
+});
+</script>
+
 {% endblock %}

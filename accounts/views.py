@@ -18,6 +18,7 @@ from django.template.loader import render_to_string
 from weasyprint import HTML
 from django.core.mail import send_mail
 import os
+from django.db.models import Q
 from django.conf import settings
 from django.db.models import Count, Sum, Q
 
@@ -220,6 +221,10 @@ def user_page(request):
                'pending': pending}
     return render(request, 'accounts/user.html', context)
 
+def customer_detail(request, pk):
+    customer = get_object_or_404(Customer, pk=pk)  # remove sales_rep filter
+    return render(request, "accounts/customer_detail.html", {"customer": customer})
+
 # this function is used to show the home page
 @login_required(login_url='login')
 @admin_only
@@ -329,7 +334,6 @@ def order_detail(request, pk):
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['customer', 'admin'])
 def createOrder(request, pk, order_type=None):
-    # Inline formset with all relevant fields from your new Order model
     OrderFormSet = inlineformset_factory(
         Customer,
         Order,
@@ -347,54 +351,43 @@ def createOrder(request, pk, order_type=None):
             'status',
             'Additional_information',
             'design_file',
-            'assigned_to',         # Sales Representative
-            'assigned_designer',   # Designer
+            'assigned_to',
+            'assigned_designer',
             'payment_status',
             'review_status',
             'review_comment',
         ),
-        extra=1,          # always show 1 extra blank row for new order
+        extra=1,  # always just 1 blank form
         can_delete=False
     )
 
     customer = get_object_or_404(Customer, id=pk)
 
     if request.method == 'POST':
-        formset = OrderFormSet(request.POST, request.FILES, instance=customer)
+        formset = OrderFormSet(request.POST, request.FILES, instance=customer, queryset=Order.objects.none())
         if formset.is_valid():
-            orders = formset.save()
-
+            orders = formset.save(commit=False)
             for order in orders:
                 order.customer = customer
-                # Ensure defaults for required fields
-                if not order.status:
-                    order.status = 'Pending'
-                if not order.price:
-                    order.price = 0
-                if not order.payment_status:
-                    order.payment_status = 'Pending'
-                if not order.review_status:
-                    order.review_status = 'Pending'
+                order.status = order.status or 'Pending'
+                order.price = order.price or 0
+                order.payment_status = order.payment_status or 'Pending'
+                order.review_status = order.review_status or 'Pending'
                 order.save()
 
                 # Generate invoice number
                 invoice_number = f"INV-{order.id:05d}"
-
-                # Render invoice HTML
                 html_string = render_to_string('accounts/invoice_template.html', {
                     'order': order,
                     'customer': customer,
                     'invoice_number': invoice_number
                 })
 
-                # Save invoice PDF
                 invoice_dir = os.path.join(settings.MEDIA_ROOT, 'invoices')
                 os.makedirs(invoice_dir, exist_ok=True)
                 pdf_path = os.path.join(invoice_dir, f"{invoice_number}.pdf")
-
                 HTML(string=html_string).write_pdf(pdf_path)
 
-                # Save file path to model
                 order.invoice_file.name = f"invoices/{invoice_number}.pdf"
                 order.save()
 
@@ -402,9 +395,8 @@ def createOrder(request, pk, order_type=None):
 
     else:
         initial_data = [{'order_type': order_type}] if order_type else [{}]
-        # ✅ Show ALL existing orders for this customer, not just 5
         formset = OrderFormSet(
-            queryset=Order.objects.filter(customer=customer),
+            queryset=Order.objects.none(),  # ✅ Only show 1 blank form
             instance=customer,
             initial=initial_data
         )
@@ -529,28 +521,28 @@ def accountSettings(request):
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['sales_rep'])
 def sales_dashboard(request):
-    sales_rep = request.user.salesrepresentative
-    customers = Customer.objects.filter(sales_rep=sales_rep)
+    sales_rep = SalesRepresentative.objects.get(user=request.user)
 
-    orders = Order.objects.filter(customer__in=customers)
+    # Count metrics
+    customers_count = Customer.objects.filter(sales_rep=sales_rep).count()
+    quote_requests_count = Order.objects.filter(customer__sales_rep=sales_rep, status="Quote Requested").count()
+    active_orders_count = Order.objects.filter(customer__sales_rep=sales_rep, status="Active").count()
+    released_projects_count = Order.objects.filter(customer__sales_rep=sales_rep, status="Released").count()
 
-    total_customers = customers.count()
-    total_orders = orders.count()
-    delivered = orders.filter(status='Delivered').count()
-    pending = orders.filter(status='Pending').count()
-    completed = orders.filter(status='Completed').count()  # ✅ Add this
+    # Recent Orders (last 5)
+    recent_orders = Order.objects.filter(customer__sales_rep=sales_rep).order_by('-date_created')[:5]
 
     context = {
-        'customers': customers,
-        'orders': orders,   # this still has ALL orders
-        'total_customers': total_customers,
-        'total_orders': total_orders,
-        'delivered': delivered,
-        'pending': pending,
-        'completed': completed,  # ✅ send to template
+        "customers_count": customers_count,
+        "quote_requests_count": quote_requests_count,
+        "active_orders_count": active_orders_count,
+        "released_projects_count": released_projects_count,
+        "recent_orders": recent_orders,
     }
+    return render(request, "accounts/sales_dashboard.html", context)
 
-    return render(request, 'accounts/sales_dashboard.html', context)
+
+
 @login_required
 def order_detail(request, pk):
     order = get_object_or_404(Order, id=pk)
@@ -559,6 +551,14 @@ def order_detail(request, pk):
         'order': order
     }
     return render(request, 'accounts/order_detail.html', context=context)
+
+@login_required
+def sales_order_detail(request, order_id):
+    order = get_object_or_404(Order, id=order_id, customer__sales_rep=request.user)
+    return render(request, "accounts/sales_order_detail.html", {"order": order})
+
+
+
 @login_required
 def release_order(request, pk):
     sales_rep = get_object_or_404(SalesRepresentative, user=request.user)
@@ -597,10 +597,9 @@ def mark_completed(request, order_id):
 # --------
 @login_required
 def manage_customers(request):
-    try:
-        sales_rep = SalesRepresentative.objects.get(user=request.user)
-    except SalesRepresentative.DoesNotExist:
-        sales_rep = None
+    sales_rep = get_sales_rep(request)
+    if not sales_rep:
+        return redirect("sales-dashboard")
 
     customers = Customer.objects.filter(sales_rep=sales_rep)
     return render(request, 'accounts/sales/manage_customers.html', {'assigned_customers': customers})
@@ -640,18 +639,30 @@ def release_projects(request):
         'completed_orders': completed_orders
     }
     return render(request, 'accounts/sales/release_projects.html', context)
-
+def get_sales_rep(request):
+    try:
+        return request.user.salesrepresentative  # returns the related SalesRepresentative instance
+    except SalesRepresentative.DoesNotExist:  # wrong exception for reverse relation
+        messages.error(request, "You are not assigned as a Sales Representative.")
+        return None
+    except AttributeError:  # if request.user is AnonymousUser or has no relation
+        return None
+    except Exception:
+        return None
 
 @login_required
 def monitor_quotes(request):
-    # Only show orders assigned to the logged-in sales rep
+    sales_rep = get_sales_rep(request)
+    if not sales_rep:
+        return redirect("sales-dashboard")
+
     quote_requests = Order.objects.filter(
-        assigned_to__user=request.user,
+        customer__sales_rep=sales_rep,
         status="Quote Requested"
     ).order_by('-date_created')
 
     active_orders = Order.objects.filter(
-        assigned_to__user=request.user,
+        customer__sales_rep=sales_rep,
         status="Active"
     ).order_by('-date_created')
 
@@ -660,10 +671,20 @@ def monitor_quotes(request):
         'active_orders': active_orders,
     }
     return render(request, 'accounts/sales/monitor_quotes.html', context)
-
 @login_required
 def track_orders(request):
-    return render(request, 'accounts/sales/track_orders.html')
+    sales_rep = get_sales_rep(request)
+    if not sales_rep:
+        return redirect("sales-dashboard")
+
+    quote_orders = Order.objects.filter(
+        customer__sales_rep=sales_rep,
+        status="Quote Requested"
+    ).order_by("-date_created")
+
+    return render(request, "accounts/sales/track_orders.html", {
+        "quote_orders": quote_orders
+    })
 
 @login_required
 def communicate_designers_admins(request):
@@ -671,7 +692,20 @@ def communicate_designers_admins(request):
 
 @login_required
 def follow_up_payments(request):
-    return render(request, 'accounts/sales/follow_up.html')
+    try:
+        # Get the SalesRepresentative object for the logged-in user
+        sales_rep = SalesRepresentative.objects.get(user=request.user)
+    except SalesRepresentative.DoesNotExist:
+        return redirect("sales_dashboard")  # if no sales rep found, redirect
+
+    released_orders = Order.objects.filter(
+        customer__sales_rep=sales_rep,   # now passing SalesRepresentative instance ✅
+        status="Released"
+    ).order_by("-date_created")
+
+    return render(request, "accounts/follow_up_payments.html", {
+        "released_orders": released_orders
+    })
 # this area is used to generate reports for admin and sales reps , 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'sales_rep'])
@@ -1073,7 +1107,11 @@ def view_message(request, pk):
 @login_required
 def view_notifications(request):
     notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
-    return render(request, 'accounts/notifications.html', {'notifications': notifications})
+    unread_count = notifications.filter(is_read=False).count()
+    return render(request, 'accounts/notifications.html', {
+        'notifications': notifications,
+        'unread_count': unread_count
+    })
 
 @login_required
 def mark_notification_read(request, pk):
@@ -1085,13 +1123,21 @@ def mark_notification_read(request, pk):
 @login_required
 @allowed_users(allowed_roles=['designer'])
 def mark_thread_read(request, order_id):
-    # Mark all messages in thread as read
     DesignerMessage.objects.filter(
         order_id=order_id,
         receiver=request.user,
         is_read=False
     ).update(is_read=True)
     return JsonResponse({'status': 'success'})
+
+def unread_notifications(request):
+    if request.user.is_authenticated:
+        unread_count = Notification.objects.filter(
+            user=request.user, is_read=False
+        ).count()
+    else:
+        unread_count = 0
+    return {"navbar_unread_count": unread_count}
 
 @login_required
 def designer_feedback(request):

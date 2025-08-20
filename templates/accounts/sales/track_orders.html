@@ -1,0 +1,46 @@
+{% extends "accounts/main.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h2>📝 Quote Requests</h2>
+
+    <div class="card shadow-sm mt-3">
+        <div class="card-body table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Product</th>
+                        <th>Date Requested</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in quote_orders %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td>{{ order.customer.name }}</td>
+                            <td>{{ order.product }}</td>
+                            <td>{{ order.date_created|date:"M d, Y" }}</td>
+                            <td><span class="badge bg-warning">{{ order.status }}</span></td>
+                            <td>
+                                <a href="{% url 'sales_order_detail' order.id %}" 
+                                   class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                No quote requests available.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

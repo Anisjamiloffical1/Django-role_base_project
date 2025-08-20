@@ -1,0 +1,60 @@
+{% extends 'accounts/main.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Customer Details</h2>
+    <div class="card mb-4">
+        <div class="card-body d-flex align-items-center">
+            <!-- Profile Picture -->
+            <div class="me-4">
+                <img src="{{ customer.profile_pic.url }}" alt="{{ customer.name }}" class="rounded-circle" width="120" height="120">
+            </div>
+
+            <!-- Customer Info -->
+            <div>
+                <h4>{{ customer.name }}</h4>
+                <p><strong>Email:</strong> {{ customer.email }}</p>
+                <p><strong>Phone:</strong> {{ customer.phone }}</p>
+                <p><strong>Assigned Sales Rep:</strong> {{ customer.sales_rep.name }}</p>
+                
+
+                <p><strong>Date Created:</strong> {{ customer.date_created|date:"F j, Y" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <h4>Orders</h4>
+    {% if customer.order_set.all %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Product</th>
+                <th>Order Type</th>
+                <th>Status</th>
+                <th>Date Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in customer.order_set.all %}
+            <tr>
+                <td>{{ order.id }}</td>
+                <td>{{ order.product.name }}</td>
+                <td>{{ order.order_type }}</td>
+                <td>{{ order.status }}</td>
+                <td>{{ order.date_created|date:"M d, Y" }}</td>
+                <td>
+                    <a href="{% url 'sales_order_detail' order.id %}" class="btn btn-sm btn-primary">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No orders found for this customer.</p>
+    {% endif %}
+</div>
+{% endblock %}

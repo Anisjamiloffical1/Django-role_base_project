@@ -24,14 +24,13 @@
                         <a class="nav-link" href="{% url 'release_projects' %}">✅ Released Projects</a>
                     </li>
                     <li class="nav-item mb-2">
-                        <!-- the sale message function not created  -->
-                        <a class="nav-link" href="">
-                            📥 Messages
-                            {% if unread_count > 0 %}
-                                <span class="badge bg-danger">{{ unread_count }}</span>
-                            {% endif %}
-                        </a>
+                        <a class="nav-link" href="{% url 'follow_up_payments' %}">💳 Follow Up</a>
                     </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'communicate_designers_admins' %}">📥 Messages</a>
+                    </li>
+                    
+                    
                 </ul>
             </div>
         </nav>

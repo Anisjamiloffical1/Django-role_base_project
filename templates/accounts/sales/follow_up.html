@@ -1,0 +1,61 @@
+{% extends "accounts/main.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h2>💳 Follow Up on Payments & Delivery</h2>
+
+    {% if pending_orders %}
+    <table class="table table-bordered table-striped mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Product</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Files</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in pending_orders %}
+            <tr>
+                <td>#{{ order.id }}</td>
+                <td>{{ order.customer.name }}</td>
+                <td>{{ order.product }}</td>
+                <td><span class="badge bg-info">{{ order.status }}</span></td>
+                <td>
+                    {% if order.is_paid %}
+                        ✅ Paid
+                    {% else %}
+                        ❌ Pending
+                    {% endif %}
+                </td>
+                <td>
+                    {% if order.design_file %}
+                        <a href="{{ order.design_file.url }}" class="btn btn-sm btn-primary">Design</a>
+                    {% else %}
+                        ❌ Missing
+                    {% endif %}
+                    {% if order.invoice_file %}
+                        <a href="{{ order.invoice_file.url }}" class="btn btn-sm btn-secondary">Invoice</a>
+                    {% else %}
+                        ❌ Missing
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'sales_order_detail' order.id %}" 
+                       class="btn btn-sm btn-outline-primary">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert alert-success mt-3">
+        🎉 All released orders are paid and delivered!
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
