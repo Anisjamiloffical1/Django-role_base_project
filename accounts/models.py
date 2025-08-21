@@ -1,9 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.db.models import Sum
+from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 # Create your models here.
 class Customer(models.Model):
-    user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE, related_name="customer_profile")
     name = models.CharField(max_length=200 )
     sales_rep = models.ForeignKey('SalesRepresentative', null=True, blank=True, on_delete=models.SET_NULL, related_name='assigned_customers')
     profile_pic = models.ImageField(
@@ -18,10 +21,15 @@ class Customer(models.Model):
     def __str__(self):
         return self.name
 class SalesRepresentative(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="sales_rep_profile")
     name = models.CharField(max_length=200, null=True, blank=True)
     def __str__(self):
         return self.user.username
+    def get_orders(self, status=None):
+        qs = Order.objects.filter(customer__sales_rep=self)
+        if status:
+            qs = qs.filter(status=status)
+        return qs
     
 
 class Designer(models.Model):
@@ -50,6 +58,7 @@ class Product(models.Model):
     name = models.CharField(max_length=200)
     price = models.FloatField(null=True)
     category = models.CharField(max_length=200, null=True, choices=CATEGORY)
+    image = models.ImageField(upload_to='products/',null=True, blank=True) 
     description = models.CharField(max_length=200)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
     tags = models.ManyToManyField(Tag)
@@ -162,7 +171,6 @@ class Order(models.Model):
     total_colors = models.PositiveIntegerField(null=True ,blank=True)
     turnaround_time = models.CharField(max_length=100, blank=True, null=True)
     placement = models.CharField(max_length=100, blank=True, null=True, choices=PLACEMENT_CHOICES)
-    assigned_to = models.ForeignKey('SalesRepresentative', on_delete=models.SET_NULL, null=True, blank=True)
     released = models.BooleanField(default=False)  # For release_projects
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='Pending')  # For follow-up payments
     date_completed = models.DateTimeField(null=True, blank=True)  # Optional: track completion time
@@ -233,3 +241,45 @@ class Feedback(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Invoice(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    year = models.PositiveIntegerField()
+    month = models.PositiveIntegerField()
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('customer', 'year', 'month')  # one invoice per customer per month
+        ordering = ['-year', '-month']
+
+    def __str__(self):
+        return f"Invoice: {self.customer.name} - {self.month}/{self.year}"
+
+    def calculate_total(self):
+        """Calculate total from all completed orders for that month"""
+        total = Order.objects.filter(
+            customer=self.customer,
+            status="Completed",
+            created_at__year=self.year,
+            created_at__month=self.month
+        ).aggregate(Sum('price'))['price__sum'] or 0
+        self.total_amount = total
+        self.save()
+        return self.total_amount
+    
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        if instance.groups.filter(name="SalesRepresentative").exists():
+            SalesRepresentative.objects.create(user=instance, name=instance.username)
+        elif instance.groups.filter(name="Customer").exists():
+            Customer.objects.create(user=instance, name=instance.username)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    if hasattr(instance, "sales_rep_profile"):
+        instance.sales_rep_profile.save()
+    if hasattr(instance, "customer_profile"):
+        instance.customer_profile.save()

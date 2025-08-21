@@ -107,21 +107,38 @@
   </div>
 
   <div class="d-flex align-items-center">
-    {% if user.is_authenticated %}
+  {% if user.is_authenticated %}
     {% if request.user.groups.all.0.name == 'designer' %}
-    <div class="notification-badge me-3">
-      <a href="{% url 'view_notifications' %}" class="nav-link p-0">
-        <i class="fas fa-bell fa-lg"></i>
-        {% if unread_count > 0 %}
-        <span class="badge bg-danger">
-          {{ unread_count }}
-        </span>
-        {% endif %}
-      </a>
+      <div class="notification-badge me-3">
+        <a href="{% url 'view_notifications' %}" class="nav-link p-0">
+          <i class="fas fa-bell fa-lg"></i>
+          {% if unread_count > 0 %}
+            <span class="badge bg-danger">{{ unread_count }}</span>
+          {% endif %}
+        </a>
+      </div>
+    {% endif %}
+
+    <!-- User Profile -->
+    <div class="d-flex align-items-center ms-3">
+      {% if user.customer_profile and user.customer_profile.profile_pic %}
+        <img src="{{ user.customer_profile.profile_pic.url }}" 
+             alt="{{ user.first_name }}" 
+             class="rounded-circle" 
+             style="height:40px; width:40px; object-fit:cover; margin-right:10px;">
+      {% else %}
+        <img src="{{ MEDIA_URL }}profile_pics/default.png" 
+             alt="{{ user.first_name }}" 
+             class="rounded-circle" 
+             style="height:40px; width:40px; object-fit:cover; margin-right:10px;">
+      {% endif %}
+      <span class="hello-msg">Hello, {{ user.first_name }}!</span>
     </div>
-    {% endif %}
-    <span class="hello-msg">Hello, {{ user.first_name }}!</span>
-    <span class="hello-msg"><a class="logout-link" href="{% url 'logout' %}">Logout</a></span>
-    {% endif %}
-  </div>
+
+    <span class="hello-msg ms-3">
+      <a class="logout-link" href="{% url 'logout' %}">Logout</a>
+    </span>
+  {% endif %}
+</div>
+
 </nav>

@@ -19,10 +19,10 @@ urlpatterns = [
     path('customer/create/', views.createCustomer, name='create_customer'),
     path('orders/<int:pk>/', views.order_detail, name='order_detail'),
     path('sales/release/<int:pk>/', views.release_order, name='release_order'),
-    path('create_order/<str:pk>/<str:order_type>/', views.createOrder, name='create_order'),
+    path('create_order/<int:pk>/<str:order_type>/', views.createOrder, name='create_order'),
     path('order/history/', views.orderHistory, name='order_history'),
     path('order/<int:pk>/download_design/', views.downloadDesign, name='download_design'),
-    path('order/<int:pk>/download_invoice/', views.downloadInvoice, name='download_invoice'),
+    path('order/<int:pk>/download-invoice/', views.downloadInvoice, name='download_invoice'),
     path('order/<int:pk>/print_invoice/', views.printInvoice, name='print_invoice'),
     path('orders/<int:pk>/invoice/', views.order_invoice, name='order_invoice'),
     path('update_order/<str:pk>/', views.updateOrder, name='update_order'),
@@ -30,6 +30,8 @@ urlpatterns = [
     path('register/', views.register_page, name='register'),
     path('login/', views.login_page, name='login'),
     path('reports/', views.report_view, name='report_view'),
+    path('admin-release-orders/', views.admin_release_orders, name='admin_release_orders'),# for admin relased orders show
+    path('admin-release-orders/<int:order_id>/', views.admin_release_order, name='admin_release_order'),# relased order to customer
     path('reports/export/csv/', views.export_report_csv, name='export_report_csv'),
     path('logout/', views.logout_page, name='logout'),
     path('user/', views.user_page, name='user-page'),
@@ -64,7 +66,12 @@ urlpatterns = [
     path("customer/released-orders/", views.customer_orders, name="released_orders"),
     path("designer/feedback/", views.designer_feedback, name="designer_feedback"),
     path("customer/order/<int:order_id>/feedback/", views.submit_feedback, name="submit_feedback"),
-    
-    
-    
+    # Monthly Invoices
+    path('customer/<int:pk>/invoices/', views.customer_invoices, name='customer_invoices'),
+    path('customer/<int:pk>/invoices/<int:year>/<int:month>/', views.invoice_detail, name='invoice_detail'),
+
+  
 ]
+    
+    
+    

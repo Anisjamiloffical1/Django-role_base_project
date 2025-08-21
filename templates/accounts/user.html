@@ -82,15 +82,15 @@
             <ul class="nav flex-column">
                 <li class="nav-item"><a class="nav-link" href="#">Dashboard</a></li>
                 <li class="nav-item"><a class="nav-link"
-                        href="{% url 'customer_orders' request.user.customer.id 'Patch' %}">Patches Orders</a></li>
+                        href="{% url 'customer_orders' customer.id 'Patch' %}">Patches Orders</a></li>
                 <li class="nav-item"><a class="nav-link"
-                        href="{% url 'customer_orders' request.user.customer.id 'Digitizing' %}">Digitizing Orders</a>
+                        href="{% url 'customer_orders' customer.id 'Digitizing' %}">Digitizing Orders</a>
                 </li>
                 <li class="nav-item"><a class="nav-link"
-                        href="{% url 'customer_orders' request.user.customer.id 'Quote' %}">Quotes Orders</a></li>
+                        href="{% url 'customer_orders' customer.id 'Quote' %}">Quotes Orders</a></li>
                 <li class="nav-item"><a class="nav-link"
-                        href="{% url 'customer_orders' request.user.customer.id 'Vector' %}">Vectors Orders</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Invoices</a></li>
+                        href="{% url 'customer_orders' customer.id 'Vector' %}">Vectors Orders</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'customer_invoices' customer.id %}">Invoices</a></li>
                 <li class="nav-item"><a class="nav-link" href="#">My Profile</a></li>
             </ul>
         </div>
@@ -99,7 +99,7 @@
         <div class="col-md-10">
             <div class="dashboard-grid">
                 <!-- Place Digitizing Order -->
-                <a href="{% url 'create_order' request.user.customer.id 'Digitizing' %}">
+                <a href="{% url 'create_order' customer.id|stringformat:"s" 'Digitizing' %}">
                     <div class="dashboard-card">
                         <div class="icon">💰</div>
                         <div class="label">Place Digitizing Order</div>
@@ -107,7 +107,7 @@
                 </a>
 
                 <!-- Place Vector Order -->
-                <a href="{% url 'create_order' request.user.customer.id 'Vector' %}">
+                <a href="{% url 'create_order' customer.id 'Vector' %}">
                     <div class="dashboard-card">
                         <div class="icon">✏️</div>
                         <div class="label">Place Vector Order</div>
@@ -115,7 +115,7 @@
                 </a>
 
                 <!-- Place Patch Order -->
-                <a href="{% url 'create_order' request.user.customer.id 'Patch' %}">
+                <a href="{% url 'create_order' customer.id 'Patch' %}">
                     <div class="dashboard-card">
                         <div class="icon">🧷</div>
                         <div class="label">Place Patch Order</div>
@@ -125,7 +125,7 @@
                 <!-- Digitizing Records -->
 
 
-                <a href="{% url 'customer_orders' request.user.customer.id 'Digitizing' %}"
+                <a href="{% url 'customer_orders' customer.id 'Digitizing' %}"
                     style="text-decoration: none; color: inherit;">
                     <div class="dashboard-card">
                         <div class="icon">📄</div>
@@ -135,7 +135,7 @@
 
 
                 <!-- Vector Records -->
-                <a href="{% url 'customer_orders' request.user.customer.id 'Vector' %}">
+                <a href="{% url 'customer_orders' customer.id 'Vector' %}">
                     <div class="dashboard-card">
                         <div class="icon">📄</div>
                         <div class="label">Vector Records</div>
@@ -143,7 +143,7 @@
                 </a>
 
                 <!-- Patch Records -->
-                <a href="{% url 'customer_orders' request.user.customer.id 'Patch' %}">
+                <a href="{% url 'customer_orders' customer.id 'Patch' %}">
                     <div class="dashboard-card">
                         <div class="icon">📄</div>
                         <div class="label">Patch Records</div>
@@ -151,7 +151,7 @@
                 </a>
 
                 <!-- Send Quote -->
-                <a href="{% url 'create_order' request.user.customer.id 'Quote' %}">
+                <a href="{% url 'create_order' customer.id 'Quote' %}">
                     <div class="dashboard-card">
                         <div class="icon">💬</div>
                         <div class="label">Send Quote</div>
@@ -160,13 +160,13 @@
 
                 <!-- Quote Records -->
 
-                <a href="{% url 'customer_orders' request.user.customer.id 'Quote' %}">
+                <a href="{% url 'customer_orders' customer.id 'Quote' %}">
                     <div class="dashboard-card">
                         <div class="icon">📄</div>
                         <div class="label">Quote Records</div>
                     </div>
                 </a>
-                <a href="{% url 'print_invoice' request.user.customer.id %}">
+                <a href="{% url 'customer_invoices' customer.id %}">
                     <div class="dashboard-card">
                         <div class="icon">🧾</div>
                         <div class="label">Invoices</div>

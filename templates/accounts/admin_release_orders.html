@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h3>✅ Completed Orders Assigned to You</h3>
+    <h3>✅ Completed Orders Pending Release</h3>
 
     {% if completed_orders %}
     <table class="table table-bordered table-hover mt-3">
@@ -34,11 +34,15 @@
                     {% endif %}
                 </td>
                 <td>
-                    <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-info me-1">View</a>
-
-                    <form action="{% url 'release_projects' %}" method="POST" style="display:inline;">
+                    {% if order.get_absolute_url %}
+                        <a href="{{ order.get_absolute_url }}" class="btn btn-sm btn-info me-1">View</a>
+                    {% else %}
+                        <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-info me-1">View</a>
+                    {% endif %}
+                    
+                    <!-- Release Order Button -->
+                    <form action="{% url 'admin_release_order' order.id %}" method="POST" style="display:inline;">
                         {% csrf_token %}
-                        <input type="hidden" name="order_id" value="{{ order.id }}">
                         <button type="submit" class="btn btn-sm btn-success">Release</button>
                     </form>
                 </td>
@@ -48,7 +52,7 @@
     </table>
     {% else %}
     <div class="alert alert-warning mt-3">
-        No completed orders found.
+        No completed orders pending release.
     </div>
     {% endif %}
 </div>

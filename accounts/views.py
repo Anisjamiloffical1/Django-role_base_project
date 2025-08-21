@@ -19,6 +19,9 @@ from weasyprint import HTML
 from django.core.mail import send_mail
 import os
 from django.db.models import Q
+from django.db.models import Sum
+from django.utils.timezone import now
+import calendar
 from django.conf import settings
 from django.db.models import Count, Sum, Q
 
@@ -211,14 +214,19 @@ def logout_page(request):
 @allowed_users(allowed_roles=['customer'])
 def user_page(request):
     customer, created = Customer.objects.get_or_create(user=request.user)
-    orders = request.user.customer.order_set.all()
+
+    orders = customer.order_set.all()
     total_order = orders.count()
     delivered = orders.filter(status='Delivered').count()
     pending = orders.filter(status='Pending').count()
-    context = {'orders': orders,
-               'total_order': total_order,
-               'delivered': delivered,
-               'pending': pending}
+
+    context = {
+        'customer': customer,   # ✅ add this
+        'orders': orders,
+        'total_order': total_order,
+        'delivered': delivered,
+        'pending': pending,
+    }
     return render(request, 'accounts/user.html', context)
 
 def customer_detail(request, pk):
@@ -255,6 +263,68 @@ def home(request):
     }
 
     return render(request, 'accounts/dashboard.html', context)
+
+##############
+def admin_release_orders(request):
+    # Completed orders (status = 'Completed')
+    completed_orders = Order.objects.filter(status='Completed').order_by('-date_created')
+
+    if request.method == "POST":
+        order_id = request.POST.get("order_id")
+        order = get_object_or_404(Order, id=order_id, status='Completed')
+
+        # Mark as Released
+        order.status = 'Released'
+        order.save()
+
+        # Send email to customer
+        if order.customer and order.customer.email:
+            subject = f"Your Order #{order.id} is Completed and Released"
+            message = f"""
+Dear {order.customer.name},
+
+Your order #{order.id} has been completed and released by our admin team.
+
+If you have already sent the payment, you can now enjoy your design!
+If not, please send the payment at your earliest convenience to access your design.
+
+Thank you for choosing Elite Digitizer.
+
+Best regards,
+Elite Digitizer Team
+"""
+            if order.design_file:
+                message += f"\nDownload your design here: {request.build_absolute_uri(order.design_file.url)}"
+
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [order.customer.email])
+
+        messages.success(request, f"Order #{order.id} released successfully!")
+
+        return redirect('admin_release_orders')
+
+    context = {
+        'completed_orders': completed_orders
+    }
+    return render(request, 'accounts/admin_release_orders.html', context)
+
+def admin_release_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id, status='Completed')
+    order.status = 'Released'
+    order.save()
+    messages.success(request, f"Order #{order.id} released successfully!")
+    return redirect('admin_release_orders')
+
+
+
+
+
+
+
+
+
+
+
+###############
 
 @admin_only
 def manage_orders(request):
@@ -327,9 +397,7 @@ def customer(request, pk, order_type):
     }
     return render(request, 'accounts/customer.html', context)
 
-def order_detail(request, pk):
-    order = get_object_or_404(Order, id=pk)
-    return render(request, 'accounts/order_detail.html', {'order': order})
+
 # the commit function for just 1 item in the formset create 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['customer', 'admin'])
@@ -348,10 +416,11 @@ def createOrder(request, pk, order_type=None):
             'total_colors',
             'placement',
             'price',
+            'Height',
+            'Width',
             'status',
             'Additional_information',
             'design_file',
-            'assigned_to',
             'assigned_designer',
             'payment_status',
             'review_status',
@@ -554,10 +623,15 @@ def order_detail(request, pk):
 
 @login_required
 def sales_order_detail(request, order_id):
-    order = get_object_or_404(Order, id=order_id, customer__sales_rep=request.user)
+    # Get the SalesRepresentative linked to the logged-in user
+    sales_rep = get_object_or_404(SalesRepresentative, user=request.user)
+
+    # Query order correctly using SalesRepresentative instance
+    order = get_object_or_404(Order, id=order_id, customer__sales_rep=sales_rep)
+
     return render(request, "accounts/sales_order_detail.html", {"order": order})
 
-
+# the order released than auto email to customer your order is released
 
 @login_required
 def release_order(request, pk):
@@ -610,9 +684,9 @@ def release_projects(request):
 
     # Completed orders waiting to be released
     completed_orders = Order.objects.filter(
-        assigned_to=sales_rep,
-        status='Completed'
-    ).order_by('-date_created')
+    customer__sales_rep=sales_rep,
+    status='Completed'
+).order_by('-date_created')
 
     if request.method == "POST":
         order_id = request.POST.get("order_id")
@@ -620,35 +694,39 @@ def release_projects(request):
 
         # Mark as released
         order.status = "Released"
+        order.date_released = timezone.now()  # optional
         order.save()
 
         # Send email to customer (if email exists)
-        if order.customer.email:
-            subject = f"Your Order #{order.id} is Ready"
-            message = "Dear {},\n\nYour design has been completed and released by our team.".format(order.customer.name)
-            email_from = settings.DEFAULT_FROM_EMAIL
-            recipient_list = [order.customer.email]
+        # if order.customer.email:
+        #     subject = f"Your Order #{order.id} is Ready"
+        #     message = "Dear {},\n\nYour design has been completed and released by our team.".format(order.customer.name)
+        #     email_from = settings.DEFAULT_FROM_EMAIL
+        #     recipient_list = [order.customer.email]
 
-            # Optionally include file link
-            if order.design_file:
-                message += f"\n\nYou can download your design here: {request.build_absolute_uri(order.design_file.url)}"
+        #     # Optionally include file link
+        #     if order.design_file:
+        #         message += f"\n\nYou can download your design here: {request.build_absolute_uri(order.design_file.url)}"
 
-            send_mail(subject, message, email_from, recipient_list)
+        #     send_mail(subject, message, email_from, recipient_list)
+        messages.success(request, f"Order #{order.id} released! Customer can now pay.")
 
     context = {
         'completed_orders': completed_orders
     }
     return render(request, 'accounts/sales/release_projects.html', context)
+
+
+
+
 def get_sales_rep(request):
     try:
-        return request.user.salesrepresentative  # returns the related SalesRepresentative instance
-    except SalesRepresentative.DoesNotExist:  # wrong exception for reverse relation
-        messages.error(request, "You are not assigned as a Sales Representative.")
+        return request.user.sales_rep_profile  # correct reverse accessor
+    except AttributeError:  # handles AnonymousUser or missing profile
         return None
-    except AttributeError:  # if request.user is AnonymousUser or has no relation
-        return None
-    except Exception:
-        return None
+    
+
+
 
 @login_required
 def monitor_quotes(request):
@@ -703,7 +781,7 @@ def follow_up_payments(request):
         status="Released"
     ).order_by("-date_created")
 
-    return render(request, "accounts/follow_up_payments.html", {
+    return render(request, "accounts/sales/follow_up.html", {
         "released_orders": released_orders
     })
 # this area is used to generate reports for admin and sales reps , 
@@ -987,13 +1065,40 @@ def mark_design_completed(request, order_id):
     order.save()
     
     # Notify sales rep
-    if order.assigned_to:
+    sales_rep = getattr(order.customer, 'sales_rep', None)
+    if sales_rep:
         notify_user(
-            user=order.assigned_to.user,
+            user=sales_rep.user,
             message=f"Order #{order.id} was completed by designer"
         )
+        
+    # Notify Customer: Request payment before sending the design
+    # this is optional add if client to add this orther wise remove this 
+    if order.customer and order.customer.email:
+        subject = f"Order #{order.id} Completed – Payment Required"
+        message = f"""
+Hello {order.customer.name},
+
+Your order #{order.id} has been completed by our designer.
+
+Please complete the payment to receive your design file.
+
+Once payment is received, we will send you your design immediately.
+
+Thank you for your cooperation!
+
+Best regards,
+Elite Digitizer
+"""
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[order.customer.email],
+            fail_silently=False,
+        )
     
-    messages.success(request, "Order marked as completed!")
+    messages.success(request, "Order marked as Completed! Waiting for Sales/Admin release.")
     return redirect('designer-dashboard')
 
 @login_required(login_url='login')
@@ -1161,3 +1266,44 @@ def submit_feedback(request, order_id):
         form = FeedbackForm()
 
     return render(request, "accounts/submit_feedback.html", {"form": form, "order": order})
+
+
+#
+@login_required
+def customer_invoices(request, pk):
+    customer = get_object_or_404(Customer, id=pk, user=request.user)
+    
+    # Get all invoices for the customer
+    invoices = Invoice.objects.filter(customer=customer).order_by('-year', '-month')
+
+    # Add month name
+    for invoice in invoices:
+        invoice.month_name = calendar.month_name[invoice.month]
+
+    return render(request, 'accounts/customer_invoices.html', {'invoices': invoices, 'customer': customer})
+
+
+@login_required
+def invoice_detail(request, pk, year, month):
+    customer = get_object_or_404(Customer, id=pk, user=request.user)
+
+    # Get the invoice if exists, else create it and calculate total
+    invoice, created = Invoice.objects.get_or_create(customer=customer, year=year, month=month)
+    if created or invoice.total_amount == 0:
+        invoice.calculate_total()
+
+    # Get all completed orders for that month
+    orders = Order.objects.filter(
+        customer=customer,
+        status="Completed",
+        created_at__year=year,
+        created_at__month=month
+    )
+
+    return render(request, 'accounts/invoice_detail.html', {
+        'invoice': invoice,
+        'orders': orders,
+        'customer': customer,
+        'month_name': calendar.month_name[month],
+        'year': year
+    })
