@@ -7,10 +7,15 @@ from django.contrib.auth.models import User, Group
 import os
 
 class CustomerForm(ModelForm):
+    sales_rep = forms.ModelChoiceField(
+        queryset=SalesRepresentative.objects.all(),
+        required=True,
+        label="Assign Sales Representative"
+    )
+
     class Meta:
         model = Customer
-        fields = '__all__'
-        exclude = ['user']
+        fields = ['name', 'phone', 'email', 'profile_pic', 'sales_rep']
 
 class OrderForm(ModelForm):
     class Meta:

@@ -32,12 +32,15 @@ import csv
 # Create your views here.
 @unauthenticated_user
 def register_page(request):
+    sales_reps = SalesRepresentative.objects.all()  # for dropdown
+
     if request.method == 'POST':
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         password = request.POST.get('password')
         role = request.POST.get('role')  # Get role from form
+        sales_rep_id = request.POST.get('sales_rep')  # Get assigned sales rep from form
 
         user_obj = User.objects.create(
             first_name=first_name,
@@ -53,7 +56,10 @@ def register_page(request):
 
         # Create related profile if needed
         if role == 'customer':
-            Customer.objects.create(user=user_obj)
+            sales_rep = None
+            if sales_rep_id:
+                sales_rep = SalesRepresentative.objects.get(id=sales_rep_id)
+            Customer.objects.create(user=user_obj, sales_rep=sales_rep)
         elif role == 'sales_rep':
             SalesRepresentative.objects.create(user=user_obj)
         elif role == 'designer':
@@ -63,7 +69,9 @@ def register_page(request):
 
         messages.success(request, "Your account has been created successfully.")
         return redirect('login')
-    return render(request, 'accounts/register.html')
+
+    return render(request, 'accounts/register.html', {'sales_reps': sales_reps})
+
 
 @unauthenticated_user
 def login_page(request):
@@ -497,12 +505,12 @@ def downloadDesign(request, pk):
         return redirect(order.design_file.url)
     return redirect('order_history')
 
-@login_required
-def downloadInvoice(request, pk):
-    order = get_object_or_404(Order, id=pk, customer__user=request.user)
-    if order.invoice_file:
-        return redirect(order.invoice_file.url)
-    return redirect('order_history')
+# @login_required
+# def downloadInvoice(request, pk):
+#     order = get_object_or_404(Order, id=pk, customer__user=request.user)
+#     if order.invoice_file:
+#         return redirect(order.invoice_file.url)
+#     return redirect('order_history')
 
 @login_required
 def printInvoice(request, pk):
@@ -573,7 +581,11 @@ def createCustomer(request):
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['customer'])
 def accountSettings(request):
-    customer = request.user.customer
+    try:
+        customer = request.user.customer_profile  # <-- fixed
+    except Customer.DoesNotExist:
+        customer = None  # Optional: handle if user has no customer profile
+
     form = CustomerForm(instance=customer)
 
     if request.method == 'POST':
@@ -675,57 +687,91 @@ def manage_customers(request):
     if not sales_rep:
         return redirect("sales-dashboard")
 
+    # Only customers assigned to this sales rep
     customers = Customer.objects.filter(sales_rep=sales_rep)
-    return render(request, 'accounts/sales/manage_customers.html', {'assigned_customers': customers})
+
+    return render(request, 'accounts/sales/manage_customers.html', {
+        'assigned_customers': customers
+    })
 
 @login_required
-def release_projects(request):
-    sales_rep = get_object_or_404(SalesRepresentative, user=request.user)
+# def release_projects(request):
+#     sales_rep = get_object_or_404(SalesRepresentative, user=request.user)
 
-    # Completed orders waiting to be released
+#     # Completed orders waiting to be released
+#     completed_orders = Order.objects.filter(
+#     customer__sales_rep=sales_rep,
+#     status='Completed'
+# ).order_by('-date_created')
+
+#     if request.method == "POST":
+#         order_id = request.POST.get("order_id")
+#         order = get_object_or_404(Order, id=order_id, assigned_to=sales_rep, status="Completed")
+
+#         # Mark as released
+#         order.status = "Released"
+#         order.date_released = timezone.now()  # optional
+#         order.save()
+
+#         # Send email to customer (if email exists)
+#         # if order.customer.email:
+#         #     subject = f"Your Order #{order.id} is Ready"
+#         #     message = "Dear {},\n\nYour design has been completed and released by our team.".format(order.customer.name)
+#         #     email_from = settings.DEFAULT_FROM_EMAIL
+#         #     recipient_list = [order.customer.email]
+
+#         #     # Optionally include file link
+#         #     if order.design_file:
+#         #         message += f"\n\nYou can download your design here: {request.build_absolute_uri(order.design_file.url)}"
+
+#         #     send_mail(subject, message, email_from, recipient_list)
+#         messages.success(request, f"Order #{order.id} released! Customer can now pay.")
+
+#     context = {
+#         'completed_orders': completed_orders
+#     }
+#     return render(request, 'accounts/sales/release_projects.html', context)
+
+def release_projects(request):
+    sales_rep = get_sales_rep(request)
+    if not sales_rep:
+        return redirect("sales-dashboard")
+
+    # Completed orders waiting for release
     completed_orders = Order.objects.filter(
-    customer__sales_rep=sales_rep,
-    status='Completed'
-).order_by('-date_created')
+        customer__sales_rep=sales_rep,
+        status="Completed"
+    ).order_by("-date_created")
 
     if request.method == "POST":
         order_id = request.POST.get("order_id")
-        order = get_object_or_404(Order, id=order_id, assigned_to=sales_rep, status="Completed")
+        order = get_object_or_404(
+            Order,
+            id=order_id,
+            customer__sales_rep=sales_rep,
+            status="Completed"
+        )
 
-        # Mark as released
+        # Mark as Released
         order.status = "Released"
-        order.date_released = timezone.now()  # optional
+        order.date_released = timezone.now()
         order.save()
 
-        # Send email to customer (if email exists)
-        # if order.customer.email:
-        #     subject = f"Your Order #{order.id} is Ready"
-        #     message = "Dear {},\n\nYour design has been completed and released by our team.".format(order.customer.name)
-        #     email_from = settings.DEFAULT_FROM_EMAIL
-        #     recipient_list = [order.customer.email]
-
-        #     # Optionally include file link
-        #     if order.design_file:
-        #         message += f"\n\nYou can download your design here: {request.build_absolute_uri(order.design_file.url)}"
-
-        #     send_mail(subject, message, email_from, recipient_list)
         messages.success(request, f"Order #{order.id} released! Customer can now pay.")
+        return redirect("release_projects")
 
-    context = {
-        'completed_orders': completed_orders
-    }
-    return render(request, 'accounts/sales/release_projects.html', context)
-
+    return render(request, "accounts/sales/release_projects.html", {
+        "completed_orders": completed_orders
+    })
 
 
 
 def get_sales_rep(request):
     try:
-        return request.user.sales_rep_profile  # correct reverse accessor
-    except AttributeError:  # handles AnonymousUser or missing profile
+        return SalesRepresentative.objects.get(user=request.user)
+    except SalesRepresentative.DoesNotExist:
         return None
     
-
 
 
 @login_required
@@ -737,18 +783,19 @@ def monitor_quotes(request):
     quote_requests = Order.objects.filter(
         customer__sales_rep=sales_rep,
         status="Quote Requested"
-    ).order_by('-date_created')
+    ).order_by("-date_created")
 
     active_orders = Order.objects.filter(
         customer__sales_rep=sales_rep,
         status="Active"
-    ).order_by('-date_created')
+    ).order_by("-date_created")
 
-    context = {
-        'quote_requests': quote_requests,
-        'active_orders': active_orders,
-    }
-    return render(request, 'accounts/sales/monitor_quotes.html', context)
+    return render(request, "accounts/sales/monitor_quotes.html", {
+        "quote_requests": quote_requests,
+        "active_orders": active_orders,
+    })
+
+
 @login_required
 def track_orders(request):
     sales_rep = get_sales_rep(request)
@@ -770,19 +817,17 @@ def communicate_designers_admins(request):
 
 @login_required
 def follow_up_payments(request):
-    try:
-        # Get the SalesRepresentative object for the logged-in user
-        sales_rep = SalesRepresentative.objects.get(user=request.user)
-    except SalesRepresentative.DoesNotExist:
-        return redirect("sales_dashboard")  # if no sales rep found, redirect
+    sales_rep = get_sales_rep(request)
+    if not sales_rep:
+        return redirect("sales-dashboard")
 
     released_orders = Order.objects.filter(
-        customer__sales_rep=sales_rep,   # now passing SalesRepresentative instance ✅
+        customer__sales_rep=sales_rep,
         status="Released"
     ).order_by("-date_created")
 
     return render(request, "accounts/sales/follow_up.html", {
-        "released_orders": released_orders
+        "pending_orders": released_orders
     })
 # this area is used to generate reports for admin and sales reps , 
 @login_required(login_url='login')

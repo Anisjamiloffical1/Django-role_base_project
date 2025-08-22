@@ -23,8 +23,8 @@
                     {% for order in quote_requests %}
                     <tr>
                         <td>{{ order.id }}</td>
-                        <td>{{ order.customer }}</td>
-                        <td>{{ order.product }}</td>
+                        <td>{{ order.customer.name }}</td>
+                        <td>{{ order.product.name }}</td>
                         <td>{{ order.order_type }}</td>
                         <td>{{ order.date_created|date:"Y-m-d H:i" }}</td>
                     </tr>
@@ -54,8 +54,8 @@
                     {% for order in active_orders %}
                     <tr>
                         <td>{{ order.id }}</td>
-                        <td>{{ order.customer }}</td>
-                        <td>{{ order.product }}</td>
+                        <td>{{ order.customer.name }}</td>
+                        <td>{{ order.product.name }}</td>
                         <td>{{ order.order_type }}</td>
                         <td>{{ order.date_created|date:"Y-m-d H:i" }}</td>
                     </tr>
