@@ -1,0 +1,42 @@
+{% extends "accounts/main.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  <h2 class="text-center mb-5">Contact Us</h2>
+
+  <div class="row">
+    <!-- Contact Form -->
+    <div class="col-md-6">
+      <h4>Send Us a Message</h4>
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="name" class="form-label">Your Name</label>
+          <input type="text" class="form-control" id="name" name="name" placeholder="John Doe">
+        </div>
+        <div class="mb-3">
+          <label for="email" class="form-label">Your Email</label>
+          <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com">
+        </div>
+        <div class="mb-3">
+          <label for="message" class="form-label">Message</label>
+          <textarea class="form-control" id="message" name="message" rows="4" placeholder="Type your message..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Send</button>
+      </form>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="col-md-6">
+      <h4>Get in Touch</h4>
+      <p>
+        <strong>Address:</strong> 123 Business Street, City, Country <br>
+        <strong>Email:</strong> info@example.com <br>
+        <strong>Phone:</strong> +123 456 7890
+      </p>
+      <img src="{% static 'images/contact.jpg' %}" alt="Contact" class="img-fluid rounded shadow">
+    </div>
+  </div>
+</div>
+{% endblock %}

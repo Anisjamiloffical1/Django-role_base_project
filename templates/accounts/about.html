@@ -1,0 +1,60 @@
+{% extends "accounts/main.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  <h2 class="text-center mb-5">About Us</h2>
+
+  <!-- Company Intro -->
+  <div class="row mb-5 align-items-center">
+    <div class="col-md-6">
+      <img src="{% static 'images/about.jpeg' %}" alt="Elite Digitizer" class="img-fluid rounded shadow">
+    </div>
+    <div class="col-md-6">
+      <h3>Elite Digitizer</h3>
+      <p>
+        At <strong>Elite Digitizer</strong>, we specialize in providing premium digitizing and patch-making
+        solutions. Our mission is to deliver the highest quality embroidery, vector art, and custom patches
+        that bring your ideas to life with precision and style.
+      </p>
+      <p>
+        With years of expertise and state-of-the-art technology, we pride ourselves on crafting products
+        that meet the unique needs of businesses, fashion brands, and individuals worldwide.
+      </p>
+    </div>
+  </div>
+
+  <!-- Our Products -->
+  <h3 class="text-center mb-4">Our Products</h3>
+  <div class="row text-center">
+    <div class="col-md-4 mb-4">
+      <img src="{% static 'images/images.jpeg' %}" class="img-fluid rounded shadow mb-2" alt="Embroidery Patches">
+      <h5>Embroidery Patches</h5>
+    </div>
+    <div class="col-md-4 mb-4">
+      <img src="{% static 'images/leather_patch.jpeg' %}" class="img-fluid rounded shadow mb-2" alt="Leather Patches">
+      <h5>Leather Patches</h5>
+    </div>
+    <div class="col-md-4 mb-4">
+      <img src="{% static 'images/chenille.jpeg' %}" class="img-fluid rounded shadow mb-2" alt="Chenille Patches">
+      <h5>Chenille Patches</h5>
+    </div>
+    <div class="col-md-4 mb-4">
+      <img src="{% static 'images/Pvc_patch.webp' %}" class="img-fluid rounded shadow mb-2" alt="PVC Patches">
+      <h5>PVC Patches</h5>
+    </div>
+    <div class="col-md-4 mb-4">
+      <img src="{% static 'images/woven_patches.jpeg' %}" class="img-fluid rounded shadow mb-2" alt="Woven Patches">
+      <h5>Woven Patches</h5>
+    </div>
+    <div class="col-md-4 mb-4">
+      <img src="{% static 'images/sublimation_patches.jpg' %}" class="img-fluid rounded shadow mb-2" alt="Sublimation Patches">
+      <h5>Sublimation Patches</h5>
+    </div>
+    <div class="col-md-4 mb-4">
+      <img src="{% static 'images/woven_patch.jpeg' %}" class="img-fluid rounded shadow mb-2" alt="Woven Labels">
+      <h5>Woven Labels</h5>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -83,7 +83,10 @@ class DesignerMessageForm(forms.ModelForm):
                 raise forms.ValidationError("Unsupported file type. Allowed: PDF, JPG, PNG, AI, EPS")
         return attachment
 class AdminSendMessageForm(forms.Form):
-    receiver = forms.ModelChoiceField(queryset=User.objects.filter(groups__name='designer'), label="Send To")
+    receiver = forms.ModelChoiceField(
+        queryset=User.objects.filter(groups__name__in=["designer", "sales_rep"]),
+        label="Send To"
+    )
     content = forms.CharField(widget=forms.Textarea, label="Message")
 
 
@@ -95,3 +98,16 @@ class FeedbackForm(forms.ModelForm):
         widgets = {
             'message': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Write your feedback...'})
         }
+class SalesRepMessageForm(forms.ModelForm):
+    class Meta:
+        model = DesignerMessage
+        fields = ["receiver", "message"]
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+
+        # Limit receivers to Admins + Designers
+        self.fields["receiver"].queryset = User.objects.filter(
+            groups__name__in=["admin", "designer"]
+        )

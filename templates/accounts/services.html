@@ -1,0 +1,37 @@
+{% extends "accounts/main.html" %}
+{% load static %}
+{% block content %}
+<div class="container py-5">
+  <h2 class="text-center mb-5">Our Services</h2>
+
+  <!-- Digitizing Services -->
+  <div class="row mb-5 align-items-center">
+    <div class="col-md-6">
+      <img src="{% static 'images/images.jpeg' %}" alt="Digitizing Services" class="img-fluid rounded shadow">
+    </div>
+    <div class="col-md-6">
+      <h3>Digitizing Services</h3>
+      <p>
+        We provide high-quality embroidery digitizing services tailored for
+        apparel, uniforms, and promotional products. Our experienced team ensures
+        sharp, precise, and stitch-friendly designs.
+      </p>
+    </div>
+  </div>
+
+  <!-- Vector Art -->
+  <div class="row mb-5 align-items-center flex-row-reverse">
+    <div class="col-md-6">
+      <img src="{% static 'images/vector.jpeg' %}" alt="Vector Art" class="img-fluid rounded shadow">
+    </div>
+    <div class="col-md-6">
+      <h3>Vector Art</h3>
+      <p>
+        Our vector art service transforms low-resolution artwork into crisp,
+        scalable vector graphics. Perfect for screen printing, logos, and
+        promotional materials.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

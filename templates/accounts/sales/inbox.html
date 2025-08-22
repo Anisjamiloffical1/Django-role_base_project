@@ -1,0 +1,35 @@
+{% extends "accounts/main.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>📨 Inbox</h2>
+    <p>You have <strong>{{ unread_count }}</strong> unread messages.</p>
+
+    {% if messages %}
+        <ul class="list-group">
+            {% for msg in messages %}
+                <li class="list-group-item {% if not msg.is_read %}list-group-item-warning{% endif %}">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>{{ msg.sender.username }}</strong> → 
+                            <span class="text-muted">{{ msg.receiver.username }}</span>
+                            <p class="mb-1">{{ msg.message|truncatewords:15 }}</p>
+                            <small class="text-muted">{{ msg.timestamp|date:"M d, Y H:i" }}</small>
+                        </div>
+                        <div>
+                            <a href="{% url 'view_message' msg.id %}" class="btn btn-sm btn-primary">
+                                View
+                            </a>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="alert alert-info mt-3">
+            No messages found.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

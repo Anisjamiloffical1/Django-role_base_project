@@ -1,7 +1,7 @@
 from django.utils import timezone 
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import *
-from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm, DesignFileForm,DesignerMessageForm,AdminSendMessageForm, FeedbackForm
+from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm, DesignFileForm,DesignerMessageForm,AdminSendMessageForm, FeedbackForm, SalesRepMessageForm
 from django.forms import inlineformset_factory
 from django.contrib import messages
 from django.utils.dateparse import parse_date
@@ -144,7 +144,7 @@ def admin_inbox(request):
     return render(request, 'accounts/admin_inbox.html', context)
 
 @login_required
-@allowed_users(allowed_roles=['admin', 'designer'])
+@allowed_users(allowed_roles=['admin', 'designer', 'sales_rep'])
 def view_message(request, pk):
     message = get_object_or_404(DesignerMessage, pk=pk, receiver=request.user)
 
@@ -772,6 +772,41 @@ def get_sales_rep(request):
     except SalesRepresentative.DoesNotExist:
         return None
     
+@login_required
+@allowed_users(allowed_roles=["sales_rep"])
+def communicate_sales_rep(request, order_id=None):
+    order = get_object_or_404(Order, pk=order_id) if order_id else None
+    messages_qs = DesignerMessage.objects.filter(receiver=request.user) | DesignerMessage.objects.filter(sender=request.user)
+
+    if request.method == "POST":
+        form = SalesRepMessageForm(request.POST, user=request.user)
+        if form.is_valid():
+            msg = form.save(commit=False)
+            msg.sender = request.user
+            if order:
+                msg.order = order
+            msg.save()
+            messages.success(request, "Message sent successfully!")
+            return redirect("sales_rep_inbox")
+    else:
+        form = SalesRepMessageForm(user=request.user)
+
+    return render(request, "accounts/sales/communicate_sales.html", {
+        "form": form,
+        "order": order,
+        "messages": messages_qs.order_by("-timestamp"),
+    })
+
+
+@login_required
+@allowed_users(allowed_roles=["sales_rep"])
+def sales_rep_inbox(request):
+    inbox = DesignerMessage.objects.filter(receiver=request.user).order_by("-timestamp")
+    unread_count = inbox.filter(is_read=False).count()
+    return render(request, "accounts/sales/inbox.html", {
+        "messages": inbox,
+        "unread_count": unread_count,
+    })
 
 
 @login_required
@@ -811,9 +846,7 @@ def track_orders(request):
         "quote_orders": quote_orders
     })
 
-@login_required
-def communicate_designers_admins(request):
-    return render(request, 'accounts/sales/communicate.html')
+
 
 @login_required
 def follow_up_payments(request):
@@ -1242,7 +1275,7 @@ def message_thread(request, order_id):
     })
 
 @login_required
-@allowed_users(allowed_roles=['admin', 'designer'])
+@allowed_users(allowed_roles=['admin', 'designer', 'sales_rep'])
 def view_message(request, pk):
     message = get_object_or_404(DesignerMessage, pk=pk, receiver=request.user)
 
@@ -1352,3 +1385,20 @@ def invoice_detail(request, pk, year, month):
         'month_name': calendar.month_name[month],
         'year': year
     })
+
+# services 
+def services(request):
+    return render(request, "accounts/services.html")
+
+def contact(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+        message = request.POST.get("message")
+
+        # (Optional) Save to DB or send email
+        messages.success(request, "Your message has been sent. Thank you!")
+
+    return render(request, "accounts/contact.html")
+def about(request):
+    return render(request, "accounts/about.html")

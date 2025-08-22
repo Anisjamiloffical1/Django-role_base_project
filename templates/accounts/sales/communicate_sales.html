@@ -1,0 +1,24 @@
+{% extends "accounts/main.html" %}
+
+{% block content %}
+<h2>Sales Rep Communication (with Admins & Designers)</h2>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Send</button>
+</form>
+
+<hr>
+
+<h3>Messages</h3>
+{% for msg in messages %}
+  <div>
+    <strong>{{ msg.sender.username }}</strong> → <strong>{{ msg.receiver.username }}</strong><br>
+    {{ msg.message }} <br>
+    <small>{{ msg.timestamp }}</small>
+  </div>
+{% empty %}
+  <p>No messages yet.</p>
+{% endfor %}
+{% endblock %}
