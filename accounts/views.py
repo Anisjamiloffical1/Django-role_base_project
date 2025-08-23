@@ -19,6 +19,7 @@ from weasyprint import HTML
 from django.core.mail import send_mail
 import os
 from django.db.models import Q
+from reportlab.pdfgen import canvas
 from django.db.models import Sum
 from django.utils.timezone import now
 import calendar
@@ -1349,42 +1350,46 @@ def submit_feedback(request, order_id):
 #
 @login_required
 def customer_invoices(request, pk):
-    customer = get_object_or_404(Customer, id=pk, user=request.user)
-    
-    # Get all invoices for the customer
+    customer = get_object_or_404(Customer, id=pk)
     invoices = Invoice.objects.filter(customer=customer).order_by('-year', '-month')
 
-    # Add month name
+    # Collect related orders for each invoice
+    invoice_data = []
     for invoice in invoices:
-        invoice.month_name = calendar.month_name[invoice.month]
+        orders = Order.objects.filter(
+            customer=customer,
+            status="Completed",
+            created_at__year=invoice.year,
+            created_at__month=invoice.month
+        )
+        invoice_data.append({
+            "invoice": invoice,
+            "orders": orders
+        })
 
-    return render(request, 'accounts/customer_invoices.html', {'invoices': invoices, 'customer': customer})
-
+    return render(request, "accounts/customer_invoices.html", {
+        "customer": customer,
+        "invoice_data": invoice_data
+    })
 
 @login_required
 def invoice_detail(request, pk, year, month):
-    customer = get_object_or_404(Customer, id=pk, user=request.user)
+    customer = get_object_or_404(Customer, id=pk)
+    invoice = get_object_or_404(Invoice, customer=customer, year=year, month=month)
 
-    # Get the invoice if exists, else create it and calculate total
-    invoice, created = Invoice.objects.get_or_create(customer=customer, year=year, month=month)
-    if created or invoice.total_amount == 0:
-        invoice.calculate_total()
+    # Example: Generate PDF dynamically
+    response = HttpResponse(content_type="application/pdf")
+    response['Content-Disposition'] = f'attachment; filename="invoice_{invoice.id}.pdf"'
 
-    # Get all completed orders for that month
-    orders = Order.objects.filter(
-        customer=customer,
-        status="Completed",
-        created_at__year=year,
-        created_at__month=month
-    )
+    p = canvas.Canvas(response)
+    p.drawString(100, 800, f"Invoice #{invoice.id}")
+    p.drawString(100, 780, f"Customer: {customer.name}")
+    p.drawString(100, 760, f"Period: {month}/{year}")
+    p.drawString(100, 740, f"Total: ${invoice.total_amount}")
+    p.showPage()
+    p.save()
 
-    return render(request, 'accounts/invoice_detail.html', {
-        'invoice': invoice,
-        'orders': orders,
-        'customer': customer,
-        'month_name': calendar.month_name[month],
-        'year': year
-    })
+    return response
 
 # services 
 def services(request):
@@ -1396,9 +1401,58 @@ def contact(request):
         email = request.POST.get("email")
         message = request.POST.get("message")
 
-        # (Optional) Save to DB or send email
-        messages.success(request, "Your message has been sent. Thank you!")
+        # Email to Admin
+        admin_subject = f"New Contact Message from {name}"
+        admin_message = f"""
+        You received a new message:
+
+        Name: {name}
+        Email: {email}
+
+        Message:
+        {message}
+        """
+
+        # Email to User (confirmation)
+        user_subject = "Thank you for contacting us!"
+        user_message = f"""
+        Hi {name},
+
+        Thank you for reaching out to us. We have received your message and our team
+        will get back to you as soon as possible.
+
+        Here’s a copy of your message:
+        {message}
+
+        Regards,  
+        The Support Team
+        """
+
+        try:
+            # Send to Admin
+            send_mail(
+                admin_subject,
+                admin_message,
+                settings.DEFAULT_FROM_EMAIL,  # from
+                [settings.ADMIN_EMAIL],       # to admin
+                fail_silently=False,
+            )
+
+            # Send confirmation to User
+            send_mail(
+                user_subject,
+                user_message,
+                settings.DEFAULT_FROM_EMAIL,  # from
+                [email],                      # to user
+                fail_silently=False,
+            )
+
+            messages.success(request, "✅ Your message has been sent. A confirmation email has been sent to you.")
+        except Exception as e:
+            messages.error(request, f"❌ Error sending message: {e}")
 
     return render(request, "accounts/contact.html")
+
+
 def about(request):
     return render(request, "accounts/about.html")

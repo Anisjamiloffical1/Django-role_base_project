@@ -13,10 +13,10 @@
                 <div class="card-body">
                     <h5>Customer:</h5>
                     <hr>
-                    {% if request.user.is_staff or request.user.is_superuser %}
+                    
                     <a class="btn btn-outline-info btn-sm w-100 mb-2"
                         href="{% url 'update_customer' customer.id %}">Update Customer</a>
-                    {% endif %}
+                   
                     <a class="btn btn-outline-info btn-sm w-100"
                         href="{% url 'create_order' customer.id 'design' %}">Place Order</a>
                 </div>
@@ -150,8 +150,8 @@
                                             <td>{{ order.status }}</td>
                                             <td>{{ order.date_created }}</td>
                                             <td>{{ order.date_completed }}</td>
-                                            <td>{{ order.assigned_to }}</td>
-                                            <td>{{ order.assigned_designer }}</td>
+                                            <td>{{ order.customer.sales_rep.name }}</td>
+                                            <td>{{ order.assigned_designer.username }}</td>
                                             <td><a class="btn btn-sm btn-info"
                                                     href="{% url 'update_order' order.id %}">Update</a></td>
                                             <td><a class="btn btn-sm btn-danger"

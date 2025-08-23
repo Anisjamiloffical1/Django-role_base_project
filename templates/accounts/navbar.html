@@ -58,12 +58,13 @@
     align-items: center;
     padding: 0 15px;
   }
-  
+
   .logo-img {
     height: 60px;
     width: auto;
     max-height: 60px;
   }
+  
 </style>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -71,8 +72,8 @@
     <img src="{% static 'images/elite_d.png' %}" alt="Elite Digitizers Logo" class="logo-img">
   </a>
 
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav"
+    aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
 
@@ -81,6 +82,9 @@
       {% if request.user.groups.all.0.name == 'admin' %}
       <li class="nav-item">
         <a class="nav-link" href="{% url 'home' %}">Dashboard</a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'services' %}" class="nav-link">Services</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="{% url 'products' %}">Products</a>
@@ -98,47 +102,64 @@
           Notifications
         </a>
       </li>
-      {% else %}
+      {% elif request.user.groups.all.0.name == 'customer' %}
+
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'account' %}">Settings</a>
+        <a class="nav-link" href="{% url 'user-page' %}">Dashboard</a>
       </li>
+
+      <li class="nav-item">
+        <a href="{% url 'services' %}" class="nav-link">Services</a>
+      </li>
+      
+
+      <li class="nav-item">
+        <a href="{% url 'about' %}" class="nav-link">About</a>
+      </li>
+      {% elif request.user.groups.all.0.name == 'sales_rep' %}
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'sales-dashboard' %}">Dashboard</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'sales_rep_inbox' %}">Messages</a>
+      </li>
+
       {% endif %}
     </ul>
   </div>
 
   <div class="d-flex align-items-center">
-  {% if user.is_authenticated %}
+    {% if user.is_authenticated %}
     {% if request.user.groups.all.0.name == 'designer' %}
-      <div class="notification-badge me-3">
-        <a href="{% url 'view_notifications' %}" class="nav-link p-0">
-          <i class="fas fa-bell fa-lg"></i>
-          {% if unread_count > 0 %}
-            <span class="badge bg-danger">{{ unread_count }}</span>
-          {% endif %}
-        </a>
-      </div>
+    <div class="notification-badge me-3">
+      <a href="{% url 'view_notifications' %}" class="nav-link p-0">
+        <i class="fas fa-bell fa-lg"></i>
+        {% if unread_count > 0 %}
+        <span class="badge bg-danger">{{ unread_count }}</span>
+        {% endif %}
+      </a>
+    </div>
     {% endif %}
 
     <!-- User Profile -->
+    {% if request.user.groups.all.0.name == 'customer' %}
     <div class="d-flex align-items-center ms-3">
       {% if user.customer_profile and user.customer_profile.profile_pic %}
-        <img src="{{ user.customer_profile.profile_pic.url }}" 
-             alt="{{ user.first_name }}" 
-             class="rounded-circle" 
-             style="height:40px; width:40px; object-fit:cover; margin-right:10px;">
+      <img src="{{ user.customer_profile.profile_pic.url }}" alt="{{ user.first_name }}" class="rounded-circle"
+        style="height:40px; width:40px; object-fit:cover; margin-right:10px;">
       {% else %}
-        <img src="{{ MEDIA_URL }}profile_pics/default.png" 
-             alt="{{ user.first_name }}" 
-             class="rounded-circle" 
-             style="height:40px; width:40px; object-fit:cover; margin-right:10px;">
+      <img src="{{ MEDIA_URL }}profile_pics/default.png" alt="{{ user.first_name }}" class="rounded-circle"
+        style="height:40px; width:40px; object-fit:cover; margin-right:10px;">
+      {% endif %}
       {% endif %}
       <span class="hello-msg">Hello, {{ user.first_name }}!</span>
     </div>
+    
 
     <span class="hello-msg ms-3">
       <a class="logout-link" href="{% url 'logout' %}">Logout</a>
     </span>
-  {% endif %}
-</div>
+    {% endif %}
+  </div>
 
 </nav>

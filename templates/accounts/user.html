@@ -80,7 +80,7 @@
         <div class="col-md-2 sidebar p-3">
             <h5>Customer Panel</h5>
             <ul class="nav flex-column">
-                <li class="nav-item"><a class="nav-link" href="#">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'user-page' %}">Dashboard</a></li>
                 <li class="nav-item"><a class="nav-link"
                         href="{% url 'customer_orders' customer.id 'Patch' %}">Patches Orders</a></li>
                 <li class="nav-item"><a class="nav-link"
@@ -91,7 +91,7 @@
                 <li class="nav-item"><a class="nav-link"
                         href="{% url 'customer_orders' customer.id 'Vector' %}">Vectors Orders</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'customer_invoices' customer.id %}">Invoices</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">My Profile</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'account' %}">My Profile</a></li>
             </ul>
         </div>
 
@@ -175,7 +175,7 @@
 
 
                 <!-- Profile -->
-                <a href="#">
+                <a href="{% url 'account' %}">
                     <div class="dashboard-card">
                         <div class="icon">👤</div>
                         <div class="label">Profile</div>
