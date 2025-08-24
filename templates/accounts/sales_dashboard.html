@@ -29,12 +29,19 @@
                     <li class="nav-item mb-2">
                         <a class="nav-link" href="{% url 'sales_rep_inbox' %}">📥 Messages Inbox</a>
                     </li>
-                
+
                     <li class="nav-item mb-2">
                         <a class="nav-link" href="{% url 'communicate_sales_rep' %}">📥 Sent Message</a>
                     </li>
-                    
-                    
+                    <li class="nav-item mb-2">
+                        <div class="mt-auto">
+                            <a class="nav-link logout-link" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </li>
+
+
                 </ul>
             </div>
         </nav>
@@ -97,27 +104,28 @@
                         </thead>
                         <tbody>
                             {% for order in recent_orders %}
-                                <tr>
-                                    <td>#{{ order.id }}</td>
-                                    <td>{{ order.customer.name }}</td>
-                                    <td>
-                                        {% if order.status == "Completed" %}
-                                            <span class="badge bg-success">{{ order.status }}</span>
-                                        {% elif order.status == "Pending" %}
-                                            <span class="badge bg-warning">{{ order.status }}</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">{{ order.status }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ order.date_created|date:"M d, Y" }}</td>
-                                    <td>
-                                        <a href="{% url 'sales_order_detail' order.id %}" class="btn btn-sm btn-outline-primary">View</a>
-                                    </td>
-                                </tr>
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>{{ order.customer.name }}</td>
+                                <td>
+                                    {% if order.status == "Completed" %}
+                                    <span class="badge bg-success">{{ order.status }}</span>
+                                    {% elif order.status == "Pending" %}
+                                    <span class="badge bg-warning">{{ order.status }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ order.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ order.date_created|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'sales_order_detail' order.id %}"
+                                        class="btn btn-sm btn-outline-primary">View</a>
+                                </td>
+                            </tr>
                             {% empty %}
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted">No recent orders available.</td>
-                                </tr>
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No recent orders available.</td>
+                            </tr>
                             {% endfor %}
                         </tbody>
                     </table>

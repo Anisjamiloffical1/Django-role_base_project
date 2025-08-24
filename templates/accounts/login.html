@@ -88,16 +88,18 @@
                                 {% csrf_token %}
                                 <!-- Email input -->
                                 <div class="form-outline mb-4">
+                                    <label class="form-label">Email address</label>
                                     <input type="email" name="email" class="form-control" 
                                            value="{{ remembered_email }}" required/>
-                                    <label class="form-label">Email address</label>
+                                   
                                 </div>
 
                                 <!-- Password input -->
                                 <div class="form-outline mb-4">
+                                    <label class="form-label">Password</label>
                                     <input type="password" name="password" class="form-control" 
                                            value="{{ remembered_password }}" required />
-                                    <label class="form-label">Password</label>
+                                   
                                 </div>
 
                                 <!-- Remember me checkbox -->

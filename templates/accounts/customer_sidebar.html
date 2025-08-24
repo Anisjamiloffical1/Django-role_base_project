@@ -1,0 +1,50 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<div class="col-md-2 sidebar d-flex flex-column p-3">
+    <h5 class="mb-4">Customer Panel</h5>
+
+    <ul class="nav flex-column mb-auto">
+        <li class="nav-item">
+            <a class="nav-link active" href="{% url 'user-page' %}">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'customer_orders' customer.id 'Patch' %}">
+                <i class="fas fa-certificate"></i> Patches Orders
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'customer_orders' customer.id 'Digitizing' %}">
+                <i class="fas fa-magic"></i> Digitizing Orders
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'customer_orders' customer.id 'Quote' %}">
+                <i class="fas fa-file-invoice-dollar"></i> Quotes Orders
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'customer_orders' customer.id 'Vector' %}">
+                <i class="fas fa-vector-square"></i> Vectors Orders
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'customer_invoices' customer.id %}">
+                <i class="fas fa-file-invoice"></i> Invoices
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'account' %}">
+                <i class="fas fa-user"></i> My Profile
+            </a>
+        </li>
+    </ul>
+
+    <!-- Logout at Bottom -->
+    <div class="mt-auto">
+        <a class="nav-link logout-link" href="{% url 'logout' %}">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+</div>

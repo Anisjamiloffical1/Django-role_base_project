@@ -486,8 +486,15 @@ def createOrder(request, pk, order_type=None):
     })
 @login_required
 def customer_orders(request):
-    customer = get_object_or_404(Customer, user=request.user)
-    released_orders = Order.objects.filter(customer=customer, status="Released").order_by('-date_created')
+    if request.user.is_staff or request.user.groups.filter(name="admin").exists():
+        # Admin sees ALL released orders
+        released_orders = Order.objects.filter(status="Released").order_by("-date_created")
+    else:
+        # Customer sees only their released orders
+        customer = get_object_or_404(Customer, user=request.user)
+        released_orders = Order.objects.filter(
+            customer=customer, status="Released"
+        ).order_by("-date_created")
 
     return render(request, "accounts/released_orders.html", {
         "released_orders": released_orders
@@ -577,15 +584,18 @@ def createCustomer(request):
             return redirect('manage_customers') 
     context = {'form': form}
     return render(request, 'accounts/create_customer_form.html', context)
-
+@receiver(post_save, sender=User)
+def create_sales_rep(sender, instance, created, **kwargs):
+    if created and instance.groups.filter(name="SalesRepresentative").exists():
+        SalesRepresentative.objects.create(user=instance)
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['customer'])
 def accountSettings(request):
     try:
-        customer = request.user.customer_profile  # <-- fixed
+        customer = request.user.customer_profile
     except Customer.DoesNotExist:
-        customer = None  # Optional: handle if user has no customer profile
+        customer = None
 
     form = CustomerForm(instance=customer)
 
@@ -595,15 +605,17 @@ def accountSettings(request):
             form.save()
             messages.success(request, "Profile updated successfully.")
 
-    context = {'form': form}
+    context = {'form': form, 'customer': customer}  # Pass to template
     return render(request, 'accounts/account_settings.html', context)
 
 
 # this function is used to show the sales dashboard for sales representatives
 @login_required(login_url='login')
-@allowed_users(allowed_roles=['sales_rep'])
+@allowed_users(allowed_roles=['sales_rep', 'admin'])
 def sales_dashboard(request):
     sales_rep = SalesRepresentative.objects.get(user=request.user)
+    # this is optional, if client want to create a SalesRepresentative if it doesn't exist by Anisjamil
+    # sales_rep, created = SalesRepresentative.objects.get_or_create(user=request.user)
 
     # Count metrics
     customers_count = Customer.objects.filter(sales_rep=sales_rep).count()
@@ -695,7 +707,7 @@ def manage_customers(request):
         'assigned_customers': customers
     })
 
-@login_required
+
 # def release_projects(request):
 #     sales_rep = get_object_or_404(SalesRepresentative, user=request.user)
 
@@ -732,7 +744,8 @@ def manage_customers(request):
 #         'completed_orders': completed_orders
 #     }
 #     return render(request, 'accounts/sales/release_projects.html', context)
-
+@login_required(login_url="login")
+@allowed_users(allowed_roles=["sales_rep", "admin"])
 def release_projects(request):
     sales_rep = get_sales_rep(request)
     if not sales_rep:
@@ -1299,10 +1312,12 @@ def view_notifications(request):
 
 @login_required
 def mark_notification_read(request, pk):
-    notification = get_object_or_404(Notification, pk=pk, user=request.user)
-    notification.is_read = True
-    notification.save()
-    return JsonResponse({'status': 'ok'})
+    if request.method == "POST":
+        notification = get_object_or_404(Notification, pk=pk, user=request.user)
+        notification.is_read = True
+        notification.save()
+        return JsonResponse({'status': 'ok'})
+    return JsonResponse({'status': 'fail'}, status=400)
 
 @login_required
 @allowed_users(allowed_roles=['designer'])

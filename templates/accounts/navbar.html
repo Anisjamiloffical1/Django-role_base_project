@@ -64,12 +64,27 @@
     width: auto;
     max-height: 60px;
   }
-  
+  .logo-text {
+    font-size: 2rem;                 /* logo-size text */
+    font-weight: 800;
+    font-family: "Poppins", sans-serif;
+    letter-spacing: 2px;
+    background: linear-gradient(45deg, #00c6ff, #0072ff); /* blue gradient */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent; /* gradient text effect */
+    text-transform: uppercase;
+  }
+
+  .logo-text .highlight {
+    background: linear-gradient(45deg, #ff512f, #dd2476); /* red/pink gradient */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 </style>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <a class="navbar-brand" href="{% url 'home' %}">
-    <img src="{% static 'images/elite_d.png' %}" alt="Elite Digitizers Logo" class="logo-img">
+    <span class="logo-text">Elite <span class="highlight">Digitizers</span></span>
   </a>
 
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav"
@@ -111,7 +126,7 @@
       <li class="nav-item">
         <a href="{% url 'services' %}" class="nav-link">Services</a>
       </li>
-      
+
 
       <li class="nav-item">
         <a href="{% url 'about' %}" class="nav-link">About</a>
@@ -144,21 +159,21 @@
     <!-- User Profile -->
     {% if request.user.groups.all.0.name == 'customer' %}
     <div class="d-flex align-items-center ms-3">
-      {% if user.customer_profile and user.customer_profile.profile_pic %}
-      <img src="{{ user.customer_profile.profile_pic.url }}" alt="{{ user.first_name }}" class="rounded-circle"
-        style="height:40px; width:40px; object-fit:cover; margin-right:10px;">
-      {% else %}
-      <img src="{{ MEDIA_URL }}profile_pics/default.png" alt="{{ user.first_name }}" class="rounded-circle"
-        style="height:40px; width:40px; object-fit:cover; margin-right:10px;">
-      {% endif %}
-      {% endif %}
-      <span class="hello-msg">Hello, {{ user.first_name }}!</span>
+      <a href="{% url 'account' %}" class="d-flex align-items-center text-decoration-none text-dark">
+        {% if user.customer_profile and user.customer_profile.profile_pic %}
+        <img src="{{ user.customer_profile.profile_pic.url }}" alt="{{ user.first_name }}" class="rounded-circle"
+          style="height:40px; width:40px; object-fit:cover; margin-right:10px;">
+        {% else %}
+        <img src="{{ MEDIA_URL }}profile_pics/default.png" alt="{{ user.first_name }}" class="rounded-circle"
+          style="height:40px; width:40px; object-fit:cover; margin-right:10px;">
+        {% endif %}
+        <span class="hello-msg">Hello, {{ user.first_name }}!</span>
+      </a>
     </div>
-    
+    {% endif %}
 
-    <span class="hello-msg ms-3">
-      <a class="logout-link" href="{% url 'logout' %}">Logout</a>
-    </span>
+
+    
     {% endif %}
   </div>
 

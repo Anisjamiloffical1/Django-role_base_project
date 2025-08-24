@@ -1,4 +1,6 @@
 {% extends 'accounts/main.html' %}
+{% load static %}
+
 {% block content %}
 
 <h2>Your Notifications 
@@ -44,30 +46,75 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+
+  // Get CSRF token from cookies
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      document.cookie.split(';').forEach(cookie => {
+        let [key, value] = cookie.trim().split('=');
+        if (key === name) cookieValue = decodeURIComponent(value);
+      });
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie('csrftoken');
+
+  // Attach click event to each mark-read button
   document.querySelectorAll(".mark-read").forEach(btn => {
     btn.addEventListener("click", function(e) {
       e.preventDefault();
-      let id = this.dataset.id;
-      let url = this.dataset.url;
+      const id = this.dataset.id;
+      const url = this.dataset.url;
 
       fetch(url, {
         method: "POST",
-        headers: { "X-CSRFToken": "{{ csrf_token }}" }
+        headers: {
+          "X-CSRFToken": csrftoken,
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        }
       })
       .then(res => res.json())
       .then(data => {
         if (data.status === "ok") {
-          let li = document.getElementById(`notif-${id}`);
+          // Remove unread style
+          const li = document.getElementById(`notif-${id}`);
           li.classList.remove("unread");
+          // Remove button
           this.remove();
-
-          let countEl = document.getElementById("notif-count");
-          let current = parseInt(countEl.innerText);
+          // Update badge count
+          const countEl = document.getElementById("notif-count");
+          const current = parseInt(countEl.innerText);
           if (current > 0) countEl.innerText = current - 1;
         }
-      });
+      })
+      .catch(err => console.log(err));
     });
   });
+
+});
+</script>
+<script>
+  fetch(url, {
+    method: "POST",
+    headers: {
+        "X-CSRFToken": csrftoken,
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    }
+})
+.then(res => res.json())
+.then(data => {
+    if (data.status === "ok") {
+        const li = document.getElementById(`notif-${id}`);
+        li.classList.remove("unread");
+        this.remove();
+
+        const countEl = document.getElementById("notif-count");
+        const current = parseInt(countEl.innerText);
+        if (current > 0) countEl.innerText = current - 1;
+    }
 });
 </script>
 

@@ -72,27 +72,107 @@
         color: inherit;
         text-decoration: none;
     }
+    /* Sidebar */
+    .sidebar {
+        background-color: #36454F; /* same dark theme */
+        color: white;
+        min-height: 100vh;
+        border-right: 1px solid #2c3e50;
+    }
+
+    .sidebar h5 {
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .sidebar a {
+        color: #dcdcdc;
+        text-decoration: none;
+        padding: 10px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        transition: background 0.3s ease;
+    }
+
+    .sidebar a i {
+        margin-right: 8px;
+    }
+
+    .sidebar a:hover {
+        background-color: #0f2c4f;
+        color: #fff;
+    }
+
+    .sidebar .nav-link.active {
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: #fff !important;
+        font-weight: 600;
+    }
+
+    /* Logout button */
+    .sidebar .logout-link {
+        color: #ff6b6b !important;
+        font-weight: bold;
+    }
+
+    .sidebar .logout-link:hover {
+        background-color: #58151c;
+        color: white !important;
+    }
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 <div class="container-fluid">
     <div class="row">
         <!-- Sidebar -->
-        <div class="col-md-2 sidebar p-3">
-            <h5>Customer Panel</h5>
-            <ul class="nav flex-column">
-                <li class="nav-item"><a class="nav-link" href="{% url 'user-page' %}">Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link"
-                        href="{% url 'customer_orders' customer.id 'Patch' %}">Patches Orders</a></li>
-                <li class="nav-item"><a class="nav-link"
-                        href="{% url 'customer_orders' customer.id 'Digitizing' %}">Digitizing Orders</a>
+        <div class="col-md-2 sidebar d-flex flex-column p-3">
+            <h5 class="mb-4">Customer Panel</h5>
+        
+            <ul class="nav flex-column mb-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'user-page' %}">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
                 </li>
-                <li class="nav-item"><a class="nav-link"
-                        href="{% url 'customer_orders' customer.id 'Quote' %}">Quotes Orders</a></li>
-                <li class="nav-item"><a class="nav-link"
-                        href="{% url 'customer_orders' customer.id 'Vector' %}">Vectors Orders</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'customer_invoices' customer.id %}">Invoices</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'account' %}">My Profile</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'customer_orders' customer.id 'Patch' %}">
+                        <i class="fas fa-certificate"></i> Patches Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'customer_orders' customer.id 'Digitizing' %}">
+                        <i class="fas fa-magic"></i> Digitizing Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'customer_orders' customer.id 'Quote' %}">
+                        <i class="fas fa-file-invoice-dollar"></i> Quotes Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'customer_orders' customer.id 'Vector' %}">
+                        <i class="fas fa-vector-square"></i> Vectors Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'customer_invoices' customer.id %}">
+                        <i class="fas fa-file-invoice"></i> Invoices
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'account' %}">
+                        <i class="fas fa-user"></i> My Profile
+                    </a>
+                </li>
             </ul>
+        
+            <!-- Logout at Bottom -->
+            <div class="mt-auto">
+                <a class="nav-link logout-link" href="{% url 'logout' %}">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
         </div>
 
         <!-- Main Dashboard -->
