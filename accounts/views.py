@@ -5,6 +5,7 @@ from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm, Des
 from django.forms import inlineformset_factory
 from django.contrib import messages
 from django.utils.dateparse import parse_date
+from django.core.mail import EmailMessage
 from django.http import FileResponse, JsonResponse
 from .filters import OrderFilter
 from django.http import HttpResponseRedirect, HttpResponse
@@ -707,76 +708,114 @@ def manage_customers(request):
         'assigned_customers': customers
     })
 
-
-# def release_projects(request):
-#     sales_rep = get_object_or_404(SalesRepresentative, user=request.user)
-
-#     # Completed orders waiting to be released
-#     completed_orders = Order.objects.filter(
-#     customer__sales_rep=sales_rep,
-#     status='Completed'
-# ).order_by('-date_created')
-
-#     if request.method == "POST":
-#         order_id = request.POST.get("order_id")
-#         order = get_object_or_404(Order, id=order_id, assigned_to=sales_rep, status="Completed")
-
-#         # Mark as released
-#         order.status = "Released"
-#         order.date_released = timezone.now()  # optional
-#         order.save()
-
-#         # Send email to customer (if email exists)
-#         # if order.customer.email:
-#         #     subject = f"Your Order #{order.id} is Ready"
-#         #     message = "Dear {},\n\nYour design has been completed and released by our team.".format(order.customer.name)
-#         #     email_from = settings.DEFAULT_FROM_EMAIL
-#         #     recipient_list = [order.customer.email]
-
-#         #     # Optionally include file link
-#         #     if order.design_file:
-#         #         message += f"\n\nYou can download your design here: {request.build_absolute_uri(order.design_file.url)}"
-
-#         #     send_mail(subject, message, email_from, recipient_list)
-#         messages.success(request, f"Order #{order.id} released! Customer can now pay.")
-
-#     context = {
-#         'completed_orders': completed_orders
-#     }
-#     return render(request, 'accounts/sales/release_projects.html', context)
 @login_required(login_url="login")
 @allowed_users(allowed_roles=["sales_rep", "admin"])
-def release_projects(request):
-    sales_rep = get_sales_rep(request)
-    if not sales_rep:
-        return redirect("sales-dashboard")
 
-    # Completed orders waiting for release
+
+def release_projects(request):
+    sales_rep = get_object_or_404(SalesRepresentative, user=request.user)
+
+    # Completed orders waiting to be released
     completed_orders = Order.objects.filter(
         customer__sales_rep=sales_rep,
-        status="Completed"
-    ).order_by("-date_created")
+        status='Completed'
+    ).order_by('-date_created')
 
     if request.method == "POST":
         order_id = request.POST.get("order_id")
         order = get_object_or_404(
-            Order,
-            id=order_id,
-            customer__sales_rep=sales_rep,
-            status="Completed"
+            Order, id=order_id, customer__sales_rep=sales_rep, status="Completed"
         )
 
-        # Mark as Released
+        # Mark as released
         order.status = "Released"
-        order.date_released = timezone.now()
+        order.date_released = timezone.now()  # optional field in model
         order.save()
 
-        messages.success(request, f"Order #{order.id} released! Customer can now pay.")
-        return redirect("release_projects")
+        # Send email to customer (if email exists)
+        if order.customer.email:
+            subject = f"Your Order #{order.id} is Ready"
+            message = (
+                f"Dear {order.customer.name},\n\n"
+                "Your design has been completed and released by our team."
+            )
+            email_from = settings.DEFAULT_FROM_EMAIL
+            recipient_list = [order.customer.email]
 
-    return render(request, "accounts/sales/release_projects.html", {
-        "completed_orders": completed_orders
-    })
+            # Optionally include file link
+            if order.design_file:
+                file_link = request.build_absolute_uri(order.design_file.url)
+                message += f"\n\nYou can download your design here: {file_link}"
+
+            send_mail(subject, message, email_from, recipient_list)
+
+        messages.success(request, f"Order #{order.id} released! Customer has been notified.")
+
+    context = {
+        'completed_orders': completed_orders
+    }
+    return render(request, 'accounts/sales/release_projects.html', context)
+
+# @login_required(login_url="login")
+# @allowed_users(allowed_roles=["sales_rep", "admin"])
+# def release_projects(request):
+#     sales_rep = get_sales_rep(request)
+#     if not sales_rep:
+#         return redirect("sales-dashboard")
+
+#     # Completed orders waiting for release
+#     completed_orders = Order.objects.filter(
+#         customer__sales_rep=sales_rep,
+#         status="Completed"
+#     ).order_by("-date_created")
+
+#     if request.method == "POST":
+#         order_id = request.POST.get("order_id")
+#         order = get_object_or_404(
+#             Order,
+#             id=order_id,
+#             customer__sales_rep=sales_rep,
+#             status="Completed"
+#         )
+
+#         # Mark as Released
+#         order.status = "Released"
+#         order.date_released = timezone.now()
+#         order.save()
+
+#         # --- Send Email with Project File Attached ---
+#         subject = f"Your Project #{order.id} is Now Released"
+#         message = f"""
+#         Dear {order.customer.name},
+
+#         Your project (Order #{order.id}) has been released.
+#         Please find the attached file.
+
+#         Thank you for choosing us!
+#         """
+
+#         recipient_email = order.customer.email  
+
+#         email = EmailMessage(
+#             subject,
+#             message,
+#             settings.DEFAULT_FROM_EMAIL,
+#             [recipient_email],
+#         )
+
+#         # Attach design file if exists
+#         if order.design_file:
+#             email.attach_file(order.design_file.path)  # design_file is a FileField
+
+#         email.send(fail_silently=False)
+#         # --- End Email ---
+
+#         messages.success(request, f"Order #{order.id} released and sent to customer by email.")
+#         return redirect("release_projects")
+
+#     return render(request, "accounts/sales/release_projects.html", {
+#         "completed_orders": completed_orders
+#     })
 
 
 
@@ -1173,13 +1212,9 @@ Hello {order.customer.name},
 
 Your order #{order.id} has been completed by our designer.
 
-Please complete the payment to receive your design file.
+Our team will reach out shortly with the next steps.
 
-Once payment is received, we will send you your design immediately.
-
-Thank you for your cooperation!
-
-Best regards,
+Best regards,  
 Elite Digitizer
 """
         send_mail(

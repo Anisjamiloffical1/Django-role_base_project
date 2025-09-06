@@ -12,13 +12,13 @@
                         <i class="fas fa-clipboard-list"></i> Assigned Orders
                     </a>
                 </li>
-                {% for order in orders %}
+                <!-- {% for order in orders %}
                 <li class="nav-item mb-2">
                     <a href="{% url 'upload_design' order.id %}" class="nav-link text-white">
-                        <i class="fas fa-upload"></i> Upload Designs
+                        <i class="fas fa-upload"></i> Upload Design for Order #{{ order.id }}
                     </a>
                 </li>
-                {% endfor %}
+                {% endfor %} -->
                 <li class="nav-item mb-2">
                     <a href="{% url 'communicate_with_sales_admin' %}" class="nav-link text-white">
                         <i class="fas fa-paper-plane"></i> Send Message
@@ -98,19 +98,20 @@
                         <td>{{ order.customer.name }}</td>
                         <td>
                             {% if order.status == "Pending" %}
-                                <span class="badge bg-warning text-dark">Pending</span>
+                            <span class="badge bg-warning text-dark">Pending</span>
                             {% elif order.status == "Completed" %}
-                                <span class="badge bg-success">Completed</span>
+                            <span class="badge bg-success">Completed</span>
                             {% else %}
-                                <span class="badge bg-secondary">{{ order.status }}</span>
+                            <span class="badge bg-secondary">{{ order.status }}</span>
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{% url 'upload_design' order.id %}" class="btn btn-primary btn-sm">Upload Design</a>
+                            <a href="{% url 'upload_design' order.id %}" class="btn btn-primary btn-sm">Upload
+                                Design</a>
                             {% if order.status != "Completed" %}
-                                <a href="{% url 'mark-design-completed' order.id %}" class="btn btn-success btn-sm ms-1">
-                                    ✅ Mark Completed
-                                </a>
+                            <a href="{% url 'mark-design-completed' order.id %}" class="btn btn-success btn-sm ms-1">
+                                ✅ Mark Completed
+                            </a>
                             {% endif %}
                         </td>
                     </tr>
