@@ -111,3 +111,100 @@ class SalesRepMessageForm(forms.ModelForm):
         self.fields["receiver"].queryset = User.objects.filter(
             groups__name__in=["admin", "designer"]
         )
+class VectorOrderForm(forms.ModelForm):
+    Vector_name = forms.CharField(
+        label='Vector Name / PO *',
+        required=True,
+        widget=forms.TextInput(attrs={'placeholder': 'Enter Vector Name or PO'})
+    )
+
+    class Meta:
+        model = Order
+        fields = [
+            'Vector_name',           # custom field (not in model)
+            'Required_Format',
+            'total_colors',
+            'Additional_information',
+            'design_file',
+            'urgent',
+        ]
+
+        widgets = {
+            'Required_Format': forms.Select(choices=[
+                ('ai', 'AI'),
+                ('cdr', 'CDR'),
+                ('eps', 'EPS'),
+                ('others', 'Others'),
+            ]),
+            'Additional_information': forms.Textarea(attrs={'rows': 3}),
+        }
+        labels = {
+            'Required_Format': 'Required Format *',
+            'total_colors': 'Total Colors',
+            'Additional_information': 'Additional Information',
+            'design_file': 'Attachment',
+            'urgent': 'Let us know if this vector is super RUSH!',
+        }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Assign custom field value (store in Additional_information or a related place)
+        instance.Additional_information = f"Vector Name/PO: {self.cleaned_data.get('Vector_name')}\n{instance.Additional_information or ''}"
+        instance.order_type = 'Vector'
+        if commit:
+            instance.save()
+        return instance
+    
+class DigitizingOrderForm(ModelForm):
+    class Meta:
+        model = Order
+        fields = [
+            'product',
+            'quantity',
+            'urgent',
+            'Required_Format',
+            'turnaround_time',
+            'fabric_material',
+            'total_colors',
+            'placement',
+            'Height',
+            'Width',
+            'Additional_information',
+            'design_file',
+        ]
+
+
+class VectorOrderForm(ModelForm):
+    class Meta:
+        model = Order
+        fields = [
+            'Required_Format',
+            'total_colors',
+            'urgent',
+            'Additional_information',
+            'design_file',
+        ]
+
+
+class PatchOrderForm(ModelForm):
+    class Meta:
+        model = Order
+        fields = [
+            'quantity',
+            'Height',
+            'Width',
+            'fabric_material',
+            'urgent',
+            'Additional_information',
+            'design_file',
+        ]
+
+
+class QuoteOrderForm(ModelForm):
+    class Meta:
+        model = Order
+        fields = [
+            'product',
+            'quantity',
+            'Additional_information',
+        ]

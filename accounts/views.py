@@ -1,7 +1,7 @@
 from django.utils import timezone 
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import *
-from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm, DesignFileForm,DesignerMessageForm,AdminSendMessageForm, FeedbackForm, SalesRepMessageForm
+from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm, DesignFileForm,DesignerMessageForm,AdminSendMessageForm, FeedbackForm, SalesRepMessageForm, VectorOrderForm
 from django.forms import inlineformset_factory
 from django.contrib import messages
 from django.utils.dateparse import parse_date
@@ -407,54 +407,76 @@ def customer(request, pk, order_type):
     }
     return render(request, 'accounts/customer.html', context)
 
+ORDER_FIELDS = {
+    'digitizing': [
+        'product', 'order_type', 'quantity', 'urgent',
+        'Required_Format', 'turnaround_time', 'fabric_material',
+        'total_colors', 'placement', 'price', 'Height', 'Width',
+        'Additional_information', 'design_file', 'payment_status',
+    ],
+    'vector': [
+        'product', 'order_type', 'quantity', 'urgent',
+        'Required_Format', 'turnaround_time', 
+        'Additional_information', 'design_file', 
+    ],
+    'patch': [
+        'product', 'order_type', 'quantity', 'fabric_material', 'total_colors',
+           'price', 'placement',
+        'Height', 'Width', 'Additional_information', 'design_file',
+        'payment_status',
+    ],
+    'quote': [
+        'product', 'order_type', 'quantity', 'Additional_information',
+        'design_file', 'payment_status',
+    ]
+}
 
 # the commit function for just 1 item in the formset create 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['customer', 'admin'])
+
+
+
+# ✅ Step 2: Create order view for all types
 def createOrder(request, pk, order_type=None):
+    """Create order dynamically for Digitizing, Vector, Patch, or Quote"""
+    customer = get_object_or_404(Customer, id=pk)
+
+    # Normalize order_type input
+    order_type = order_type.lower() if order_type else 'digitizing'
+
+    # Pick correct fields based on order type (fallback to digitizing)
+    fields = ORDER_FIELDS.get(order_type, ORDER_FIELDS['digitizing'])
+
+    # Create formset dynamically
     OrderFormSet = inlineformset_factory(
         Customer,
         Order,
-        fields=(
-            'product',
-            'order_type',
-            'quantity',
-            'urgent',
-            'Required_Format',
-            'turnaround_time',
-            'fabric_material',
-            'total_colors',
-            'placement',
-            'price',
-            'Height',
-            'Width',
-            'status',
-            'Additional_information',
-            'design_file',
-            'assigned_designer',
-            'payment_status',
-            'review_status',
-            'review_comment',
-        ),
-        extra=1,  # always just 1 blank form
+        fields=fields,
+        extra=1,
         can_delete=False
     )
 
-    customer = get_object_or_404(Customer, id=pk)
-
     if request.method == 'POST':
-        formset = OrderFormSet(request.POST, request.FILES, instance=customer, queryset=Order.objects.none())
+        formset = OrderFormSet(
+            request.POST,
+            request.FILES,
+            instance=customer,
+            queryset=Order.objects.none()
+        )
+
         if formset.is_valid():
             orders = formset.save(commit=False)
             for order in orders:
                 order.customer = customer
+                order.order_type = order_type.capitalize()
                 order.status = order.status or 'Pending'
                 order.price = order.price or 0
                 order.payment_status = order.payment_status or 'Pending'
                 order.review_status = order.review_status or 'Pending'
                 order.save()
 
-                # Generate invoice number
+                # ✅ Generate invoice PDF
                 invoice_number = f"INV-{order.id:05d}"
                 html_string = render_to_string('accounts/invoice_template.html', {
                     'order': order,
@@ -473,9 +495,10 @@ def createOrder(request, pk, order_type=None):
             return redirect('home')
 
     else:
-        initial_data = [{'order_type': order_type}] if order_type else [{}]
+        # Set order_type as initial data
+        initial_data = [{'order_type': order_type.capitalize()}]
         formset = OrderFormSet(
-            queryset=Order.objects.none(),  # ✅ Only show 1 blank form
+            queryset=Order.objects.none(),
             instance=customer,
             initial=initial_data
         )
@@ -485,6 +508,10 @@ def createOrder(request, pk, order_type=None):
         'order_type': order_type,
         'customer': customer
     })
+
+
+
+
 @login_required
 def customer_orders(request):
     if request.user.is_staff or request.user.groups.filter(name="admin").exists():

@@ -2,85 +2,138 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4">
-    
-  
-    <div class="card shadow-lg border-0">
-        
-        <div class="card-header bg-primary text-white">
+<div class="container-fluid px-4 py-4" style="background-color:#f5f6fa;">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-md-10">
             
-            {% if formset %}
-                🛒 Create New Orders
-            {% else %}
-                ✏️ Update Order
-            {% endif %}
-        </div>
-        <div class="card-body">
-            {% if customer %}
-            <div class="alert alert-info">
-                <strong>Customer:</strong> {{ customer.name }}<br>
-                <strong>Email:</strong> {{ customer.email }}
-            </div>
-            {% endif %}
+            <!-- Card -->
+            <div class="card shadow border-0 rounded-3">
+                <div class="card-header py-3" style="background-color:#ffffff; border-bottom:2px solid #0d6efd;">
+                    <h4 class="mb-0 text-primary fw-bold">
+                        {% if formset %}
+                            Place New {{ order_type|capfirst }}
+                        {% else %}
+                            Update {{ order_type|capfirst }}
+                        {% endif %}
+                    </h4>
+                </div>
 
-            <form method="POST" enctype="multipart/form-data">
-                {% csrf_token %}
+                <div class="card-body bg-white">
+                    {% if customer %}
+                    <div class="alert alert-light border mb-4">
+                        <p class="mb-1"><strong class="text-primary">Customer:</strong> <span class="text-dark">{{ customer.name }}</span></p>
+                        <p class="mb-0"><strong class="text-primary">Email:</strong> <span class="text-dark">{{ customer.email }}</span></p>
+                    </div>
+                    {% endif %}
 
-                {% if formset %}
-                    <!-- Create Order (Formset) -->
-                    {{ formset.management_form }}
-                    {% for form in formset %}
-                        <div class="border rounded p-3 mb-3 bg-light">
-                            {% for field in form %}
-                                <div class="mb-3">
-                                    <label class="form-label">{{ field.label }}</label>
-                                    {{ field }}
-                                    {% if field.errors %}
-                                        <div class="text-danger small">{{ field.errors }}</div>
-                                    {% endif %}
+                    <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        {% if formset %}
+                            {{ formset.management_form }}
+                            {% for form in formset %}
+                                <div class="border rounded p-3 mb-3 bg-light">
+                                    {% for field in form %}
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">{{ field.label }}</label>
+                                            {{ field }}
+                                            {% if field.errors %}
+                                                <div class="text-danger small">{{ field.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
                                 </div>
                             {% endfor %}
-                        </div>
-                    {% endfor %}
-
-                {% elif form %}
-                    <!-- Update Order (Single Form) -->
-                    <div class="border rounded p-3 mb-3 bg-light">
-                        {% for field in form %}
-                            <div class="mb-3">
-                                <label class="form-label">{{ field.label }}</label>
-                                {{ field }}
-                                {% if field.errors %}
-                                    <div class="text-danger small">{{ field.errors }}</div>
-                                {% endif %}
+                        {% elif form %}
+                            <div class="row">
+                                {% for field in form %}
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-semibold">{{ field.label }}</label>
+                                        {{ field }}
+                                        {% if field.errors %}
+                                            <div class="text-danger small">{{ field.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
                             </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+                        {% endif %}
 
-                <div class="d-flex justify-content-between">
-                    <a href="{% url 'home' %}" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Cancel
-                    </a>
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i> Submit Order
-                    </button>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="rushCheck" name="urgent">
+                            <label class="form-check-label" for="rushCheck">
+                                Let us know if this vector is super RUSH!
+                            </label>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="{% url 'home' %}" class="btn btn-danger px-4">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                Submit
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
+            <!-- End Card -->
         </div>
     </div>
 </div>
 
+<!-- Custom Styling -->
 <style>
-    .formset-wrapper input, .formset-wrapper select, .formset-wrapper textarea {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 6px;
+    .card {
+        background: #fff;
+        border-radius: 10px;
     }
-    .card-header {
+
+    .card-header h4 {
+        font-size: 1.3rem;
         font-weight: 600;
-        font-size: 1.2rem;
+    }
+
+    .alert-light {
+        background-color: #f9fafb;
+        border-color: #e4e6eb;
+    }
+
+    .alert-light strong.text-primary {
+        font-size: 1rem;
+    }
+
+    input.form-control, select.form-select, textarea.form-control {
+        border-radius: 6px !important;
+        border: 1px solid #d3d3d3 !important;
+        padding: 8px 10px !important;
+        font-size: 15px;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .btn-primary:hover {
+        background-color: #0069d9;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    .btn-danger:hover {
+        background-color: #c82333;
+    }
+
+    label.form-label {
+        color: #333;
+    }
+
+    body {
+        background-color: #f5f6fa;
     }
 </style>
 {% endblock %}

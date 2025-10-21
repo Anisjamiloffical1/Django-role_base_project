@@ -175,7 +175,7 @@
         <div class="col-md-10">
             <div class="dashboard-grid">
                 <!-- Place Digitizing Order -->
-                <a href="{% url 'create_order' customer.id|stringformat:"s" 'Digitizing' %}">
+                <a href="{% url 'create_order' customer.id 'digitizing' %}">
                     <div class="dashboard-card">
                         <div class="icon">💰</div>
                         <div class="label">Place Digitizing Order</div>
@@ -183,7 +183,7 @@
                 </a>
 
                 <!-- Place Vector Order -->
-                <a href="{% url 'create_order' customer.id 'Vector' %}">
+                <a href="{% url 'create_order' customer.id 'vector' %}">
                     <div class="dashboard-card">
                         <div class="icon">✏️</div>
                         <div class="label">Place Vector Order</div>
@@ -191,7 +191,7 @@
                 </a>
 
                 <!-- Place Patch Order -->
-                <a href="{% url 'create_order' customer.id 'Patch' %}">
+                <a href="{% url 'create_order' customer.id 'patch' %}">
                     <div class="dashboard-card">
                         <div class="icon">🧷</div>
                         <div class="label">Place Patch Order</div>
@@ -227,7 +227,7 @@
                 </a>
 
                 <!-- Send Quote -->
-                <a href="{% url 'create_order' customer.id 'Quote' %}">
+                <a href="{% url 'create_order' customer.id 'quote' %}">
                     <div class="dashboard-card">
                         <div class="icon">💬</div>
                         <div class="label">Send Quote</div>
