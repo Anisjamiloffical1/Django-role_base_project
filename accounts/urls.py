@@ -29,6 +29,7 @@ urlpatterns = [
     path('update_order/<str:pk>/', views.updateOrder, name='update_order'),
     path('delete_order/<str:pk>/', views.delete_order, name='delete_order'),
     path('register/', views.register_page, name='register'),
+   
     path('login/', views.login_page, name='login'),
     path('reports/', views.report_view, name='report_view'),
    # FOR VECTOR ORDERS
@@ -41,6 +42,7 @@ urlpatterns = [
     path('message/<int:pk>/', views.view_message, name='view_message'),
     path('accounts/', views.accountSettings, name='account'),
     path('customer/update/<str:pk>/', views.updateCustomer, name='update_customer'),
+    path('customer/<int:pk>/all-orders/', views.customer_all_orders, name='customer_all_orders'), # this for all orders in one page
     path('settings/', views.manage_settings, name='manage_settings'),
     path('sales/dashboard/', views.sales_dashboard, name='sales-dashboard'),
     path('sales/customers/', views.manage_customers, name='manage_customers'),

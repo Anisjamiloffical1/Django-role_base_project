@@ -6,36 +6,49 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 # Create your models here.
 class Customer(models.Model):
-    user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE, related_name="customer_profile")
-    name = models.CharField(max_length=200 )
-    sales_rep = models.ForeignKey('SalesRepresentative', null=True, blank=True, on_delete=models.SET_NULL, related_name='assigned_customers')
+    user = models.OneToOneField(
+        User, null=True, blank=True,
+        on_delete=models.CASCADE,
+        related_name="customer_profile"
+    )
+    name = models.CharField(max_length=200)
+    designer = models.ForeignKey(
+        'Designer', null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='orders'
+    )
     profile_pic = models.ImageField(
-        upload_to='profile_pics/',  # Images will be saved in MEDIA_ROOT/profile_pics/
+        upload_to='profile_pics/',
         null=True,
         blank=True,
-        default='profile_pics/default.png'  # Default image path
+        default='profile_pics/default.png'
     )
     phone = models.CharField(max_length=200)
     email = models.CharField(max_length=200)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
+
     def __str__(self):
         return self.name
+
+
 class SalesRepresentative(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="sales_rep_profile")
     name = models.CharField(max_length=200, null=True, blank=True)
     def __str__(self):
         return self.user.username
+
     def get_orders(self, status=None):
-        qs = Order.objects.filter(customer__sales_rep=self)
+        qs = Order.objects.filter(customer__designer=self)  # optional, if you still want to fetch orders linked via designer
         if status:
             qs = qs.filter(status=status)
         return qs
-    
+
 
 class Designer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     def __str__(self):
         return self.user.username
+
 
 class Admin(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -178,7 +191,15 @@ class Order(models.Model):
     review_comment = models.TextField(blank=True, null=True)
     design_file = models.FileField(upload_to='designs/', blank=True, null=True)
     assigned_designer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='designer_orders')
-
+    def save(self, *args, **kwargs):
+        if self.customer and not self.assigned_designer:
+        # auto-assign the designer from the customer
+            if self.customer.designer:
+            # if Designer model links to User:
+                self.assigned_designer = self.customer.designer.user
+            # OR if it links directly to User (depending on your model):
+            # self.assigned_designer = self.customer.designer
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.product.name if self.product else 'No product'} ({self.order_type})"

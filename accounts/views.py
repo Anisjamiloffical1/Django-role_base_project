@@ -34,16 +34,23 @@ import csv
 # Create your views here.
 @unauthenticated_user
 def register_page(request):
-    sales_reps = SalesRepresentative.objects.all()  # for dropdown
+    designers = Designer.objects.all()  # for dropdown
 
     if request.method == 'POST':
+        print("POST DATA:", request.POST)  # ✅ debug line
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         password = request.POST.get('password')
-        role = request.POST.get('role')  # Get role from form
-        sales_rep_id = request.POST.get('sales_rep')  # Get assigned sales rep from form
+        role = request.POST.get('role')
+        designer_id = request.POST.get('designer')
 
+        # ✅ Check if username (email) already exists
+        if User.objects.filter(username=email).exists():
+            messages.error(request, 'This email is already registered.')
+            return redirect('register')
+
+        # ✅ Create user safely
         user_obj = User.objects.create(
             first_name=first_name,
             last_name=last_name,
@@ -53,15 +60,25 @@ def register_page(request):
         user_obj.set_password(password)
         user_obj.save()
 
-        group = Group.objects.get(name=role)
-        user_obj.groups.add(group)
+        # ✅ Assign role (Group)
+        try:
+            group = Group.objects.get(name=role)
+            user_obj.groups.add(group)
+        except Group.DoesNotExist:
+            messages.error(request, f"The role '{role}' does not exist.")
+            return redirect('register')
 
-        # Create related profile if needed
+        # ✅ Create related profile
         if role == 'customer':
-            sales_rep = None
-            if sales_rep_id:
-                sales_rep = SalesRepresentative.objects.get(id=sales_rep_id)
-            Customer.objects.create(user=user_obj, sales_rep=sales_rep)
+            designer = None
+            if designer_id and designer_id != "":
+                designer = Designer.objects.filter(id=designer_id).first()
+                print("🎨 Designer Selected:", designer)
+            Customer.objects.create(
+                user=user_obj,
+                name=f"{first_name} {last_name}",
+                designer=designer
+            )
         elif role == 'sales_rep':
             SalesRepresentative.objects.create(user=user_obj)
         elif role == 'designer':
@@ -69,10 +86,12 @@ def register_page(request):
         elif role == 'admin':
             Admin.objects.create(user=user_obj)
 
-        messages.success(request, "Your account has been created successfully.")
+        messages.success(request, "✅ Your account has been created successfully.")
         return redirect('login')
 
-    return render(request, 'accounts/register.html', {'sales_reps': sales_reps})
+    return render(request, 'accounts/register.html', {'designers': designers})
+
+
 
 
 @unauthenticated_user
@@ -386,6 +405,26 @@ def review_file(request, pk):
 def products(request):
     products = Product.objects.all()
     return render(request, 'accounts/products.html', {'products': products})
+# for all order details of a customer like for inovices
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
+def customer_all_orders(request, pk):
+    customer = get_object_or_404(Customer, id=pk)
+    orders = Order.objects.filter(customer=customer).order_by('-date_created')
+
+    print("Customer ID in URL:", pk)
+    print("Database Customer ID:", customer.id)
+    print("Orders count:", orders.count())
+
+    context = {
+        'customer': customer,
+        'orders': orders,
+        'total_order': orders.count(),
+    }
+    return render(request, 'accounts/customer_all_orders.html', context)
+
+
+
 # # this function is used to show the customer details and their orders
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
@@ -406,7 +445,7 @@ def customer(request, pk, order_type):
         'total_order': total_order
     }
     return render(request, 'accounts/customer.html', context)
-
+# this feilds name for different order types
 ORDER_FIELDS = {
     'digitizing': [
         'product', 'order_type', 'quantity', 'urgent',
@@ -416,7 +455,7 @@ ORDER_FIELDS = {
     ],
     'vector': [
         'product', 'order_type', 'quantity', 'urgent',
-        'Required_Format', 'turnaround_time', 
+        'Required_Format', 'turnaround_time', 'total_colors',
         'Additional_information', 'design_file', 
     ],
     'patch': [
@@ -426,7 +465,7 @@ ORDER_FIELDS = {
         'payment_status',
     ],
     'quote': [
-        'product', 'order_type', 'quantity', 'Additional_information',
+        'product', 'order_type', 'fabric_material', 'quantity','total_colors','Height', 'Width', 'Additional_information',
         'design_file', 'payment_status',
     ]
 }
@@ -434,9 +473,6 @@ ORDER_FIELDS = {
 # the commit function for just 1 item in the formset create 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['customer', 'admin'])
-
-
-
 # ✅ Step 2: Create order view for all types
 def createOrder(request, pk, order_type=None):
     """Create order dynamically for Digitizing, Vector, Patch, or Quote"""
@@ -1144,36 +1180,55 @@ def designer_dashboard(request):
         'status_filter': status
     })
 
+
+@login_required(login_url='login')
 @allowed_users(allowed_roles=['designer'])
 def upload_design(request, pk):
     order = get_object_or_404(Order, id=pk, assigned_designer=request.user)
-    
+
     if request.method == 'POST':
         form = DesignFileForm(request.POST, request.FILES)
         if form.is_valid():
-            file = request.FILES['design_file']
+            file = request.FILES.get('design_file')  # ✅ Safely access file
+
+            # ✅ Check if file is provided
+            if not file:
+                messages.error(request, "Please select a design file before uploading.")
+                return redirect(request.path)
+
+            # ✅ Check file size (max 5 MB)
+            max_size = 5 * 1024 * 1024  # 5 MB in bytes
+            if file.size > max_size:
+                messages.error(request, "File too large! Maximum allowed size is 5 MB.")
+                return redirect(request.path)
+
+            # ✅ Check file extension/type
             if not file.name.lower().endswith(('.ai', '.eps', '.svg')):
-                messages.error(request, "Only AI/EPS/SVG files allowed!")
-            else:
-                # Save to UploadedFile for history
-                UploadedFile.objects.create(
-                    order=order,
-                    file=file,
-                    uploaded_by=request.user
-                )
-                # Update main design reference
-                order.design_file = file
-                order.save()
-                messages.success(request, "Design uploaded successfully!")
-                return redirect('designer-dashboard')
+                messages.error(request, "Only AI, EPS, or SVG files are allowed!")
+                return redirect(request.path)
+
+            # ✅ Save file history
+            UploadedFile.objects.create(
+                order=order,
+                file=file,
+                uploaded_by=request.user
+            )
+
+            # ✅ Update order with new design file
+            order.design_file = file
+            order.save()
+
+            messages.success(request, "Design uploaded successfully!")
+            return redirect('designer-dashboard')
+        else:
+            messages.error(request, "Please correct the errors in the form.")
     else:
-        form = DesignFileForm()
-    
+        form = DesignFileForm(instance=order)
+
     return render(request, 'accounts/upload_design.html', {
         'form': form,
         'order': order
     })
-
 @login_required
 def designer_manage_orders(request):
     # Get all orders assigned to this designer

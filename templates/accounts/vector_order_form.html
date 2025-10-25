@@ -1,0 +1,15 @@
+{% extends 'accounts/main.html' %}
+{% block content %}
+<h3>Place New Vector Order</h3>
+
+<form method="POST" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ formset.management_form }}
+
+  {% for form in formset %}
+    {{ form.as_p }}
+  {% endfor %}
+
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+{% endblock %}
