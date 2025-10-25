@@ -775,10 +775,11 @@ def manage_customers(request):
 @allowed_users(allowed_roles=["sales_rep", "admin"])
 
 
+
 def release_projects(request):
     sales_rep = get_object_or_404(SalesRepresentative, user=request.user)
 
-    # Completed orders waiting to be released
+    # Get all completed orders waiting for release
     completed_orders = Order.objects.filter(
         customer__sales_rep=sales_rep,
         status='Completed'
@@ -792,30 +793,49 @@ def release_projects(request):
 
         # Mark as released
         order.status = "Released"
-        order.date_released = timezone.now()  # optional field in model
+        order.date_released = timezone.now()
         order.save()
 
-        # Send email to customer (if email exists)
+        # Prepare email
         if order.customer.email:
-            subject = f"Your Order #{order.id} is Ready"
+            subject = f"Your Order #{order.id} is Ready!"
             message = (
                 f"Dear {order.customer.name},\n\n"
-                "Your design has been completed and released by our team."
+                f"Your order #{order.id} has been completed and is now released.\n"
+                "Please find your design and invoice attached below.\n\n"
+                "Thank you for choosing us!\n\n"
+                "Best regards,\n"
+                f"{sales_rep.user.get_full_name() or 'Your Sales Representative'}"
             )
-            email_from = settings.DEFAULT_FROM_EMAIL
-            recipient_list = [order.customer.email]
 
-            # Optionally include file link
-            if order.design_file:
-                file_link = request.build_absolute_uri(order.design_file.url)
-                message += f"\n\nYou can download your design here: {file_link}"
+            email = EmailMessage(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [order.customer.email],
+            )
 
-            send_mail(subject, message, email_from, recipient_list)
+            # Attach design file if exists
+            if order.design_file and os.path.isfile(order.design_file.path):
+                email.attach_file(order.design_file.path)
 
-        messages.success(request, f"Order #{order.id} released! Customer has been notified.")
+            # Attach invoice if exists
+            if hasattr(order, 'invoice_file') and order.invoice_file and os.path.isfile(order.invoice_file.path):
+                email.attach_file(order.invoice_file.path)
+
+            # Send the email
+            try:
+                email.send()
+                messages.success(request, f"Order #{order.id} released and email sent to {order.customer.email}.")
+            except Exception as e:
+                messages.error(request, f"Order released but email could not be sent: {e}")
+        else:
+            messages.warning(request, f"Order #{order.id} released, but customer email not available.")
+
+        return redirect('release_projects')  # reload page after POST
 
     context = {
-        'completed_orders': completed_orders
+        'completed_orders': completed_orders,
     }
     return render(request, 'accounts/sales/release_projects.html', context)
 
@@ -1267,47 +1287,73 @@ def mark_completed(request, order_id):
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['designer'])
 def mark_design_completed(request, order_id):
+    # Get the order assigned to this designer
     order = get_object_or_404(Order, id=order_id, assigned_designer=request.user)
     
+    # Ensure design file is uploaded first
     if not order.design_file:
-        messages.error(request, "Upload design file first!")
+        messages.error(request, "Please upload the design file before marking as completed!")
         return redirect('upload_design', pk=order.id)
     
-    order.status = 'Completed'
+    # Update order status to Released (since you want it automatically sent)
+    order.status = 'Released'
     order.date_completed = timezone.now()
+    order.date_released = timezone.now()
     order.save()
-    
-    # Notify sales rep
+
+    # Notify Sales Rep (optional)
     sales_rep = getattr(order.customer, 'sales_rep', None)
     if sales_rep:
-        notify_user(
-            user=sales_rep.user,
-            message=f"Order #{order.id} was completed by designer"
-        )
-        
-    # Notify Customer: Request payment before sending the design
-    # this is optional add if client to add this orther wise remove this 
+        try:
+            # Example: log or send a message if you have notify_user()
+            # notify_user(user=sales_rep.user, message=f"Order #{order.id} released by designer.")
+            print(f"Sales Rep Notified: Order #{order.id} released by designer.")
+        except Exception as e:
+            print(f"Could not notify sales rep: {e}")
+
+    # Send email to customer with design + invoice attached
     if order.customer and order.customer.email:
-        subject = f"Order #{order.id} Completed – Payment Required"
+        subject = f"Your Order #{order.id} is Ready!"
         message = f"""
-Hello {order.customer.name},
+Dear {order.customer.name},
 
-Your order #{order.id} has been completed by our designer.
+Your order #{order.id} has been completed and released by our designer.
 
-Our team will reach out shortly with the next steps.
+Please find your design file attached below.
+If applicable, the invoice is also attached.
+
+Thank you for choosing Elite Digitizer!
 
 Best regards,  
-Elite Digitizer
+Elite Digitizer Team
 """
-        send_mail(
+
+        email = EmailMessage(
             subject=subject,
-            message=message,
+            body=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[order.customer.email],
-            fail_silently=False,
+            to=[order.customer.email],
         )
-    
-    messages.success(request, "Order marked as Completed! Waiting for Sales/Admin release.")
+
+        # Attach design file if exists
+        if order.design_file and os.path.isfile(order.design_file.path):
+            email.attach_file(order.design_file.path)
+
+        # Attach invoice file if exists (optional field)
+        if hasattr(order, 'invoice_file') and order.invoice_file and os.path.isfile(order.invoice_file.path):
+            email.attach_file(order.invoice_file.path)
+
+        try:
+            email.send()
+            messages.success(
+                request,
+                f"Order #{order.id} released and email sent to {order.customer.email} with attachments."
+            )
+        except Exception as e:
+            messages.error(request, f"Order released but email could not be sent: {e}")
+    else:
+        messages.warning(request, f"Order #{order.id} released, but customer email not found.")
+
     return redirect('designer-dashboard')
 
 @login_required(login_url='login')

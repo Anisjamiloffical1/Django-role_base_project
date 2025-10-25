@@ -133,5 +133,5 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'anisjamilofficial1@gmail.com'
-EMAIL_HOST_PASSWORD = 'ogzx ywmj rshy bxqf'
-ADMIN_EMAIL = "anisjamiloffical1@gmail.com"
+EMAIL_HOST_PASSWORD = 'qgjz bysn lzms aaiq'
+ADMIN_EMAIL = "anisjamilofficial1@gmail.com"
