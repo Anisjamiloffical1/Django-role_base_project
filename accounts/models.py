@@ -23,6 +23,8 @@ class Customer(models.Model):
         blank=True,
         default='profile_pics/default.png'
     )
+    sales_rep = models.ForeignKey('SalesRepresentative', null=True, blank=True, on_delete=models.SET_NULL)
+
     phone = models.CharField(max_length=200)
     email = models.CharField(max_length=200)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
