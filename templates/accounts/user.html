@@ -242,7 +242,7 @@
                         <div class="label">Quote Records</div>
                     </div>
                 </a>
-                <a href="{% url 'customer_all_orders' customer.id %}">
+                <a href="{% url 'customer_receivable_orders' customer.id %}">
                     <div class="dashboard-card">
                         <div class="icon">🧾</div>
                         <div class="label">Invoices</div>
@@ -261,5 +261,7 @@
         </div>
     </div>
 </div>
-
+<a href="{% url 'customer_invoices' customer.id %}" class="btn btn-info">View All Invoices</a>
+<a href="{% url 'customer_receivable_orders' customer.id %}" class="btn btn-warning">Receivable Orders</a>
+<a href="{% url 'customer_received_orders' customer.id %}" class="btn btn-success">Received Orders</a>
 {% endblock content %}

@@ -159,7 +159,7 @@ class DigitizingOrderForm(ModelForm):
     class Meta:
         model = Order
         fields = [
-            'product',
+            
             'quantity',
             'urgent',
             'Required_Format',
@@ -204,7 +204,11 @@ class QuoteOrderForm(ModelForm):
     class Meta:
         model = Order
         fields = [
-            'product',
+            
             'quantity',
             'Additional_information',
         ]
+class CustomerProfileForm(forms.ModelForm):
+    class Meta:
+        model = Customer
+        fields = ['name', 'phone', 'email', 'profile_pic']

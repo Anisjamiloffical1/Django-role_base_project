@@ -1,52 +1,32 @@
 {% extends 'accounts/main.html' %}
-{% load static %}
-
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4">Invoices for {{ customer.name }}</h2>
-
-    {% if invoice_data %}
-        <div class="list-group">
-            {% for item in invoice_data %}
-                <div class="list-group-item mb-3 shadow-sm p-3 rounded">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-1">
-                                Invoice - {{ item.invoice.month }}/{{ item.invoice.year }}
-                            </h5>
-                            <p class="mb-1">Total: ${{ item.invoice.total_amount }}</p>
-                        </div>
-                        <div>
-                            <a href="{% url 'invoice_detail' customer.id item.invoice.year item.invoice.month %}" 
-                               class="btn btn-sm btn-primary">
-                                Download PDF
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Related Orders -->
-                    {% if item.orders %}
-                        <hr>
-                        <h6>Orders in this invoice:</h6>
-                        <ul class="list-group list-group-flush">
-                            {% for order in item.orders %}
-                                <li class="list-group-item">
-                                    Order #{{ order.id }} - {{ order.product.name }} ({{ order.created_at|date:"M d, Y" }})
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p class="text-muted">No completed orders for this period.</p>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="alert alert-info">
-            No invoices found for this customer.
-        </div>
-    {% endif %}
-
-    <a href="{% url 'home' %}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+  <h3>{{ page_title }} for {{ customer.name }}</h3>
+  <table class="table table-bordered mt-3">
+    <thead class="table-primary">
+      <tr>
+        <th>Month</th>
+        <th>Year</th>
+        <th>Total Amount</th>
+        <th>Created At</th>
+        <th>View</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for invoice in invoices %}
+      <tr>
+        <td>{{ invoice.month }}</td>
+        <td>{{ invoice.year }}</td>
+        <td>${{ invoice.total_amount }}</td>
+        <td>{{ invoice.created_at|date:"M d, Y" }}</td>
+        <td>
+          <a href="{% url 'invoice_detail' invoice.id %}" class="btn btn-sm btn-primary">View</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="text-center">No invoices found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% endblock %}

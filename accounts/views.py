@@ -1,7 +1,7 @@
 from django.utils import timezone 
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import *
-from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm, DesignFileForm,DesignerMessageForm,AdminSendMessageForm, FeedbackForm, SalesRepMessageForm, VectorOrderForm
+from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm, DesignFileForm,DesignerMessageForm,AdminSendMessageForm, FeedbackForm, SalesRepMessageForm, CustomerProfileForm
 from django.forms import inlineformset_factory
 from django.contrib import messages
 from django.utils.dateparse import parse_date
@@ -27,7 +27,7 @@ from django.utils.timezone import now
 import calendar
 from django.conf import settings
 from django.db.models import Count, Sum, Q
-
+from .utils import generate_monthly_invoice
 from io import BytesIO
 import csv
 
@@ -449,25 +449,25 @@ def customer(request, pk, order_type):
 # this feilds name for different order types
 ORDER_FIELDS = {
     'digitizing': [
-        'product', 'order_type', 'quantity', 'urgent',
-        'Required_Format', 'turnaround_time', 'fabric_material',
-        'total_colors', 'placement', 'price', 'Height', 'Width',
-        'Additional_information', 'design_file', 'payment_status',
+         'Order_name_PO', # remove the product field if not needed
+        'Required_Format', 'fabric_material',
+        'total_colors', 'placement',  'Height', 'Width',
+        'Additional_information', 'design_file', 
     ],
     'vector': [
-        'product', 'order_type', 'quantity', 'urgent',
-        'Required_Format', 'turnaround_time', 'total_colors',
+         'Order_name_PO', 
+        'Required_Format',  'total_colors',
         'Additional_information', 'design_file', 
     ],
     'patch': [
-        'product', 'order_type', 'quantity', 'fabric_material', 'total_colors',
-           'price', 'placement',
+        'Order_name_PO',  'patch_type',  'total_colors',
+           'placement',
         'Height', 'Width', 'Additional_information', 'design_file',
-        'payment_status',
+        
     ],
     'quote': [
-        'product', 'order_type', 'fabric_material', 'quantity','total_colors','Height', 'Width', 'Additional_information',
-        'design_file', 'payment_status',
+         'Order_name_PO', 'fabric_material', 'total_colors','Height', 'Width', 'Additional_information',
+        'design_file', 
     ]
 }
 
@@ -657,20 +657,19 @@ def create_sales_rep(sender, instance, created, **kwargs):
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['customer'])
 def accountSettings(request):
-    try:
-        customer = request.user.customer_profile
-    except Customer.DoesNotExist:
-        customer = None
-
-    form = CustomerForm(instance=customer)
+    customer, created = Customer.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
-        form = CustomerForm(request.POST, request.FILES, instance=customer)
+        form = CustomerProfileForm(request.POST, request.FILES, instance=customer)
         if form.is_valid():
             form.save()
             messages.success(request, "Profile updated successfully.")
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = CustomerProfileForm(instance=customer)
 
-    context = {'form': form, 'customer': customer}  # Pass to template
+    context = {'form': form, 'customer': customer}
     return render(request, 'accounts/account_settings.html', context)
 
 
@@ -1662,3 +1661,59 @@ def contact(request):
 
 def about(request):
     return render(request, "accounts/about.html")
+
+
+def customer_receivable_orders(request, pk):
+    customer = get_object_or_404(Customer, id=pk)
+    # Assuming payment_status='Pending' means not yet received
+    orders = Order.objects.filter(customer=customer, payment_status='Pending').order_by('-date_created')
+
+    context = {
+        'customer': customer,
+        'orders': orders,
+        'total_order': orders.count(),
+        'page_title': 'Receivable Orders',
+    }
+    return render(request, 'accounts/customer_orders_list.html', context)
+
+def customer_received_orders(request, pk):
+    customer = get_object_or_404(Customer, id=pk)
+    # Assuming payment_status='Paid' means received
+    orders = Order.objects.filter(customer=customer, payment_status='Paid').order_by('-date_created')
+
+    context = {
+        'customer': customer,
+        'orders': orders,
+        'total_order': orders.count(),
+        'page_title': 'Received Orders',
+    }
+    return render(request, 'accounts/customer_orders_list.html', context)
+
+
+
+def customer_invoices(request, pk):
+    customer = get_object_or_404(Customer, id=pk)
+    invoices = Invoice.objects.filter(customer=customer).order_by('-year', '-month')
+
+    context = {
+        'customer': customer,
+        'invoices': invoices,
+        'page_title': 'All Invoices',
+    }
+    return render(request, 'accounts/customer_invoices.html', context)
+
+def invoice_detail(request, invoice_id):
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+    orders = Order.objects.filter(
+        customer=invoice.customer,
+        date_created__year=invoice.year,
+        date_created__month=invoice.month,
+        status='Completed'
+    )
+
+    context = {
+        'invoice': invoice,
+        'orders': orders,
+        'page_title': f"Invoice {invoice.month}/{invoice.year}"
+    }
+    return render(request, 'accounts/invoice_detail.html', context)

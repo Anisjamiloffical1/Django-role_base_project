@@ -77,7 +77,11 @@ urlpatterns = [
     path('customer/<int:pk>/invoices/', views.customer_invoices, name='customer_invoices'),
     path('customer/<int:pk>/invoices/<int:year>/<int:month>/', views.invoice_detail, name='invoice_detail'),
 
-  
+    path('customer/<int:pk>/receivable-orders/', views.customer_receivable_orders, name='customer_receivable_orders'),
+    path('customer/<int:pk>/received-orders/', views.customer_received_orders, name='customer_received_orders'),
+
+    path('customer/<int:pk>/invoices/', views.customer_invoices, name='customer_invoices'),
+    path('invoice/<int:invoice_id>/', views.invoice_detail, name='invoice_detail'),
 ]
     
     

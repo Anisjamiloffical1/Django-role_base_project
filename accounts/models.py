@@ -11,7 +11,7 @@ class Customer(models.Model):
         on_delete=models.CASCADE,
         related_name="customer_profile"
     )
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200,null=True, blank=True)
     designer = models.ForeignKey(
         'Designer', null=True, blank=True,
         on_delete=models.SET_NULL,
@@ -25,8 +25,8 @@ class Customer(models.Model):
     )
     sales_rep = models.ForeignKey('SalesRepresentative', null=True, blank=True, on_delete=models.SET_NULL)
 
-    phone = models.CharField(max_length=200)
-    email = models.CharField(max_length=200)
+    phone = models.CharField(max_length=200, null=True, blank=True)
+    email = models.CharField(max_length=200, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
@@ -98,12 +98,12 @@ class Order(models.Model):
         ('Completed', 'Completed'),
         ('Released', 'Released'),
     )
-    ORDER_TYPE = (
-        ('Digitizing', 'Digitizing'),
-        ('Vector', 'Vector'),
-        ('Patch', 'Patch'),
-        ('Quote', 'Quote'),
-    )
+    # ORDER_TYPE = (
+    #     ('Digitizing', 'Digitizing'),
+    #     ('Vector', 'Vector'),
+    #     ('Patch', 'Patch'),
+    #     ('Quote', 'Quote'),
+    # )
     PAYMENT_STATUS = (
         ('Pending', 'Pending'),
         ('Paid', 'Paid'),
@@ -169,8 +169,9 @@ class Order(models.Model):
         ('other', 'Other'),
     ]
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, null=True, on_delete=models.SET_NULL)
-    order_type = models.CharField(max_length=50, choices=ORDER_TYPE, null=True, blank=True)
+    patch_type = models.ForeignKey(Product, null=True, on_delete=models.SET_NULL)
+   
+    Order_name_PO = models.CharField(max_length=50,  null=True, blank=True)# change this to Order_name/PO for patch name patch type
     date_created = models.DateTimeField(auto_now_add=True, null=True)
     status = models.CharField(max_length=200, null=True, choices=STATUS)
     Additional_information = models.TextField(blank=True, null=True)
@@ -191,20 +192,36 @@ class Order(models.Model):
     date_completed = models.DateTimeField(null=True, blank=True)  # Optional: track completion time
     review_status = models.CharField(max_length=20, choices=REVIEW_STATUS, default='Pending')
     review_comment = models.TextField(blank=True, null=True)
-    design_file = models.FileField(upload_to='designs/', blank=True, null=True)
+    design_file = models.FileField(upload_to='designs/', blank=True, null=True)# limated size 2MB
+    assigned_sale_rep = models.ForeignKey(SalesRepresentative, on_delete=models.SET_NULL, null=True, blank=True, related_name='sales_rep_orders')
+    # def save(self, *args, **kwargs):
+    # # Auto-assign designer if not set
+    #     if self.customer and not self.assigned_designer:
+    #         if self.customer.designer:
+    #             self.assigned_designer = self.customer.designer.user
+
+    # # Auto-assign sales rep if not set
+    #     if self.customer and not self.assigned_sales_rep:
+    #         if self.customer.sales_rep:
+    #             self.assigned_sales_rep = self.customer.sales_rep.user
+
+    #     super().save(*args, **kwargs)
     assigned_designer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='designer_orders')
     def save(self, *args, **kwargs):
+    # Auto-assign designer if not set
         if self.customer and not self.assigned_designer:
-        # auto-assign the designer from the customer
             if self.customer.designer:
-            # if Designer model links to User:
                 self.assigned_designer = self.customer.designer.user
-            # OR if it links directly to User (depending on your model):
-            # self.assigned_designer = self.customer.designer
+
+    # Auto-assign sales rep if not set
+        if self.customer and not self.assigned_sales_rep:
+            if self.customer.sales_rep:
+                self.assigned_sales_rep = self.customer.sales_rep.user
+
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.product.name if self.product else 'No product'} ({self.order_type})"
+        return f"{self.patch_type.name if self.patch_type else 'No product'} ({self.Order_name_PO})"
     
 # class Invoice(models.Model):
 #     order = models.ForeignKey(related_name='')
@@ -272,6 +289,7 @@ class Invoice(models.Model):
     month = models.PositiveIntegerField()
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+    date_created = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         unique_together = ('customer', 'year', 'month')  # one invoice per customer per month
