@@ -204,12 +204,13 @@
         {% endif %}
 
         <span class="hello-msg">Hello, {{ user.first_name }}!
+          <!-- this is  optional for client -->
 
-          <div class="nav-item dropdown">
+          <!-- <div class="nav-item dropdown">
             <a class="nav-link logout-link" href="{% url 'logout' %}">
               <i class="fas fa-sign-out-alt"></i> Logout
             </a>
-          </div>
+          </div> -->
 
 
         </span>

@@ -8,7 +8,7 @@
         <thead>
             <tr>
                 <th>Order #</th>
-                <th>Product</th>
+                <th>Order_name_PO</th>
                 <th>Type</th>
                 <th>Status</th>
                 <th>Date</th>
@@ -19,7 +19,7 @@
             {% for order in orders %}
             <tr>
                 <td>{{ order.id }}</td>
-                <td>{{ order.product }}</td>
+                <td>{{ order.Order_name_PO }}</td>
                 <td>{{ order.order_type }}</td>
                 <td>{{ order.status }}</td>
                 <td>{{ order.date_created|date:"Y-m-d H:i" }}</td>

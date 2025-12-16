@@ -45,7 +45,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Customer</th>
-                        <th>Product</th>
+                        <th>Order_name_PO</th>
                         <th>Type</th>
                         <th>Date</th>
                     </tr>
@@ -55,7 +55,7 @@
                     <tr>
                         <td>{{ order.id }}</td>
                         <td>{{ order.customer.name }}</td>
-                        <td>{{ order.product.name }}</td>
+                        <td>{{ order.Order_name_PO }}</td>
                         <td>{{ order.order_type }}</td>
                         <td>{{ order.date_created|date:"Y-m-d H:i" }}</td>
                     </tr>

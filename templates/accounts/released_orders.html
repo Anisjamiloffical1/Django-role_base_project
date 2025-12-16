@@ -8,7 +8,7 @@
         <thead class="table-dark">
             <tr>
                 <th>Order ID</th>
-                <th>Product</th>
+                <th>Order Name/PO</th>
                 <th>Order Type</th>
                 <th>Released On</th>
                 <th>Files</th>
@@ -19,7 +19,7 @@
             {% for order in released_orders %}
             <tr>
                 <td>#{{ order.id }}</td>
-                <td>{{ order.product.name }}</td>
+                <td>{{ order.Order_name_PO }}</td>
                 <td>{{ order.order_type }}</td>
                 <td>{{ order.date_created|date:"M d, Y H:i" }}</td>
                 <td>

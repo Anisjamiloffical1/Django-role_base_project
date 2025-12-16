@@ -22,7 +22,7 @@
                         <tr>
                             <th>#</th>
                             <th>Order Type</th>
-                            <th>Product</th>
+                            <th>Order Name/PO</th>
                             <th>Quantity</th>
                             <th>Fabric</th>
                             <th>Format</th>
@@ -45,7 +45,7 @@
                         <tr>
                             <td>{{ forloop.counter }}</td>
                             <td>{{ order.order_type|title }}</td>
-                            <td>{{ order.product }}</td>
+                            <td>{{ order.Order_name_PO }}</td>
                             <td>{{ order.quantity }}</td>
                             <td>{{ order.fabric_material }}</td>
                             <td>{{ order.Required_Format }}</td>

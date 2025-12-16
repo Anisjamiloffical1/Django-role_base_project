@@ -2,79 +2,9 @@
 {% block content %}
 
 <style>
-    /* Sidebar adjustments if needed */
-    .sidebar {
-        background-color: #36454F;
-        /* matching your sidebar color */
-        color: white;
-        min-height: 100vh;
-    }
-
-    .sidebar a {
-        color: white;
-        text-decoration: none;
-    }
-
-    .sidebar a:hover {
-        background-color: #0f2c4f;
-    }
-
-    /* Container & Grid */
-    .dashboard-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-        margin-top: 20px;
-    }
-
-    /* Card Style */
-    .dashboard-card {
-        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-        color: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding: 20px;
-        height: 160px;
-        position: relative;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        cursor: pointer;
-    }
-
-    .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
-    }
-
-    /* Icon Area */
-    .dashboard-card .icon {
-        font-size: 2.5rem;
-        margin-bottom: 10px;
-    }
-
-    /* Bottom Label */
-    .dashboard-card .label {
-        background-color: rgba(255, 255, 255, 0.1);
-        text-align: center;
-        padding: 8px;
-        border-radius: 5px;
-        font-weight: 500;
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        right: 10px;
-        font-size: 0.95rem;
-    }
-
-    .dashboard-card a {
-        color: inherit;
-        text-decoration: none;
-    }
     /* Sidebar */
     .sidebar {
-        background-color: #36454F; /* same dark theme */
+        background-color: #36454F;
         color: white;
         min-height: 100vh;
         border-right: 1px solid #2c3e50;
@@ -110,7 +40,6 @@
         font-weight: 600;
     }
 
-    /* Logout button */
     .sidebar .logout-link {
         color: #ff6b6b !important;
         font-weight: bold;
@@ -120,56 +49,66 @@
         background-color: #58151c;
         color: white !important;
     }
+
+    /* Dashboard Layout */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    /* Card Style */
+    .dashboard-card {
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 20px;
+        height: 160px;
+        position: relative;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+    }
+
+    .dashboard-card .icon {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    .dashboard-card .label {
+        background-color: rgba(255, 255, 255, 0.1);
+        text-align: center;
+        padding: 8px;
+        border-radius: 5px;
+        font-weight: 500;
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        font-size: 0.95rem;
+    }
+
+    .dashboard-card a {
+        color: inherit;
+        text-decoration: none;
+    }
 </style>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 <div class="container-fluid">
     <div class="row">
         <!-- Sidebar -->
-        <div class="col-md-2 sidebar d-flex flex-column p-3">
-            <h5 class="mb-4">Customer Panel</h5>
-        
-            <ul class="nav flex-column mb-auto">
-                <li class="nav-item">
-                    <a class="nav-link active" href="{% url 'user-page' %}">
-                        <i class="fas fa-tachometer-alt"></i> Dashboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'customer_orders' customer.id 'Patch' %}">
-                        <i class="fas fa-certificate"></i> Patches Orders
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'customer_orders' customer.id 'Digitizing' %}">
-                        <i class="fas fa-magic"></i> Digitizing Orders
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'customer_orders' customer.id 'Quote' %}">
-                        <i class="fas fa-file-invoice-dollar"></i> Quotes Orders
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'customer_orders' customer.id 'Vector' %}">
-                        <i class="fas fa-vector-square"></i> Vectors Orders
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'customer_invoices' customer.id %}">
-                        <i class="fas fa-file-invoice"></i> Invoices
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'account' %}">
-                        <i class="fas fa-user"></i> My Profile
-                    </a>
-                </li>
-            </ul>
-        
-            <!-- Logout at Bottom -->
-            
-        </div>
+        {% include 'accounts/customer_sidebar.html' %}
 
         <!-- Main Dashboard -->
         <div class="col-md-10">
@@ -199,16 +138,12 @@
                 </a>
 
                 <!-- Digitizing Records -->
-
-
-                <a href="{% url 'customer_orders' customer.id 'Digitizing' %}"
-                    style="text-decoration: none; color: inherit;">
+                <a href="{% url 'customer_orders' customer.id 'Digitizing' %}">
                     <div class="dashboard-card">
                         <div class="icon">📄</div>
                         <div class="label">Digitizing Records</div>
                     </div>
                 </a>
-
 
                 <!-- Vector Records -->
                 <a href="{% url 'customer_orders' customer.id 'Vector' %}">
@@ -235,20 +170,20 @@
                 </a>
 
                 <!-- Quote Records -->
-
                 <a href="{% url 'customer_orders' customer.id 'Quote' %}">
                     <div class="dashboard-card">
                         <div class="icon">📄</div>
                         <div class="label">Quote Records</div>
                     </div>
                 </a>
+
+                <!-- Invoices -->
                 <a href="{% url 'customer_receivable_orders' customer.id %}">
                     <div class="dashboard-card">
                         <div class="icon">🧾</div>
                         <div class="label">Invoices</div>
                     </div>
                 </a>
-
 
                 <!-- Profile -->
                 <a href="{% url 'account' %}">
@@ -258,10 +193,14 @@
                     </div>
                 </a>
             </div>
+
+            <div class="mt-4">
+                <a href="{% url 'customer_invoices' customer.id %}" class="btn btn-info me-2">View All Invoices</a>
+                <a href="{% url 'customer_receivable_orders' customer.id %}" class="btn btn-warning me-2">Receivable Orders</a>
+                <a href="{% url 'customer_received_orders' customer.id %}" class="btn btn-success">Received Orders</a>
+            </div>
         </div>
     </div>
 </div>
-<a href="{% url 'customer_invoices' customer.id %}" class="btn btn-info">View All Invoices</a>
-<a href="{% url 'customer_receivable_orders' customer.id %}" class="btn btn-warning">Receivable Orders</a>
-<a href="{% url 'customer_received_orders' customer.id %}" class="btn btn-success">Received Orders</a>
+
 {% endblock content %}

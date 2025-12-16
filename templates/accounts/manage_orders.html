@@ -11,13 +11,13 @@
                 <thead class="table-light">
                     <tr>
                         <th>Customer</th>
-                        <th>Product</th>
+                        <th>Order Name/PO</th>
                         <th>Order Type</th>
                         <th>Date Ordered</th>
                         <th>Status</th>
                         <th>Update</th>
                         <th>Remove</th>
-                        <th>Review</th>
+                       
                         <th>Info</th>
                     </tr>
                 </thead>
@@ -25,7 +25,7 @@
                     {% for order in orders %}
                     <tr>
                         <td>{{ order.customer.name }}</td>
-                        <td>{{ order.product }}</td>
+                        <td>{{ order.Order_name_PO  }}</td>
                         <td>{{ order.order_type }}</td>
                         <td>{{ order.date_created|date:"Y-m-d H:i" }}</td>
                         <td>
@@ -39,13 +39,7 @@
                         </td>
                         <td><a class="btn btn-sm btn-info" href="{% url 'update_order' order.id %}">Update</a></td>
                         <td><a class="btn btn-sm btn-danger" href="{% url 'delete_order' order.id %}">Delete</a></td>
-                        <td>
-                            {% for file in order.files.all %}
-                                <a href="{% url 'review_file' file.id %}" class="btn btn-sm btn-primary mb-1">Review</a>
-                            {% empty %}
-                                <span class="text-muted">No files</span>
-                            {% endfor %}
-                        </td>
+                        
                         <td>
                             <a class="btn btn-outline-info btn-sm" href="{% url 'customer_orders' order.customer.id 'all' %}">Info</a>
                         </td>

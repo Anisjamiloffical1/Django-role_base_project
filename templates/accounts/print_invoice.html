@@ -98,8 +98,8 @@
                     <td>{{ order.order_type }}</td>
                 </tr>
                 <tr>
-                    <th>Product</th>
-                    <td>{{ order.product }}</td>
+                    <th>Order Name/PO</th>
+                    <td>{{ order.Order_name_PO }}</td>
                 </tr>
                 <tr>
                     <th>Status</th>
@@ -139,7 +139,7 @@
         <!-- Notes -->
         {% if order.note %}
         <div class="notes">
-            <strong>Notes:</strong> {{ order.note }}
+            <strong>Notes:</strong> {{ order.Additional_information  }}
         </div>
         {% endif %}
 

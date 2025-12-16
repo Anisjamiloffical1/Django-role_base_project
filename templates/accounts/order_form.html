@@ -2,104 +2,207 @@
 {% load static %}
 
 {% block content %}
-<div class="container py-3">
-    <div class="row justify-content-center">
-        <div class="col-lg-7 col-md-8">
-            
-            <!-- Card -->
-            <div class="card shadow-sm border-0 rounded-2">
-                <div class="card-header py-2 bg-white border-bottom border-primary">
-                    <h5 class="mb-0 text-primary fw-semibold" style="font-size: 1.1rem;">
-                        {% if formset %}
-                            Place New {{ order_type|capfirst }}
-                        {% else %}
-                            Update {{ order_type|capfirst }}
-                        {% endif %}
-                    </h5>
-                </div>
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-                <div class="card-body p-3">
-                    {% if customer %}
-                    <div class="alert alert-light border small mb-3 p-2">
-                        <p class="mb-1"><strong class="text-primary">Customer:</strong> {{ customer.name }}</p>
-                        <p class="mb-0"><strong class="text-primary">Email:</strong> {{ customer.email }}</p>
-                    </div>
-                    {% endif %}
+<div class="container-fluid py-3">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar d-flex flex-column p-3">
+            <h5 class="mb-4">Customer Panel</h5>
 
-                    <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
-                        {% csrf_token %}
+            <ul class="nav flex-column mb-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'user-page' %}">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'customer_orders' customer.id 'Patch' %}">
+                        <i class="fas fa-certificate"></i> Patches Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'customer_orders' customer.id 'Digitizing' %}">
+                        <i class="fas fa-magic"></i> Digitizing Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'customer_orders' customer.id 'Quote' %}">
+                        <i class="fas fa-file-invoice-dollar"></i> Quotes Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'customer_orders' customer.id 'Vector' %}">
+                        <i class="fas fa-vector-square"></i> Vectors Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'customer_invoices' customer.id %}">
+                        <i class="fas fa-file-invoice"></i> Invoices
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'account' %}">
+                        <i class="fas fa-user"></i> My Profile
+                    </a>
+                </li>
+            </ul>
 
-                        {% if formset %}
-                            {{ formset.management_form }}
-                            {% for form in formset %}
-                                <div class="border rounded bg-light p-2 mb-2">
-                                    {% for field in form %}
-                                        {% if field.name != "id" and field.name != "customer" %}
-                                            <div class="mb-2">
-                                                <label class="form-label small mb-1">{{ field.label }}</label>
-                                                {{ field }}
-                                                {% if field.errors %}
-                                                    <div class="text-danger small">{{ field.errors }}</div>
-                                                {% endif %}
-                                            </div>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                            {% endfor %}
-                        {% elif form %}
-                            <div class="row">
-                                {% for field in form %}
-                                    {% if field.name != "id" and field.name != "customer" %}
-                                        <div class="col-md-6 mb-2">
-                                            <label class="form-label small mb-1">{{ field.label }}</label>
-                                            {{ field }}
-                                            {% if field.errors %}
-                                                <div class="text-danger small">{{ field.errors }}</div>
-                                            {% endif %}
-                                        </div>
-                                    {% endif %}
-                                {% endfor %}
+            <!-- Logout at Bottom -->
+            <div class="mt-auto">
+                <a class="nav-link logout-link" href="{% url 'logout' %}">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Form Area -->
+        <div class="col-md-9 col-lg-10 px-4">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-md-10">
+                    <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
+                        <div class="card-header text-white py-2"
+                             style="background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);">
+                            <h5 class="mb-0 fw-semibold" style="font-size: 1.1rem;">
+                                {% if formset %}
+                                    Place New {{ order_type|capfirst }}
+                                {% else %}
+                                    Update {{ order_type|capfirst }}
+                                {% endif %}
+                            </h5>
+                        </div>
+
+                        <div class="card-body p-4 bg-light">
+                            {% if customer %}
+                            <div class="alert alert-dark border small mb-3 p-2 bg-white shadow-sm">
+                                <p class="mb-1"><strong class="text-primary">Customer:</strong> {{ customer.name }}</p>
+                                <p class="mb-0"><strong class="text-primary">Email:</strong> {{ customer.email }}</p>
                             </div>
-                        {% endif %}
+                            {% endif %}
 
-                        <div class="form-check mb-2 small">
-                            <input class="form-check-input" type="checkbox" id="rushCheck" name="urgent">
-                            <label class="form-check-label" for="rushCheck">
-                                Rush order
-                            </label>
-                        </div>
+                            <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                                {% csrf_token %}
 
-                        <!-- Buttons -->
-                        <div class="d-flex justify-content-end gap-2 mt-3">
-                            <a href="{% url 'home' %}" class="btn btn-sm btn-outline-danger px-3">
-                                Cancel
-                            </a>
-                            <button type="submit" class="btn btn-sm btn-primary px-3">
-                                Submit
-                            </button>
+                                {% if formset %}
+                                    {{ formset.management_form }}
+                                    {% for form in formset %}
+                                        <div class="border rounded p-3 mb-3 bg-white shadow-sm">
+                                            {% for field in form %}
+                                                {% if field.name != "id" and field.name != "customer" %}
+                                                    <div class="mb-3">
+                                                        <label class="form-label small mb-1">{{ field.label }}</label>
+                                                        {{ field }}
+                                                        {% if field.errors %}
+                                                            <div class="text-danger small">{{ field.errors }}</div>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    {% endfor %}
+                                {% elif form %}
+                                    <div class="row">
+                                        {% for field in form %}
+                                            {% if field.name != "id" and field.name != "customer" %}
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label small mb-1">{{ field.label }}</label>
+                                                    {{ field }}
+                                                    {% if field.errors %}
+                                                        <div class="text-danger small">{{ field.errors }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                <div class="form-check mb-3 small">
+                                    <input class="form-check-input" type="checkbox" id="rushCheck" name="urgent">
+                                    <label class="form-check-label" for="rushCheck">
+                                        Rush order
+                                    </label>
+                                </div>
+
+                                <!-- Buttons -->
+                                <div class="d-flex justify-content-end gap-2 mt-3">
+                                    <a href="{% url 'home' %}" class="btn btn-sm btn-outline-danger px-3">Cancel</a>
+                                    <button type="submit" class="btn btn-sm text-white px-3"
+                                            style="background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);">
+                                        Submit
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                    </form>
+                    </div>
+                    <!-- End Card -->
                 </div>
             </div>
-            <!-- End Card -->
         </div>
     </div>
 </div>
 
-<!-- Compact Styling -->
+<!-- Styling -->
 <style>
     body {
-        background-color: #f8f9fa;
+        background-color: #f0f2f5;
     }
 
-    .card {
-        background: #fff;
+    /* Sidebar Styling */
+    .sidebar {
+        background: #1e2a38;
+        color: white;
+        min-height: 100vh;
+        border-right: 1px solid #2c3e50;
+        border-radius: 0;
+    }
+
+    .sidebar h5 {
+        color: #fff;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .sidebar .nav-link {
+        color: #dcdcdc;
+        text-decoration: none;
+        padding: 10px 12px;
         border-radius: 6px;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
     }
 
-    .alert-light {
-        background-color: #fcfcfd;
-        border-color: #e6e6e6;
+    .sidebar .nav-link i {
+        margin-right: 10px;
+        font-size: 1rem;
+        width: 20px;
+        text-align: center;
+    }
+
+    .sidebar .nav-link:hover,
+    .sidebar .nav-link.active {
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: #fff !important;
+        font-weight: 600;
+    }
+
+    .sidebar .logout-link {
+        color: #ff6b6b !important;
+        font-weight: bold;
+    }
+
+    .sidebar .logout-link:hover {
+        background-color: #58151c;
+        color: white !important;
+    }
+
+    /* Card & Form */
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
     input.form-control,
@@ -111,22 +214,18 @@
         font-size: 14px;
     }
 
-    .btn-sm {
-        font-size: 0.85rem;
-        border-radius: 4px;
-    }
-
     label.form-label {
-        color: #333;
+        color: #203a43;
         font-weight: 500;
-    }
-
-    .card-header h5 {
-        font-weight: 600;
     }
 
     .form-check-label {
         font-weight: 500;
+    }
+
+    .btn-sm {
+        font-size: 0.85rem;
+        border-radius: 4px;
     }
 </style>
 {% endblock %}

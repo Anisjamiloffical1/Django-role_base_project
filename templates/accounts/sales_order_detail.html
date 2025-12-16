@@ -6,7 +6,7 @@
         <li class="list-group-item"><strong>Customer:</strong> {{ order.customer.name }}</li>
         <li class="list-group-item"><strong>Status:</strong> {{ order.status }}</li>
         <li class="list-group-item"><strong>Date Created:</strong> {{ order.date_created|date:"M d, Y H:i" }}</li>
-        <li class="list-group-item"><strong>Product:</strong> {{ order.product }}</li>
+        <li class="list-group-item"><strong>Order Name/PO:</strong> {{ order.Order_name_PO }}</li>
         <li class="list-group-item"><strong>Quantity:</strong> {{ order.quantity }}</li>
     </ul>
     <a href="{% url 'sales-dashboard' %}" class="btn btn-secondary mt-3">⬅ Back to Dashboard</a>

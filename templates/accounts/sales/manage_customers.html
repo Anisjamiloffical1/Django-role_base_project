@@ -7,7 +7,7 @@
     {% for customer in assigned_customers %}
     <li class="list-group-item">
         {{ customer.name }} - {{ customer.email }}
-        <a href="{% url 'customer' customer.id %}" class="btn btn-sm btn-info float-end">View</a>
+        <a href="{% url 'customer_detail' customer.id %}" class="btn btn-sm btn-info float-end">View</a>
     </li>
     {% endfor %}
 </ul>

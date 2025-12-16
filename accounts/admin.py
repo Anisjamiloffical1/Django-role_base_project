@@ -12,5 +12,5 @@ admin.site.register(UploadedFile)
 admin.site.register(SiteSetting)
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('customer', 'patch_type', 'Order_name_PO', 'status', 'date_created')
+    list_display = ('customer', 'order_type', 'Order_name_PO', 'status', 'date_created')
     list_filter = ('status', 'Order_name_PO')

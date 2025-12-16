@@ -11,7 +11,7 @@
             <tr>
                 <th>Order ID</th>
                 <th>Customer</th>
-                <th>Product</th>
+                <th>Order_name_PO</th>
                 <th>Order Type</th>
                 <th>Files</th>
                 <th>Action</th>
@@ -22,7 +22,7 @@
             <tr>
                 <td>#{{ order.id }}</td>
                 <td>{{ order.customer.name }}</td>
-                <td>{{ order.product.name }}</td>
+                <td>{{ order.Order_name_PO }}</td>
                 <td>{{ order.order_type }}</td>
                 <td>
                     {% if order.design_file %}

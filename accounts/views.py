@@ -260,7 +260,8 @@ def user_page(request):
     return render(request, 'accounts/user.html', context)
 
 def customer_detail(request, pk):
-    customer = get_object_or_404(Customer, pk=pk)  # remove sales_rep filter
+    """Shows single customer detail page."""
+    customer = get_object_or_404(Customer, pk=pk)
     return render(request, "accounts/customer_detail.html", {"customer": customer})
 
 # this function is used to show the home page
@@ -432,20 +433,23 @@ def customer_all_orders(request, pk):
 def customer(request, pk, order_type):
     customer = get_object_or_404(Customer, id=pk)
 
-    if order_type == "all":
+    if order_type.lower() == "all":
         orders = Order.objects.filter(customer=customer).order_by('-date_created')
     else:
-        orders = Order.objects.filter(customer=customer, order_type=order_type).order_by('-date_created')
-
-    total_order = orders.count()
+        # ✅ FIX — filter by the Product name, not the ForeignKey itself
+        orders = Order.objects.filter(
+            customer=customer,
+            order_type__name__iexact=order_type
+        ).order_by('-date_created')
 
     context = {
-        'customer': customer,
-        'orders': orders,
-        'order_type': order_type,
-        'total_order': total_order
+        "customer": customer,
+        "orders": orders,
+        "order_type": order_type,
+        "total_order": orders.count(),
     }
-    return render(request, 'accounts/customer.html', context)
+    return render(request, "accounts/customer.html", context)
+
 # this feilds name for different order types
 ORDER_FIELDS = {
     'digitizing': [
@@ -460,7 +464,7 @@ ORDER_FIELDS = {
         'Additional_information', 'design_file', 
     ],
     'patch': [
-        'Order_name_PO',  'patch_type',  'total_colors',
+        'Order_name_PO',  'order_type',  'total_colors',
            'placement',
         'Height', 'Width', 'Additional_information', 'design_file',
         
@@ -506,7 +510,15 @@ def createOrder(request, pk, order_type=None):
             orders = formset.save(commit=False)
             for order in orders:
                 order.customer = customer
-                order.order_type = order_type.capitalize()
+
+                # ✅ Assign actual Product object instead of string
+                try:
+                    order.order_type = Product.objects.get(name__iexact=order_type)
+                except Product.DoesNotExist:
+                    messages.error(request, f"Product '{order_type}' not found in the database.")
+                    return redirect('home')
+
+                # ✅ Set default values if not provided
                 order.status = order.status or 'Pending'
                 order.price = order.price or 0
                 order.payment_status = order.payment_status or 'Pending'
@@ -524,12 +536,19 @@ def createOrder(request, pk, order_type=None):
                 invoice_dir = os.path.join(settings.MEDIA_ROOT, 'invoices')
                 os.makedirs(invoice_dir, exist_ok=True)
                 pdf_path = os.path.join(invoice_dir, f"{invoice_number}.pdf")
+
+                # Generate PDF file
                 HTML(string=html_string).write_pdf(pdf_path)
 
+                # Attach PDF to order
                 order.invoice_file.name = f"invoices/{invoice_number}.pdf"
                 order.save()
 
+            messages.success(request, "Order(s) created successfully!")
             return redirect('home')
+
+        else:
+            messages.error(request, "There was an error creating the order. Please check the form.")
 
     else:
         # Set order_type as initial data
@@ -632,7 +651,7 @@ def updateCustomer(request, pk):
         form = CustomerForm(request.POST, instance=customer)
         if form.is_valid():
             form.save()
-            return redirect('customer', pk=customer.id)  # or your detail view name
+            return redirect('customer_detail', pk=customer.id)  # or your detail view name
 
     return render(request, 'accounts/customer_form.html', {
         'form': form,

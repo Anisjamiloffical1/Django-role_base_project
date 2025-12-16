@@ -16,7 +16,7 @@
                 <h4>{{ customer.name }}</h4>
                 <p><strong>Email:</strong> {{ customer.email }}</p>
                 <p><strong>Phone:</strong> {{ customer.phone }}</p>
-                <p><strong>Assigned Sales Rep:</strong> {{ customer.sales_rep.name }}</p>
+                <p><strong>Assigned Sales Rep:</strong> {{ customer.sales_rep }}</p>
                 
 
                 <p><strong>Date Created:</strong> {{ customer.date_created|date:"F j, Y" }}</p>
@@ -31,7 +31,7 @@
         <thead>
             <tr>
                 <th>Order ID</th>
-                <th>Product</th>
+                <th>Order Name/PO</th>
                 <th>Order Type</th>
                 <th>Status</th>
                 <th>Date Created</th>
@@ -42,7 +42,7 @@
             {% for order in customer.order_set.all %}
             <tr>
                 <td>{{ order.id }}</td>
-                <td>{{ order.product.name }}</td>
+                <td>{{ order.Order_name_PO }}</td>
                 <td>{{ order.order_type }}</td>
                 <td>{{ order.status }}</td>
                 <td>{{ order.date_created|date:"M d, Y" }}</td>
