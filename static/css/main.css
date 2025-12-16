@@ -87,6 +87,44 @@ body{
     .btn-warning:hover {
       background-color: #ffaa00;
     }
+    /* Sidebar */
+.sidebar {
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Cards */
+.card {
+  border-radius: 14px;
+}
+
+/* Table Header */
+.table thead th {
+  background: #eef3f9;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* Buttons */
+.btn-info {
+  background-color: #2563eb;
+  border: none;
+}
+.btn-info:hover {
+  background-color: #1d4ed8;
+}
+
+/* Accent headings */
+h5, h4, h2 {
+  color: #111827;
+}
+
+/* Tabs */
+.nav-tabs .nav-link.active {
+  background-color: #2563eb;
+  color: #fff;
+  border-radius: 8px;
+}
     
     
 
