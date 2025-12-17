@@ -1,45 +1,88 @@
 {% extends "accounts/main.html" %}
 {% block content %}
 
-<div class="container mt-4">
-    <h2>📝 Quote Requests</h2>
+<div class="container-fluid">
+    <div class="row">
 
-    <div class="card shadow-sm mt-3">
-        <div class="card-body table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Customer</th>
-                        <th>Order_name_PO</th>
-                        <th>Date Requested</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in quote_orders %}
-                        <tr>
-                            <td>#{{ order.id }}</td>
-                            <td>{{ order.customer.name }}</td>
-                            <td>{{ order.Order_name_PO }}</td>
-                            <td>{{ order.date_created|date:"M d, Y" }}</td>
-                            <td><span class="badge bg-warning">{{ order.status }}</span></td>
-                            <td>
-                                <a href="{% url 'sales_order_detail' order.id %}" 
-                                   class="btn btn-sm btn-outline-primary">View</a>
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center text-muted">
-                                No quote requests available.
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        <!-- ================= SIDEBAR ================= -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar shadow-sm min-vh-100">
+            <div class="px-3 py-4">
+                <h5 class="fw-bold mb-4">📊 Sales Panel</h5>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'sales-dashboard' %}">🏠 Dashboard</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'manage_customers' %}">👥 My Customers</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'monitor_quotes' %}">📦 Active Orders</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link active fw-bold" href="{% url 'track_orders' %}">📝 Quote Requests</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'release_projects' %}">✅ Released Projects</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'follow_up_payments' %}">💳 Follow Up</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'sales_rep_inbox' %}">📥 Inbox</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'communicate_sales_rep' %}">📤 Sent Messages</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- ================= MAIN CONTENT ================= -->
+        <main class="col-md-9 col-lg-10 px-4 py-4">
+
+            <h2 class="mb-4">📝 Quote Requests</h2>
+
+            <div class="card shadow-sm">
+                <div class="card-body table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Order_name_PO</th>
+                                <th>Date Requested</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in quote_orders %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.customer.name }}</td>
+                                    <td>{{ order.Order_name_PO }}</td>
+                                    <td>{{ order.date_created|date:"M d, Y" }}</td>
+                                    <td><span class="badge bg-warning">{{ order.status }}</span></td>
+                                    <td>
+                                        <a href="{% url 'sales_order_detail' order.id %}" 
+                                           class="btn btn-sm btn-outline-primary">View</a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">
+                                        No quote requests available.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+
     </div>
 </div>
 

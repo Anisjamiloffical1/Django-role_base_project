@@ -1,24 +1,73 @@
 {% extends "accounts/main.html" %}
 
 {% block content %}
-<h2>Sales Rep Communication (with Admins & Designers)</h2>
 
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Send</button>
-</form>
+<div class="container-fluid">
+    <div class="row">
 
-<hr>
+        <!-- ================= SIDEBAR ================= -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar shadow-sm min-vh-100">
+            <div class="px-3 py-4">
+                <h5 class="fw-bold mb-4">📊 Sales Panel</h5>
 
-<h3>Messages</h3>
-{% for msg in messages %}
-  <div>
-    <strong>{{ msg.sender.username }}</strong> → <strong>{{ msg.receiver.username }}</strong><br>
-    {{ msg.message }} <br>
-    <small>{{ msg.timestamp }}</small>
-  </div>
-{% empty %}
-  <p>No messages yet.</p>
-{% endfor %}
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'sales-dashboard' %}">🏠 Dashboard</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'manage_customers' %}">👥 My Customers</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'monitor_quotes' %}">📦 Active Orders</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'track_orders' %}">📝 Quote Requests</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'release_projects' %}">✅ Released Projects</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'follow_up_payments' %}">💳 Follow Up</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'sales_rep_inbox' %}">📥 Inbox</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link active fw-bold" href="{% url 'communicate_sales_rep' %}">
+                            📤 Sent Messages
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- ================= MAIN CONTENT ================= -->
+        <main class="col-md-9 col-lg-10 px-4 py-4">
+
+            <h2 class="mb-4">Sales Rep Communication (with Admins & Designers)</h2>
+
+            <form method="post" class="mb-4">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Send</button>
+            </form>
+
+            <hr>
+
+            <h3>Messages</h3>
+            {% for msg in messages %}
+                <div class="mb-3 p-2 border rounded">
+                    <strong>{{ msg.sender.username }}</strong> → <strong>{{ msg.receiver.username }}</strong><br>
+                    {{ msg.message }} <br>
+                    <small class="text-muted">{{ msg.timestamp|date:"M d, Y H:i" }}</small>
+                </div>
+            {% empty %}
+                <div class="alert alert-info">No messages yet.</div>
+            {% endfor %}
+
+        </main>
+
+    </div>
+</div>
+
 {% endblock %}

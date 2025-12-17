@@ -83,7 +83,7 @@ def superuser_check(user):
     return user.is_superuser
 
 
-@user_passes_test(superuser_check)
+# @user_passes_test(superuser_check)
 def register_staff(request, role):
     """
     role = 'designer' | 'sales_rep' | 'admin'
@@ -120,9 +120,10 @@ def register_staff(request, role):
             Admin.objects.create(user=user_obj)
 
         messages.success(request, f"{role.capitalize()} account created successfully.")
-        return redirect('dashboard')  # or wherever you want
+        return redirect('login')  # or wherever you want
 
     return render(request, 'accounts/register_staff.html', {'role': role})
+# this is optional if you want to enable the registration for different roles
 
 # @unauthenticated_user
 # def register_page(request):

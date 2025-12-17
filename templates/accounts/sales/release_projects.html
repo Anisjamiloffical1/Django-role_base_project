@@ -2,54 +2,98 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4">
-    <h3>✅ Completed Orders Assigned to You</h3>
 
-    {% if completed_orders %}
-    <table class="table table-bordered table-hover mt-3">
-        <thead class="table-dark">
-            <tr>
-                <th>Order ID</th>
-                <th>Customer</th>
-                <th>Order_name_PO</th>
-                <th>Order Type</th>
-                <th>Files</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for order in completed_orders %}
-            <tr>
-                <td>#{{ order.id }}</td>
-                <td>{{ order.customer.name }}</td>
-                <td>{{ order.Order_name_PO }}</td>
-                <td>{{ order.order_type }}</td>
-                <td>
-                    {% if order.design_file %}
-                        <a href="{{ order.design_file.url }}" class="btn btn-sm btn-primary me-1">Design</a>
-                    {% endif %}
-                    {% if order.invoice_file %}
-                        <a href="{{ order.invoice_file.url }}" class="btn btn-sm btn-secondary me-1">Invoice</a>
-                      
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-info me-1">View</a>
+<div class="container-fluid">
+    <div class="row">
 
-                    <form action="{% url 'release_projects' %}" method="POST" style="display:inline;">
-                        {% csrf_token %}
-                        <input type="hidden" name="order_id" value="{{ order.id }}">
-                        <button type="submit" class="btn btn-sm btn-success">Release</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="alert alert-warning mt-3">
-        No completed orders found.
+        <!-- ================= SIDEBAR ================= -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar shadow-sm min-vh-100">
+            <div class="px-3 py-4">
+                <h5 class="fw-bold mb-4">📊 Sales Panel</h5>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'sales-dashboard' %}">🏠 Dashboard</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'manage_customers' %}">👥 My Customers</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'monitor_quotes' %}">📦 Active Orders</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'track_orders' %}">📝 Quote Requests</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'release_projects' %}">✅ Released Projects</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'follow_up_payments' %}">💳 Follow Up</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'sales_rep_inbox' %}">📥 Inbox</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'communicate_sales_rep' %}">📤 Sent Messages</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- ================= MAIN CONTENT ================= -->
+        <main class="col-md-9 col-lg-10 px-4 py-4">
+
+            <h3 class="mb-4">✅ Completed Orders Assigned to You</h3>
+
+            {% if completed_orders %}
+            <table class="table table-bordered table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Order_name_PO</th>
+                        <th>Order Type</th>
+                        <th>Files</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in completed_orders %}
+                    <tr>
+                        <td>#{{ order.id }}</td>
+                        <td>{{ order.customer.name }}</td>
+                        <td>{{ order.Order_name_PO }}</td>
+                        <td>{{ order.order_type }}</td>
+                        <td>
+                            {% if order.design_file %}
+                                <a href="{{ order.design_file.url }}" class="btn btn-sm btn-primary me-1">Design</a>
+                            {% endif %}
+                            {% if order.invoice_file %}
+                                <a href="{{ order.invoice_file.url }}" class="btn btn-sm btn-secondary me-1">Invoice</a>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-info me-1">View</a>
+
+                            <form action="{% url 'release_projects' %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="order_id" value="{{ order.id }}">
+                                <button type="submit" class="btn btn-sm btn-success">Release</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-warning mt-3">
+                No completed orders found.
+            </div>
+            {% endif %}
+
+        </main>
+
     </div>
-    {% endif %}
 </div>
+
 {% endblock %}

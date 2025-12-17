@@ -2,34 +2,79 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>📨 Inbox</h2>
-    <p>You have <strong>{{ unread_count }}</strong> unread messages.</p>
 
-    {% if messages %}
-        <ul class="list-group">
-            {% for msg in messages %}
-                <li class="list-group-item {% if not msg.is_read %}list-group-item-warning{% endif %}">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <strong>{{ msg.sender.username }}</strong> → 
-                            <span class="text-muted">{{ msg.receiver.username }}</span>
-                            <p class="mb-1">{{ msg.message|truncatewords:15 }}</p>
-                            <small class="text-muted">{{ msg.timestamp|date:"M d, Y H:i" }}</small>
-                        </div>
-                        <div>
-                            <a href="{% url 'view_message' msg.id %}" class="btn btn-sm btn-primary">
-                                View
-                            </a>
-                        </div>
-                    </div>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <div class="alert alert-info mt-3">
-            No messages found.
-        </div>
-    {% endif %}
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- ================= SIDEBAR ================= -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar shadow-sm min-vh-100">
+            <div class="px-3 py-4">
+                <h5 class="fw-bold mb-4">📊 Sales Panel</h5>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'sales-dashboard' %}">🏠 Dashboard</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'manage_customers' %}">👥 My Customers</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'monitor_quotes' %}">📦 Active Orders</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'track_orders' %}">📝 Quote Requests</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'release_projects' %}">✅ Released Projects</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'follow_up_payments' %}">💳 Follow Up</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link active fw-bold" href="{% url 'sales_rep_inbox' %}">📥 Inbox</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'communicate_sales_rep' %}">📤 Sent Messages</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- ================= MAIN CONTENT ================= -->
+        <main class="col-md-9 col-lg-10 px-4 py-4">
+
+            <h2 class="mb-4">📨 Inbox</h2>
+            <p>You have <strong>{{ unread_count }}</strong> unread messages.</p>
+
+            {% if messages %}
+                <ul class="list-group">
+                    {% for msg in messages %}
+                        <li class="list-group-item {% if not msg.is_read %}list-group-item-warning{% endif %}">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>{{ msg.sender.username }}</strong> → 
+                                    <span class="text-muted">{{ msg.receiver.username }}</span>
+                                    <p class="mb-1">{{ msg.message|truncatewords:15 }}</p>
+                                    <small class="text-muted">{{ msg.timestamp|date:"M d, Y H:i" }}</small>
+                                </div>
+                                <div>
+                                    <a href="{% url 'view_message' msg.id %}" class="btn btn-sm btn-primary">
+                                        View
+                                    </a>
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="alert alert-info mt-3">
+                    No messages found.
+                </div>
+            {% endif %}
+
+        </main>
+
+    </div>
 </div>
+
 {% endblock %}

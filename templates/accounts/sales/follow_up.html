@@ -1,60 +1,116 @@
 {% extends "accounts/main.html" %}
 {% block content %}
 
-<div class="container mt-4">
-    <h2>💳 Follow Up on Payments & Delivery</h2>
+<div class="container-fluid">
+    <div class="row">
 
-    {% if pending_orders %}
-    <table class="table table-bordered table-striped mt-3">
-        <thead class="table-dark">
-            <tr>
-                <th>Order ID</th>
-                <th>Customer</th>
-                <th>Product</th>
-                <th>Status</th>
-                <th>Payment</th>
-                <th>Files</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for order in pending_orders %}
-            <tr>
-                <td>#{{ order.id }}</td>
-                <td>{{ order.customer.name }}</td>
-                <td>{{ order.product }}</td>
-                <td><span class="badge bg-info">{{ order.status }}</span></td>
-                <td>
-                    {% if order.is_paid %}
-                        ✅ Paid
-                    {% else %}
-                        ❌ Pending
-                    {% endif %}
-                </td>
-                <td>
-                    {% if order.design_file %}
-                        <a href="{{ order.design_file.url }}" class="btn btn-sm btn-primary">Design</a>
-                    {% else %}
-                        ❌ Missing
-                    {% endif %}
-                    {% if order.invoice_file %}
-                        <a href="{{ order.invoice_file.url }}" class="btn btn-sm btn-secondary">Invoice</a>
-                    {% else %}
-                        ❌ Missing
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{% url 'sales_order_detail' order.id %}" class="btn btn-sm btn-outline-primary">View</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="alert alert-success mt-3">
-        🎉 All released orders are paid and delivered!
+        <!-- ================= SIDEBAR ================= -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar shadow-sm min-vh-100">
+            <div class="px-3 py-4">
+                <h5 class="fw-bold mb-4">📊 Sales Panel</h5>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'sales-dashboard' %}">🏠 Dashboard</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'manage_customers' %}">👥 My Customers</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'monitor_quotes' %}">📦 Active Orders</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'track_orders' %}">📝 Quote Requests</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'release_projects' %}">✅ Released Projects</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link active fw-bold" href="{% url 'follow_up_payments' %}">
+                            💳 Follow Up
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'sales_rep_inbox' %}">📥 Inbox</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'communicate_sales_rep' %}">📤 Sent Messages</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- ================= MAIN CONTENT ================= -->
+        <main class="col-md-9 col-lg-10 px-4 py-4">
+
+            <h2 class="mb-4">💳 Follow Up on Payments & Delivery</h2>
+
+            {% if pending_orders %}
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Product</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th>Files</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in pending_orders %}
+                    <tr>
+                        <td>#{{ order.id }}</td>
+                        <td>{{ order.customer.name }}</td>
+                        <td>{{ order.product }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ order.status }}</span>
+                        </td>
+                        <td>
+                            {% if order.is_paid %}
+                                ✅ Paid
+                            {% else %}
+                                ❌ Pending
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if order.design_file %}
+                                <a href="{{ order.design_file.url }}" class="btn btn-sm btn-primary">
+                                    Design
+                                </a>
+                            {% else %}
+                                ❌ Missing
+                            {% endif %}
+
+                            {% if order.invoice_file %}
+                                <a href="{{ order.invoice_file.url }}" class="btn btn-sm btn-secondary">
+                                    Invoice
+                                </a>
+                            {% else %}
+                                ❌ Missing
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'sales_order_detail' order.id %}"
+                               class="btn btn-sm btn-outline-primary">
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% else %}
+            <div class="alert alert-success">
+                🎉 All released orders are paid and delivered!
+            </div>
+            {% endif %}
+
+        </main>
+
     </div>
-    {% endif %}
 </div>
 
 {% endblock %}

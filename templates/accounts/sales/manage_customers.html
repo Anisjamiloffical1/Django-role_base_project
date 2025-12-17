@@ -1,18 +1,74 @@
-{% extends 'accounts/main.html' %}
+{% extends "accounts/main.html" %}
 {% block content %}
-<h2>👥 Manage Assigned Customers</h2>
 
-{% if assigned_customers %}
-<ul class="list-group">
-    {% for customer in assigned_customers %}
-    <li class="list-group-item">
-        {{ customer.name }} - {{ customer.email }}
-        <a href="{% url 'customer_detail' customer.id %}" class="btn btn-sm btn-info float-end">View</a>
-    </li>
-    {% endfor %}
-</ul>
-{% else %}
-<p>No customers assigned.</p>
-{% endif %}
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- ================= SIDEBAR ================= -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar shadow-sm min-vh-100">
+            <div class="px-3 py-4">
+                <h5 class="fw-bold mb-4">📊 Sales Panel</h5>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'sales-dashboard' %}">🏠 Dashboard</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link active fw-bold" href="{% url 'manage_customers' %}">
+                            👥 My Customers
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'monitor_quotes' %}">📦 Active Orders</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'track_orders' %}">📝 Quote Requests</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'release_projects' %}">✅ Released Projects</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'follow_up_payments' %}">💳 Follow Up</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'sales_rep_inbox' %}">📥 Inbox</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link" href="{% url 'communicate_sales_rep' %}">📤 Sent Messages</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- ================= MAIN CONTENT ================= -->
+        <main class="col-md-9 col-lg-10 px-4 py-4">
+
+            <h2 class="mb-4">👥 Manage Assigned Customers</h2>
+
+            {% if assigned_customers %}
+                <ul class="list-group">
+                    {% for customer in assigned_customers %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ customer.name }}</strong><br>
+                            <small class="text-muted">{{ customer.email }}</small>
+                        </div>
+                        <a href="{% url 'customer_detail' customer.id %}"
+                           class="btn btn-sm btn-info">
+                            View
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="alert alert-warning">
+                    No customers assigned.
+                </div>
+            {% endif %}
+
+        </main>
+
+    </div>
+</div>
 
 {% endblock %}
