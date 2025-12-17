@@ -82,6 +82,8 @@ urlpatterns = [
 
     path('customer/<int:pk>/invoices/', views.customer_invoices, name='customer_invoices'),
     path('invoice/<int:invoice_id>/', views.invoice_detail, name='invoice_detail'),
+
+    path('register/<str:role>/', views.register_staff, name='register_staff'),  # Protected
 ]
     
     

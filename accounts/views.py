@@ -34,24 +34,21 @@ import csv
 
 # Create your views here.
 @unauthenticated_user
-def register_page(request):
+def register_page(request): # this only for customer registration
     designers = Designer.objects.all()  # for dropdown
 
     if request.method == 'POST':
-        print("POST DATA:", request.POST)  # ✅ debug line
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         password = request.POST.get('password')
-        role = request.POST.get('role')
         designer_id = request.POST.get('designer')
 
-        # ✅ Check if username (email) already exists
         if User.objects.filter(username=email).exists():
             messages.error(request, 'This email is already registered.')
             return redirect('register')
 
-        # ✅ Create user safely
+        # Create user
         user_obj = User.objects.create(
             first_name=first_name,
             last_name=last_name,
@@ -61,36 +58,130 @@ def register_page(request):
         user_obj.set_password(password)
         user_obj.save()
 
-        # ✅ Assign role (Group)
-        try:
-            group = Group.objects.get(name=role)
-            user_obj.groups.add(group)
-        except Group.DoesNotExist:
-            messages.error(request, f"The role '{role}' does not exist.")
-            return redirect('register')
+        # Assign customer role
+        group = Group.objects.get(name='customer')
+        user_obj.groups.add(group)
 
-        # ✅ Create related profile
-        if role == 'customer':
-            designer = None
-            if designer_id and designer_id != "":
-                designer = Designer.objects.filter(id=designer_id).first()
-                print("🎨 Designer Selected:", designer)
-            Customer.objects.create(
-                user=user_obj,
-                name=f"{first_name} {last_name}",
-                designer=designer
-            )
-        elif role == 'sales_rep':
-            SalesRepresentative.objects.create(user=user_obj)
-        elif role == 'designer':
-            Designer.objects.create(user=user_obj)
-        elif role == 'admin':
-            Admin.objects.create(user=user_obj)
+        # Create customer profile
+        designer = None
+        if designer_id:
+            designer = Designer.objects.filter(id=designer_id).first()
+        Customer.objects.create(
+            user=user_obj,
+            name=f"{first_name} {last_name}",
+            designer=designer
+        )
 
         messages.success(request, "✅ Your account has been created successfully.")
         return redirect('login')
 
     return render(request, 'accounts/register.html', {'designers': designers})
+
+
+# Only superuser can access
+def superuser_check(user):
+    return user.is_superuser
+
+
+@user_passes_test(superuser_check)
+def register_staff(request, role):
+    """
+    role = 'designer' | 'sales_rep' | 'admin'
+    """
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+
+        if User.objects.filter(username=email).exists():
+            messages.error(request, 'This email is already registered.')
+            return redirect(request.path)
+
+        user_obj = User.objects.create(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            username=email,
+        )
+        user_obj.set_password(password)
+        user_obj.save()
+
+        # Assign group
+        group = Group.objects.get(name=role)
+        user_obj.groups.add(group)
+
+        # Create profile depending on role
+        if role == 'designer':
+            Designer.objects.create(user=user_obj)
+        elif role == 'sales_rep':
+            SalesRepresentative.objects.create(user=user_obj)
+        elif role == 'admin':
+            Admin.objects.create(user=user_obj)
+
+        messages.success(request, f"{role.capitalize()} account created successfully.")
+        return redirect('dashboard')  # or wherever you want
+
+    return render(request, 'accounts/register_staff.html', {'role': role})
+
+# @unauthenticated_user
+# def register_page(request):
+#     designers = Designer.objects.all()  # for dropdown
+
+#     if request.method == 'POST':
+#         print("POST DATA:", request.POST)  # ✅ debug line
+#         first_name = request.POST.get('first_name')
+#         last_name = request.POST.get('last_name')
+#         email = request.POST.get('email')
+#         password = request.POST.get('password')
+#         role = request.POST.get('role')
+#         designer_id = request.POST.get('designer')
+
+#         # ✅ Check if username (email) already exists
+#         if User.objects.filter(username=email).exists():
+#             messages.error(request, 'This email is already registered.')
+#             return redirect('register')
+
+#         # ✅ Create user safely
+#         user_obj = User.objects.create(
+#             first_name=first_name,
+#             last_name=last_name,
+#             email=email,
+#             username=email,
+#         )
+#         user_obj.set_password(password)
+#         user_obj.save()
+
+#         # ✅ Assign role (Group)
+#         try:
+#             group = Group.objects.get(name=role)
+#             user_obj.groups.add(group)
+#         except Group.DoesNotExist:
+#             messages.error(request, f"The role '{role}' does not exist.")
+#             return redirect('register')
+
+#         # ✅ Create related profile
+#         if role == 'customer':
+#             designer = None
+#             if designer_id and designer_id != "":
+#                 designer = Designer.objects.filter(id=designer_id).first()
+#                 print("🎨 Designer Selected:", designer)
+#             Customer.objects.create(
+#                 user=user_obj,
+#                 name=f"{first_name} {last_name}",
+#                 designer=designer
+#             )
+#         elif role == 'sales_rep':
+#             SalesRepresentative.objects.create(user=user_obj)
+#         elif role == 'designer':
+#             Designer.objects.create(user=user_obj)
+#         elif role == 'admin':
+#             Admin.objects.create(user=user_obj)
+
+#         messages.success(request, "✅ Your account has been created successfully.")
+#         return redirect('login')
+
+#     return render(request, 'accounts/register.html', {'designers': designers})
 
 
 
