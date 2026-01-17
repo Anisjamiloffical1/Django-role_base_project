@@ -1,25 +1,66 @@
 {% extends "accounts/main.html" %}
-{% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4"><i class="fas fa-comments"></i> Feedback & Revisions</h2>
 
-    {% if feedbacks %}
-        <div class="list-group">
-            {% for feedback in feedbacks %}
-                <div class="list-group-item mb-3 shadow-sm rounded">
-                    <h5 class="mb-1">Order #{{ feedback.order.id }}</h5>
-                    <p class="mb-1">{{ feedback.message }}</p>
-                    <small class="text-muted">
-                        From: {{ feedback.customer.username }} | 
-                        {{ feedback.created_at|date:"M d, Y H:i" }}
-                    </small>
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 bg-dark text-white vh-100 p-3">
+            <h4 class="mb-4">Designer Menu</h4>
+            <ul class="nav flex-column">
+                <li class="nav-item mb-2">
+                    <a href="{% url 'designer-dashboard' %}" class="nav-link text-white">
+                        <i class="fas fa-clipboard-list"></i> Assigned Orders
+                    </a>
+                </li>
+
+                <li class="nav-item mb-2">
+                    <a href="{% url 'communicate_with_sales_admin' %}" class="nav-link text-white">
+                        <i class="fas fa-paper-plane"></i> Send Message
+                    </a>
+                </li>
+
+                <li class="nav-item mb-2">
+                    <a href="{% url 'designer_feedback' %}" class="nav-link text-white active">
+                        <i class="fas fa-comments"></i> Feedback / Revisions
+                    </a>
+                </li>
+
+                <li class="nav-item mt-auto">
+                    <a class="nav-link text-white" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 p-4">
+            <h2 class="mb-4">
+                <i class="fas fa-comments"></i> Feedback & Revisions
+            </h2>
+
+            {% if feedbacks %}
+                <div class="list-group">
+                    {% for feedback in feedbacks %}
+                        <div class="list-group-item mb-3 shadow-sm rounded">
+                            <h5 class="mb-1">Order #{{ feedback.order.id }}</h5>
+                            <p class="mb-1">{{ feedback.message }}</p>
+                            <small class="text-muted">
+                                From: {{ feedback.customer.username }} |
+                                {{ feedback.created_at|date:"M d, Y H:i" }}
+                            </small>
+                        </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    No feedback or revision requests yet.
+                </div>
+            {% endif %}
         </div>
-    {% else %}
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> No feedback or revision requests yet.
-        </div>
-    {% endif %}
+
+    </div>
 </div>
 {% endblock %}

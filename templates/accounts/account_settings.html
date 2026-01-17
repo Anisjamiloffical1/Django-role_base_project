@@ -2,76 +2,189 @@
 {% load static %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
-                <div class="row g-0">
-                    <!-- Profile Section -->
-                    <div class="col-md-4 bg-light text-center p-4 d-flex flex-column justify-content-center">
-                        <h3 class="mb-4 text-primary fw-bold">Account Settings</h3>
 
-                        {% if customer.profile_pic %}
-                            <img src="{{ customer.profile_pic.url }}" alt="Profile Picture"
-                                 class="rounded-circle shadow-sm mb-3"
-                                 style="width: 180px; height: 180px; object-fit: cover;">
-                        {% else %}
-                            <img src="{% static 'images/default-profile.png' %}" alt="Default Profile Picture"
-                                 class="rounded-circle shadow-sm mb-3"
-                                 style="width: 180px; height: 180px; object-fit: cover;">
-                        {% endif %}
+<div class="container-fluid">
+    <div class="row">
 
-                        <h5 class="mt-2">{{ customer.name }}</h5>
-                        <p class="text-muted">{{ customer.email }}</p>
+        <!-- Sidebar -->
+        <div class="col-md-2 p-0">
+            <div class="sidebar d-flex flex-column p-3">
+                <h5 class="mb-4">Customer Panel</h5>
 
-                        <a href="{% url 'user-page' %}" class="btn btn-outline-secondary btn-sm mt-3">
-                            <i class="bi bi-arrow-left-circle"></i> Back to Profile
+                <ul class="nav flex-column mb-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'user-page' %}">
+                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
                         </a>
-                    </div>
+                    </li>
 
-                    <!-- Form Section -->
-                    <div class="col-md-8 p-5">
-                        <form method="POST" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Full Name</label>
-                                {{ form.name }}
-                            </div>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Patch' %}">
+                            <i class="fas fa-certificate me-2"></i> Patches Orders
+                        </a>
+                    </li>
 
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Phone</label>
-                                {{ form.phone }}
-                            </div>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Digitizing' %}">
+                            <i class="fas fa-magic me-2"></i> Digitizing Orders
+                        </a>
+                    </li>
 
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold">Email</label>
-                                {{ form.email }}
-                            </div>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Quote' %}">
+                            <i class="fas fa-file-invoice-dollar me-2"></i> Quotes Orders
+                        </a>
+                    </li>
 
-                            <div class="mb-4">
-                                <label class="form-label fw-semibold">Change Profile Picture</label><br>
-                                {{ form.profile_pic }}
-                            </div>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Vector' %}">
+                            <i class="fas fa-vector-square me-2"></i> Vectors Orders
+                        </a>
+                    </li>
 
-                            <button type="submit" class="btn btn-primary px-4">
-                                <i class="bi bi-check-circle"></i> Save Changes
-                            </button>
-                        </form>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_invoices' customer.id %}">
+                            <i class="fas fa-file-invoice me-2"></i> Invoices
+                        </a>
+                    </li>
 
-                        {% if messages %}
-                            {% for message in messages %}
-                                <div class="alert alert-success mt-3 mb-0">
-                                    <i class="bi bi-check2-circle"></i> {{ message }}
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'account' %}">
+                            <i class="fas fa-user me-2"></i> My Profile
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Logout -->
+                <div class="mt-auto">
+                    <a class="nav-link logout-link" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10">
+            <div class="container py-5">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                            <div class="row g-0">
+
+                                <!-- Profile Section -->
+                                <div class="col-md-4 bg-light text-center p-4 d-flex flex-column justify-content-center">
+                                    <h3 class="mb-4 text-primary fw-bold">Account Settings</h3>
+
+                                    {% if customer.profile_pic %}
+                                        <img src="{{ customer.profile_pic.url }}" alt="Profile Picture"
+                                             class="rounded-circle shadow-sm mb-3"
+                                             style="width: 180px; height: 180px; object-fit: cover;">
+                                    {% else %}
+                                        <img src="{% static 'images/default-profile.png' %}" alt="Default Profile Picture"
+                                             class="rounded-circle shadow-sm mb-3"
+                                             style="width: 180px; height: 180px; object-fit: cover;">
+                                    {% endif %}
+
+                                    <h5 class="mt-2">{{ customer.name }}</h5>
+                                    <p class="text-muted">{{ customer.email }}</p>
+
+                                    <a href="{% url 'user-page' %}" class="btn btn-outline-secondary btn-sm mt-3">
+                                        <i class="bi bi-arrow-left-circle"></i> Back to Profile
+                                    </a>
                                 </div>
-                            {% endfor %}
-                        {% endif %}
+
+                                <!-- Form Section -->
+                                <div class="col-md-8 p-5">
+                                    <form method="POST" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">Full Name</label>
+                                            {{ form.name }}
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">Phone</label>
+                                            {{ form.phone }}
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">Email</label>
+                                            {{ form.email }}
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label class="form-label fw-semibold">Change Profile Picture</label><br>
+                                            {{ form.profile_pic }}
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary px-4">
+                                            <i class="bi bi-check-circle"></i> Save Changes
+                                        </button>
+                                    </form>
+
+                                    {% if messages %}
+                                        {% for message in messages %}
+                                            <div class="alert alert-success mt-3 mb-0">
+                                                <i class="bi bi-check2-circle"></i> {{ message }}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 
 <!-- Optional Bootstrap Icons -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Sidebar CSS -->
+<style>
+    .nav-active {
+        background-color: #4f46e5;
+        color: #ffffff !important;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35);
+    }
+
+    .sidebar {
+        height: 100vh;
+        background-color: #343a40;
+        color: #fff;
+    }
+
+    .sidebar .nav-link {
+        color: #fff;
+    }
+
+    .sidebar .nav-link.active {
+        background-color: #495057;
+        font-weight: bold;
+    }
+
+    .sidebar .nav-link:hover {
+        background-color: #495057;
+        color: #fff;
+    }
+
+    .logout-link {
+        color: #fff;
+    }
+
+    .logout-link:hover {
+        color: #fff;
+        text-decoration: none;
+        background-color: #495057;
+    }
+</style>
+
 {% endblock %}

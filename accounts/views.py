@@ -88,6 +88,21 @@ def register_staff(request, role):
     """
     role = 'designer' | 'sales_rep' | 'admin'
     """
+
+    role = role.lower()
+
+    ROLE_MAP = {
+        "sale_rep": "sales_rep",
+        "sales_rep": "sales_rep",
+        "designer": "designer",
+        "admin": "admin",
+    }
+
+    role = ROLE_MAP.get(role)
+    if not role:
+        messages.error(request, "Invalid staff role.")
+        return redirect("login")
+
     if request.method == 'POST':
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
@@ -107,11 +122,11 @@ def register_staff(request, role):
         user_obj.set_password(password)
         user_obj.save()
 
-        # Assign group
-        group = Group.objects.get(name=role)
+        # ✅ Safe group assignment
+        group, _ = Group.objects.get_or_create(name=role)
         user_obj.groups.add(group)
 
-        # Create profile depending on role
+        # ✅ Create profile
         if role == 'designer':
             Designer.objects.create(user=user_obj)
         elif role == 'sales_rep':
@@ -119,8 +134,8 @@ def register_staff(request, role):
         elif role == 'admin':
             Admin.objects.create(user=user_obj)
 
-        messages.success(request, f"{role.capitalize()} account created successfully.")
-        return redirect('login')  # or wherever you want
+        messages.success(request, f"{role.replace('_',' ').title()} account created successfully.")
+        return redirect('login')
 
     return render(request, 'accounts/register_staff.html', {'role': role})
 # this is optional if you want to enable the registration for different roles
@@ -343,7 +358,7 @@ def user_page(request):
     pending = orders.filter(status='Pending').count()
 
     context = {
-        'customer': customer,   # ✅ add this
+        'customer': customer,   #  add this for customer info
         'orders': orders,
         'total_order': total_order,
         'delivered': delivered,
@@ -388,16 +403,18 @@ def home(request):
     return render(request, 'accounts/dashboard.html', context)
 
 ##############
+
 def admin_release_orders(request):
-    # Completed orders (status = 'Completed')
+    # Get all completed orders
     completed_orders = Order.objects.filter(status='Completed').order_by('-date_created')
 
     if request.method == "POST":
         order_id = request.POST.get("order_id")
         order = get_object_or_404(Order, id=order_id, status='Completed')
 
-        # Mark as Released
+        # Mark order as released
         order.status = 'Released'
+        order.date_released = timezone.now()
         order.save()
 
         # Send email to customer
@@ -416,26 +433,44 @@ Thank you for choosing Elite Digitizer.
 Best regards,
 Elite Digitizer Team
 """
-            if order.design_file:
-                message += f"\nDownload your design here: {request.build_absolute_uri(order.design_file.url)}"
 
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [order.customer.email])
+            email = EmailMessage(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [order.customer.email],
+            )
 
-        messages.success(request, f"Order #{order.id} released successfully!")
+            # Attach design file if exists
+            if order.design_file and os.path.isfile(order.design_file.path):
+                email.attach_file(order.design_file.path)
+
+            # Attach invoice if exists
+            if hasattr(order, 'invoice_file') and order.invoice_file and os.path.isfile(order.invoice_file.path):
+                email.attach_file(order.invoice_file.path)
+
+            # Send email
+            try:
+                email.send()
+                messages.success(request, f"Order #{order.id} released and email sent to {order.customer.email}.")
+            except Exception as e:
+                messages.error(request, f"Order released but email could not be sent: {e}")
+        else:
+            messages.warning(request, f"Order #{order.id} released, but customer email not available.")
 
         return redirect('admin_release_orders')
 
     context = {
-        'completed_orders': completed_orders
+        'completed_orders': completed_orders,
     }
     return render(request, 'accounts/admin_release_orders.html', context)
 
-def admin_release_order(request, order_id):
-    order = get_object_or_404(Order, id=order_id, status='Completed')
-    order.status = 'Released'
-    order.save()
-    messages.success(request, f"Order #{order.id} released successfully!")
-    return redirect('admin_release_orders')
+# def admin_release_order(request, order_id):
+#     order = get_object_or_404(Order, id=order_id, status='Completed')
+#     order.status = 'Released'
+#     order.save()
+#     messages.success(request, f"Order #{order.id} released successfully!")
+#     return redirect('admin_release_orders')
 
 
 
@@ -515,6 +550,7 @@ def customer_all_orders(request, pk):
         'orders': orders,
         'total_order': orders.count(),
     }
+   
     return render(request, 'accounts/customer_all_orders.html', context)
 
 
@@ -662,18 +698,24 @@ def createOrder(request, pk, order_type=None):
 
 @login_required
 def customer_orders(request):
+    customer = None  # ✅ important
+
     if request.user.is_staff or request.user.groups.filter(name="admin").exists():
         # Admin sees ALL released orders
-        released_orders = Order.objects.filter(status="Released").order_by("-date_created")
+        released_orders = Order.objects.filter(
+            status="Released"
+        ).order_by("-date_created")
     else:
         # Customer sees only their released orders
         customer = get_object_or_404(Customer, user=request.user)
         released_orders = Order.objects.filter(
-            customer=customer, status="Released"
+            customer=customer,
+            status="Released"
         ).order_by("-date_created")
 
     return render(request, "accounts/released_orders.html", {
-        "released_orders": released_orders
+        "released_orders": released_orders,
+        "customer": customer,  # ✅ FIX
     })
 
 @login_required
@@ -711,18 +753,23 @@ def order_invoice(request, pk):
 # this function is used to update the order
 @login_required(login_url='login')
 def updateOrder(request, pk):
-    order = Order.objects.get(id=pk)
-    
+    order = get_object_or_404(Order, id=pk)
+    customer = order.customer
+
     if request.method == 'POST':
-        #  Add request.FILES here to support file upload
         form = OrderForm(request.POST, request.FILES, instance=order)
         if form.is_valid():
             form.save()
-            return redirect('/')
+            return redirect('customer_orders', customer.id, order.order_type.name)
     else:
         form = OrderForm(instance=order)
 
-    context = {'form': form}
+    context = {
+        'form': form,
+        'customer': customer,
+        'order': order,  # <-- MUST pass order to template
+        'order_type': order.order_type.name
+    }
     return render(request, 'accounts/order_form.html', context)
 
 # this function is used to delete the order
@@ -1120,48 +1167,81 @@ def follow_up_payments(request):
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'sales_rep'])
 def report_view(request):
-    # Get filter inputs from GET params
+    # ---------------------------
+    # Get filters
+    # ---------------------------
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
     sales_rep_username = request.GET.get('sales_rep')
 
     orders = Order.objects.all()
 
-    # Filter by date range if provided
+    # ---------------------------
+    # Apply filters on orders
+    # ---------------------------
     if start_date:
         orders = orders.filter(date_created__date__gte=parse_date(start_date))
+
     if end_date:
         orders = orders.filter(date_created__date__lte=parse_date(end_date))
 
-    # Filter by sales rep username if provided
     if sales_rep_username:
-        orders = orders.filter(assigned_to__user__username=sales_rep_username)
+        orders = orders.filter(
+            assigned_sale_reps__user__username=sales_rep_username
+        )
 
-    # Aggregate orders count by status (after filters)
-    orders_by_status = orders.values('status').annotate(count=Count('id'))
+    # ---------------------------
+    # Orders by status
+    # ---------------------------
+    orders_by_status = (
+        orders
+        .values('status')
+        .annotate(count=Count('id'))
+        .order_by('status')
+    )
 
-    # Build Q filter for revenue_by_sales_rep aggregation
-    filter_q = Q(assigned_customers__order__status='Completed')
+    # ---------------------------
+    # Revenue & completed orders by sales rep
+    # ---------------------------
+    filter_q = Q(sales_rep_orders__status='Completed')
 
     if start_date:
-        filter_q &= Q(assigned_customers__order__date_created__date__gte=parse_date(start_date))
-    if end_date:
-        filter_q &= Q(assigned_customers__order__date_created__date__lte=parse_date(end_date))
-    if sales_rep_username:
-        filter_q &= Q(assigned_customers__order__assigned_to__user__username=sales_rep_username)
+        filter_q &= Q(
+            sales_rep_orders__date_created__date__gte=parse_date(start_date)
+        )
 
-    # Aggregate revenue and completed orders by sales rep (after filters)
+    if end_date:
+        filter_q &= Q(
+            sales_rep_orders__date_created__date__lte=parse_date(end_date)
+        )
+
+    if sales_rep_username:
+        filter_q &= Q(user__username=sales_rep_username)
+
     revenue_by_sales_rep = (
         SalesRepresentative.objects
         .annotate(
-            total_revenue=Sum('assigned_customers__order__product__price', filter=filter_q),
-            total_orders=Count('assigned_customers__order', filter=filter_q)
+            total_orders=Count(
+                'sales_rep_orders',
+                filter=filter_q,
+                distinct=True
+            ),
+            total_revenue=Sum(
+                'sales_rep_orders__price',
+                filter=filter_q
+            ),
         )
-        .values('user__username', 'total_revenue', 'total_orders')
+        .values('user__username', 'total_orders', 'total_revenue')
+        .order_by('user__username')
     )
 
-    # For filter dropdown, get all sales rep usernames
-    all_sales_reps = SalesRepresentative.objects.all().values_list('user__username', flat=True)
+    # ---------------------------
+    # Sales reps list for dropdown
+    # ---------------------------
+    all_sales_reps = SalesRepresentative.objects.values_list(
+        'user__username',
+        flat=True
+    )
 
     context = {
         'orders_by_status': orders_by_status,
@@ -1173,76 +1253,104 @@ def report_view(request):
             'sales_rep_username': sales_rep_username,
         }
     }
+
     return render(request, 'accounts/report.html', context)
+
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'sales_rep'])
 def export_report_csv(request):
+    # ---------------------------
+    # Get filters
+    # ---------------------------
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
     sales_rep_username = request.GET.get('sales_rep')
 
-    def clean_val(val):
-        if val and val.lower() != 'none':
-            return val
-        return None
-
-    start_date = clean_val(start_date)
-    end_date = clean_val(end_date)
-    sales_rep_username = clean_val(sales_rep_username)
-
     orders = Order.objects.all()
+
     if start_date:
         orders = orders.filter(date_created__date__gte=parse_date(start_date))
+
     if end_date:
         orders = orders.filter(date_created__date__lte=parse_date(end_date))
-    if sales_rep_username:
-        orders = orders.filter(assigned_to__user__username=sales_rep_username)
 
+    if sales_rep_username:
+        orders = orders.filter(
+            assigned_sale_reps__user__username=sales_rep_username
+        )
+
+    # ---------------------------
+    # CSV Response
+    # ---------------------------
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="report.csv"'
-
     writer = csv.writer(response)
 
-    # Write Report Title & Filter Info
+    # ---------------------------
+    # Header
+    # ---------------------------
     writer.writerow(['Order Report'])
-    filters_applied = []
-    if start_date:
-        filters_applied.append(f"Start Date: {start_date}")
-    if end_date:
-        filters_applied.append(f"End Date: {end_date}")
-    if sales_rep_username:
-        filters_applied.append(f"Sales Rep: {sales_rep_username}")
-    writer.writerow(filters_applied)
+    writer.writerow([
+        f"Start Date: {start_date or 'All'}",
+        f"End Date: {end_date or 'All'}",
+        f"Sales Rep: {sales_rep_username or 'All'}",
+    ])
     writer.writerow([])
 
+    # ---------------------------
     # Section 1: Orders by Status
+    # ---------------------------
     writer.writerow(['Orders by Status'])
-    writer.writerow(['Status', 'Number of Orders'])
-    orders_by_status = orders.values('status').annotate(count=Count('id')).order_by('status')
-    for item in orders_by_status:
-        writer.writerow([item['status'], item['count']])
+    writer.writerow(['Status', 'Count'])
+
+    orders_by_status = (
+        orders
+        .values('status')
+        .annotate(count=Count('id'))
+        .order_by('status')
+    )
+
+    for row in orders_by_status:
+        writer.writerow([row['status'], row['count']])
+
     writer.writerow([])
 
-    # Section 2: Revenue & Completed Orders by Sales Rep
+    # ---------------------------
+    # Section 2: Sales Rep Summary
+    # ---------------------------
     writer.writerow(['Sales Representative Summary'])
-    writer.writerow(['Sales Representative', 'Completed Orders', 'Total Revenue'])
+    writer.writerow(['Sales Rep', 'Completed Orders', 'Total Revenue'])
 
-    q_filters = Q(assigned_customers__order__status='Completed')
+    q_filters = Q(sales_rep_orders__status='Completed')
+
     if start_date:
-        q_filters &= Q(assigned_customers__order__date_created__gte=parse_date(start_date))
+        q_filters &= Q(
+            sales_rep_orders__date_created__date__gte=parse_date(start_date)
+        )
+
     if end_date:
-        q_filters &= Q(assigned_customers__order__date_created__lte=parse_date(end_date))
+        q_filters &= Q(
+            sales_rep_orders__date_created__date__lte=parse_date(end_date)
+        )
+
     if sales_rep_username:
-        q_filters &= Q(assigned_customers__order__assigned_to__user__username=sales_rep_username)
+        q_filters &= Q(user__username=sales_rep_username)
 
     revenue_by_sales_rep = (
         SalesRepresentative.objects
         .annotate(
-            total_revenue=Sum('assigned_customers__order__product__price', filter=q_filters),
-            total_orders=Count('assigned_customers__order', filter=q_filters),
+            total_orders=Count(
+                'sales_rep_orders',
+                filter=q_filters,
+                distinct=True
+            ),
+            total_revenue=Sum(
+                'sales_rep_orders__price',
+                filter=q_filters
+            ),
         )
-        .values('user__username', 'total_revenue', 'total_orders')
+        .values('user__username', 'total_orders', 'total_revenue')
         .order_by('user__username')
     )
 
@@ -1250,23 +1358,31 @@ def export_report_csv(request):
         writer.writerow([
             rep['user__username'],
             rep['total_orders'] or 0,
-            f"${rep['total_revenue']:.2f}" if rep['total_revenue'] else "$0.00",
+            f"${rep['total_revenue'] or 0:.2f}",
         ])
+
     writer.writerow([])
 
+    # ---------------------------
     # Section 3: Overall Totals
+    # ---------------------------
     writer.writerow(['Overall Totals'])
-    total_orders = orders.count()
-    total_completed_orders = orders.filter(status='Completed').count()
-    total_revenue = orders.filter(status='Completed').aggregate(
-        total=Sum('product__price')
-    )['total'] or 0
-    writer.writerow(['Total Orders', total_orders])
-    writer.writerow(['Total Completed Orders', total_completed_orders])
+
+    writer.writerow(['Total Orders', orders.count()])
+    writer.writerow([
+        'Completed Orders',
+        orders.filter(status='Completed').count()
+    ])
+
+    total_revenue = (
+        orders
+        .filter(status='Completed')
+        .aggregate(total=Sum('price'))['total'] or 0
+    )
+
     writer.writerow(['Total Revenue', f"${total_revenue:.2f}"])
 
     return response
-
 
 # this function use for designer dashboard
 def create_designer_group():
@@ -1663,21 +1779,21 @@ def submit_feedback(request, order_id):
     return render(request, "accounts/submit_feedback.html", {"form": form, "order": order})
 
 
-#
 @login_required
 def customer_invoices(request, pk):
     customer = get_object_or_404(Customer, id=pk)
-    invoices = Invoice.objects.filter(customer=customer).order_by('-year', '-month')
 
-    # Collect related orders for each invoice
+    invoices = Invoice.objects.filter(customer=customer)
+
     invoice_data = []
     for invoice in invoices:
         orders = Order.objects.filter(
             customer=customer,
             status="Completed",
-            created_at__year=invoice.year,
-            created_at__month=invoice.month
+            date_completed__year=invoice.year,
+            date_completed__month=invoice.month
         )
+
         invoice_data.append({
             "invoice": invoice,
             "orders": orders
@@ -1685,7 +1801,7 @@ def customer_invoices(request, pk):
 
     return render(request, "accounts/customer_invoices.html", {
         "customer": customer,
-        "invoice_data": invoice_data
+        "invoice_data": invoice_data,
     })
 
 @login_required
@@ -1802,29 +1918,107 @@ def customer_received_orders(request, pk):
 
 
 
-def customer_invoices(request, pk):
-    customer = get_object_or_404(Customer, id=pk)
-    invoices = Invoice.objects.filter(customer=customer).order_by('-year', '-month')
+# def customer_invoices(request, pk):
+#     customer = get_object_or_404(Customer, id=pk)
+#     invoices = Invoice.objects.filter(customer=customer).order_by('-year', '-month')
+#     context = {
+#         'customer': customer,
+#         'invoices': invoices,
+#         'page_title': 'All Invoices',
+#     }
+#     return render(request, 'accounts/customer_invoices.html', context)
 
-    context = {
-        'customer': customer,
-        'invoices': invoices,
-        'page_title': 'All Invoices',
-    }
-    return render(request, 'accounts/customer_invoices.html', context)
+def invoice_detail(request, pk, year, month):
+    invoice = get_object_or_404(
+        Invoice,
+        customer__id=pk,
+        year=year,
+        month=month
+    )
 
-def invoice_detail(request, invoice_id):
-    invoice = get_object_or_404(Invoice, id=invoice_id)
     orders = Order.objects.filter(
         customer=invoice.customer,
-        date_created__year=invoice.year,
-        date_created__month=invoice.month,
-        status='Completed'
-    )
+        date_created__year=year,
+        date_created__month=month
+    ).order_by('-date_created')
 
     context = {
         'invoice': invoice,
         'orders': orders,
-        'page_title': f"Invoice {invoice.month}/{invoice.year}"
+        'customer': invoice.customer,
+        'year': year,
+        'month': month,
+        'total_order': orders.count(),
+        'delivered': orders.filter(status='Delivered').count(),
+        'pending': orders.filter(status='Pending').count(),
+        'page_title': f"Invoice {month}/{year}",
     }
+
     return render(request, 'accounts/invoice_detail.html', context)
+
+
+
+
+
+# def customer_all_invoice_details(request, pk):
+#     customer = get_object_or_404(Customer, id=pk)
+
+#     invoices = Invoice.objects.filter(customer=customer).order_by('-year', '-month')
+
+#     invoice_data = []
+
+#     for invoice in invoices:
+#         orders = Order.objects.filter(
+#             customer=customer,
+#             date_created__year=invoice.year,
+#             date_created__month=invoice.month
+#         ).order_by('-date_created')
+
+#         invoice_data.append({
+#             'invoice': invoice,
+#             'orders': orders,
+#             'total_order': orders.count(),
+#             'delivered': orders.filter(status='Delivered').count(),
+#             'pending': orders.filter(status='Pending').count(),
+#         })
+
+#     context = {
+#         'customer': customer,
+#         'invoice_data': invoice_data,
+#         'page_title': 'All Invoices',
+#     }
+
+#     return render(request, 'accounts/invoice_detail_all.html', context)
+
+def customer_all_invoice_details(request, pk, order_type="all"):
+    customer = get_object_or_404(Customer, id=pk)
+
+    invoices = Invoice.objects.filter(customer=customer)
+
+    invoice_data = []
+
+    for invoice in invoices:
+        orders = Order.objects.filter(
+            customer=customer,
+            status="Completed",
+            date_completed__year=invoice.year,
+            date_completed__month=invoice.month
+        )
+
+        if order_type.lower() != "all":
+            orders = orders.filter(order_type__name__iexact=order_type)
+
+        invoice_data.append({
+            'invoice': invoice,
+            'orders': orders,
+            'total_order': orders.count(),
+            'delivered': orders.count(),  # completed = delivered logically
+            'pending': 0,
+        })
+
+    return render(request, 'accounts/invoice_detail_all.html', {
+        'customer': customer,
+        'invoice_data': invoice_data,
+        'order_type': order_type,
+        'page_title': 'All Invoices',
+    })

@@ -13,7 +13,7 @@ urlpatterns = [
     path('users/delete/<int:pk>/', views.delete_user, name='delete_user'),
     path('products/', views.products, name='products'),
     path('review-file/<int:pk>/', views.review_file, name='review_file'),
-    path('customer/<int:pk>/<str:order_type>/', views.customer, name='customer_orders'),
+    path('customer/<int:pk>/orders/<str:order_type>/', views.customer, name='customer_orders'),
     path("customer/<int:pk>/", views.customer_detail, name="customer_detail"),
     path("designer/manage-orders/", views.designer_manage_orders, name="design_manage_orders"),   #this
     path('customer/create/', views.createCustomer, name='create_customer'),
@@ -26,15 +26,15 @@ urlpatterns = [
     path("contact/", views.contact, name="contact"),
     path('order/<int:pk>/print_invoice/', views.printInvoice, name='print_invoice'),
     path('orders/<int:pk>/invoice/', views.order_invoice, name='order_invoice'),
-    path('update_order/<str:pk>/', views.updateOrder, name='update_order'),
+    path('update_order/<int:pk>/', views.updateOrder, name='update_order'),
     path('delete_order/<str:pk>/', views.delete_order, name='delete_order'),
     path('register/', views.register_page, name='register'),
-   
     path('login/', views.login_page, name='login'),
     path('reports/', views.report_view, name='report_view'),
+    path('admin-release-orders/', views.admin_release_orders, name='admin_release_orders'),
    # FOR VECTOR ORDERS
-    path('admin-release-orders/', views.admin_release_orders, name='admin_release_orders'),# for admin relased orders show
-    path('admin-release-orders/<int:order_id>/', views.admin_release_order, name='admin_release_order'),# relased order to customer
+    # path('admin-release-orders/', views.admin_release_orders, name='admin_release_orders'),# for admin relased orders show
+    # path('admin-release-orders/<int:order_id>/', views.admin_release_order, name='admin_release_order'),# relased order to customer
     path('reports/export/csv/', views.export_report_csv, name='export_report_csv'),
     path('logout/', views.logout_page, name='logout'),
     path('user/', views.user_page, name='user-page'),
@@ -79,11 +79,24 @@ urlpatterns = [
 
     path('customer/<int:pk>/receivable-orders/', views.customer_receivable_orders, name='customer_receivable_orders'),
     path('customer/<int:pk>/received-orders/', views.customer_received_orders, name='customer_received_orders'),
-
-    path('customer/<int:pk>/invoices/', views.customer_invoices, name='customer_invoices'),
     path('invoice/<int:invoice_id>/', views.invoice_detail, name='invoice_detail'),
 
     path('register/<str:role>/', views.register_staff, name='register_staff'),  # Protected
+     # All invoices
+    path(
+        'customer/<int:pk>/invoices/all/',
+        views.customer_all_invoice_details,
+        name='customer_all_invoice_details'
+    ),
+
+    # Filter by order type
+    path(
+        'customer/<int:pk>/invoices/<str:order_type>/',
+        views.customer_all_invoice_details,
+        name='customer_all_invoice_details_by_type'
+    ),
+    
+
 ]
     
     

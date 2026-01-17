@@ -1,10 +1,92 @@
 {% extends 'accounts/main.html' %}
 
 {% block content %}
-<h2>Send Message to Designer</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Send</button>
-</form>
+<style>
+    .sidebar {
+        background-color: #343a40;
+        min-height: 100vh;
+        color: #fff;
+        padding-top: 1rem;
+        position: sticky;
+        top: 0;
+    }
+    
+    .sidebar .nav-link {
+        color: #adb5bd;
+        font-weight: 500;
+        padding: 0.75rem 1rem;
+        transition: background-color 0.3s, color 0.3s;
+    }
+    
+    .sidebar .nav-link:hover,
+    .sidebar .nav-link.active {
+        background-color: #495057;
+        color: #fff;
+        border-radius: 0.375rem;
+    }
+    
+    main {
+        padding-top: 1.5rem;
+        padding-bottom: 2rem;
+    }
+    
+</style>
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- ✅ SAME ADMIN SIDEBAR -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="sidebar-sticky px-2">
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'report_view' %}">📈 Generate Reports</a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'manage_settings' %}">⚙️ Manage Settings</a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'create_customer' %}">➕ Create Customer</a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'manage_users' %}">👥 Manage Users</a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link active" href="{% url 'admin_send_message' %}">
+                            📤 Send Message
+                        </a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'admin_inbox' %}">
+                            📥 Inbox
+                            {% if unread_count > 0 %}
+                                <span class="badge bg-danger">{{ unread_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'admin_release_orders' %}">
+                            🚀 Admin Release Order
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- ✅ MAIN CONTENT -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="container mt-4">
+                <h2 class="mb-4">Send Message to Designer</h2>
+
+                <form method="post" class="card p-4 shadow-sm">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">
+                        Send
+                    </button>
+                </form>
+            </div>
+        </main>
+
+    </div>
+</div>
 {% endblock %}

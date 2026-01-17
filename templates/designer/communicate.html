@@ -2,75 +2,104 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4">
-  <div class="card">
-    <div class="card-header bg-primary text-white">
-      <h3 class="mb-0">
-        {% if order %}
-          Message About Order #{{ order.id }}
-        {% else %}
-          New Message
-        {% endif %}
-      </h3>
-    </div>
-    
-    <div class="card-body">
-      <form method="post" enctype="multipart/form-data" id="message-form">
-        {% csrf_token %}
-        
-        <!-- Hidden order field if pre-set -->
-        {% if order %}
-          <input type="hidden" name="order" value="{{ order.id }}">
-        {% else %}
-          <div class="mb-3">
-            <label class="form-label">Related Order</label>
-            {{ form.order }}
-            <small class="text-muted">Optional - select if this relates to a specific order</small>
-          </div>
-        {% endif %}
-        
-        <!-- Receiver field -->
-        <div class="mb-3">
-          <label class="form-label">To</label>
-          {{ form.receiver }}
-        </div>
-        
-        <!-- Subject field -->
-        <div class="mb-3">
-          <label class="form-label">Subject</label>
-          {{ form.subject }}
-        </div>
-        
-        <!-- Message content -->
-        <div class="mb-3">
-          <label class="form-label">Message</label>
-          {{ form.message }}
-        </div>
-        
-        <!-- Attachment field -->
-        <div class="mb-4">
-          <label class="form-label">Attachment</label>
-          {{ form.attachment }}
-          <div id="file-help" class="form-text">
-            Max 5MB. Allowed: PDF, JPG, PNG, AI, EPS files
-          </div>
-          <div id="file-preview" class="mt-2 d-none">
-            <img id="preview-image" src="#" alt="Preview" class="img-thumbnail" style="max-height: 200px; display: none;">
-            <div id="file-info" class="small mt-1"></div>
-          </div>
-        </div>
-        
-        <div class="d-flex justify-content-between">
-          <a href="{% if order %}{% url 'designer-order-detail' pk=order.id %}{% else %}{% url 'designer-dashboard' %}{% endif %}" 
-             class="btn btn-secondary">
-            Cancel
+<div class="container-fluid">
+  <div class="row">
+
+    <!-- Sidebar -->
+    <div class="col-md-3 col-lg-2 bg-dark text-white vh-100 p-3">
+      <h4 class="mb-4">Designer Menu</h4>
+      <ul class="nav flex-column">
+        <li class="nav-item mb-2">
+          <a href="{% url 'designer-dashboard' %}" class="nav-link text-white">
+            <i class="fas fa-clipboard-list"></i> Assigned Orders
           </a>
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-paper-plane me-1"></i> Send Message
-          </button>
-        </div>
-      </form>
+        </li>
+        <li class="nav-item mb-2">
+          <a href="{% url 'communicate_with_sales_admin' %}" class="nav-link text-white active">
+            <i class="fas fa-paper-plane"></i> Send Message
+          </a>
+        </li>
+        <li class="nav-item mb-2">
+          <a href="{% url 'designer_feedback' %}" class="nav-link text-white">
+            <i class="fas fa-comments"></i> Feedback / Revisions
+          </a>
+        </li>
+        <li class="nav-item mt-auto">
+          <a class="nav-link text-white" href="{% url 'logout' %}">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a>
+        </li>
+      </ul>
     </div>
+
+    <!-- Main Content -->
+    <div class="col-md-9 col-lg-10 p-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">
+            {% if order %}
+              Message About Order #{{ order.id }}
+            {% else %}
+              New Message
+            {% endif %}
+          </h3>
+        </div>
+        
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data" id="message-form">
+            {% csrf_token %}
+            
+            {% if order %}
+              <input type="hidden" name="order" value="{{ order.id }}">
+            {% else %}
+              <div class="mb-3">
+                <label class="form-label">Related Order</label>
+                {{ form.order }}
+                <small class="text-muted">Optional - select if this relates to a specific order</small>
+              </div>
+            {% endif %}
+            
+            <div class="mb-3">
+              <label class="form-label">To</label>
+              {{ form.receiver }}
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Subject</label>
+              {{ form.subject }}
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Message</label>
+              {{ form.message }}
+            </div>
+            
+            <div class="mb-4">
+              <label class="form-label">Attachment</label>
+              {{ form.attachment }}
+              <div id="file-help" class="form-text">
+                Max 5MB. Allowed: PDF, JPG, PNG, AI, EPS files
+              </div>
+              <div id="file-preview" class="mt-2 d-none">
+                <img id="preview-image" src="#" alt="Preview" class="img-thumbnail" style="max-height: 200px; display: none;">
+                <div id="file-info" class="small mt-1"></div>
+              </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+              <a href="{% if order %}{% url 'designer-order-detail' pk=order.id %}{% else %}{% url 'designer-dashboard' %}{% endif %}" 
+                 class="btn btn-secondary">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane me-1"></i> Send Message
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -90,7 +119,6 @@ document.getElementById('id_attachment').addEventListener('change', function(e) 
       <strong>Size:</strong> ${(file.size/1024).toFixed(2)} KB
     `;
     
-    // Show image preview if image file
     if (file.type.startsWith('image/')) {
       previewImg.style.display = 'block';
       const reader = new FileReader();
@@ -108,7 +136,6 @@ document.getElementById('id_attachment').addEventListener('change', function(e) 
 </script>
 
 <style>
-  /* Custom styles */
   .card {
     max-width: 800px;
     margin: 0 auto;

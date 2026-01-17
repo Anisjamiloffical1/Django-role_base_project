@@ -1,47 +1,160 @@
 {% extends "accounts/main.html" %}
 {% block content %}
-<div class="container mt-4">
-    <h3>📂 Your Released Orders</h3>
+<style>
+    .nav-active {
+        background-color: #4f46e5;
+        color: #ffffff !important;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35);
+    }
 
-    {% if released_orders %}
-    <table class="table table-striped mt-3">
-        <thead class="table-dark">
-            <tr>
-                <th>Order ID</th>
-                <th>Order Name/PO</th>
-                <th>Order Type</th>
-                <th>Released On</th>
-                <th>Files</th>
-                <th>Actions</th> <!-- Added actions column -->
-            </tr>
-        </thead>
-        <tbody>
-            {% for order in released_orders %}
-            <tr>
-                <td>#{{ order.id }}</td>
-                <td>{{ order.Order_name_PO }}</td>
-                <td>{{ order.order_type }}</td>
-                <td>{{ order.date_created|date:"M d, Y H:i" }}</td>
-                <td>
-                    {% if order.design_file %}
-                        <a href="{{ order.design_file.url }}" class="btn btn-sm btn-primary">Design File</a>
-                    {% endif %}
-                    {% if order.invoice_file %}
-                        <a href="{{ order.invoice_file.url }}" class="btn btn-sm btn-secondary">Invoice</a>
-                    {% endif %}
-                </td>
-                <td>
-                    <!-- Feedback button -->
-                    <a href="{% url 'submit_feedback' order.id %}" class="btn btn-sm btn-warning">
-                        <i class="fas fa-comment"></i> Give Feedback
+    .sidebar {
+        height: 100vh;
+        background-color: #343a40;
+        color: #fff;
+    }
+
+    .sidebar .nav-link {
+        color: #fff;
+    }
+
+    .sidebar .nav-link.active {
+        background-color: #495057;
+        font-weight: bold;
+    }
+
+    .sidebar .nav-link:hover {
+        background-color: #495057;
+        color: #fff;
+    }
+
+    .logout-link {
+        color: #fff;
+    }
+
+    .logout-link:hover {
+        color: #fff;
+        text-decoration: none;
+        background-color: #495057;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- Sidebar -->
+        <div class="col-md-2 p-0">
+            <div class="sidebar d-flex flex-column p-3">
+                <h5 class="mb-4">Customer Panel</h5>
+
+                <ul class="nav flex-column mb-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'user-page' %}">
+                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Patch' %}">
+                            <i class="fas fa-certificate me-2"></i> Patches Orders
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Digitizing' %}">
+                            <i class="fas fa-magic me-2"></i> Digitizing Orders
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Quote' %}">
+                            <i class="fas fa-file-invoice-dollar me-2"></i> Quotes Orders
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Vector' %}">
+                            <i class="fas fa-vector-square me-2"></i> Vectors Orders
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_invoices' customer.id %}">
+                            <i class="fas fa-file-invoice me-2"></i> Invoices
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'account' %}">
+                            <i class="fas fa-user me-2"></i> My Profile
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Logout -->
+                <div class="mt-auto">
+                    <a class="nav-link logout-link" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
                     </a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="alert alert-warning">You don’t have any released orders yet.</div>
-    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10">
+            <div class="container mt-4">
+                <h3>📂 Your Released Orders</h3>
+
+                {% if released_orders %}
+                <table class="table table-striped mt-3">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Order Name / PO</th>
+                            <th>Order Type</th>
+                            <th>Released On</th>
+                            <th>Files</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in released_orders %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td>{{ order.Order_name_PO }}</td>
+                            <td>{{ order.order_type }}</td>
+                            <td>{{ order.date_created|date:"M d, Y H:i" }}</td>
+                            <td>
+                                {% if order.design_file %}
+                                    <a href="{{ order.design_file.url }}" class="btn btn-sm btn-primary">
+                                        Design File
+                                    </a>
+                                {% endif %}
+                                {% if order.invoice_file %}
+                                    <a href="{{ order.invoice_file.url }}" class="btn btn-sm btn-secondary">
+                                        Invoice
+                                    </a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'submit_feedback' order.id %}" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-comment"></i> Give Feedback
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="alert alert-warning">
+                    You don’t have any released orders yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
 </div>
 {% endblock %}

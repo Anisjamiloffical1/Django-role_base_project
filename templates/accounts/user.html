@@ -196,8 +196,8 @@
 
             <div class="mt-4">
                 <a href="{% url 'customer_invoices' customer.id %}" class="btn btn-info me-2">View All Invoices</a>
-                <a href="{% url 'customer_receivable_orders' customer.id %}" class="btn btn-warning me-2">Receivable Orders</a>
-                <a href="{% url 'customer_received_orders' customer.id %}" class="btn btn-success">Received Orders</a>
+                <a href="{% url 'customer_all_invoice_details' customer.id %}" class="btn btn-warning me-2">Receivable Orders</a>
+                <a href="{% url 'customer_orders'  customer.id 'all' %}" class="btn btn-success">Received Orders</a>
             </div>
         </div>
     </div>

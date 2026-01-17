@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Register | Dynamic Digitizers</title>
+    <title>Register | Elite Digitizers</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap -->
@@ -13,18 +13,48 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <style>
-        * {
-            font-family: 'Poppins', sans-serif;
+        /* ===== FOOTER (MATCH HERO GRADIENT) ===== */
+.auth-footer {
+    position: relative;
+    margin-top: auto;
+    padding: 20px 0;
+    background:
+        linear-gradient(135deg,
+            rgba(67, 56, 202, 0.65),
+            rgba(139, 92, 246, 0.65),
+            rgba(56, 189, 248, 0.65)
+        );
+    backdrop-filter: blur(14px);
+    color: rgba(255,255,255,0.95);
+    font-size: 0.85rem;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.25);
+}
+
+.auth-footer small {
+    opacity: 0.9;
+}
+
+        * { font-family: 'Poppins', sans-serif; }
+        html, body { height: 100%; margin: 0; }
+
+        /* ===== NAVBAR ===== */
+        .auth-navbar {
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(14px);
+            padding: 14px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
         }
 
-        html, body {
-            height: 100%;
-            margin: 0;
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
         /* ===== HERO SECTION ===== */
         .hero {
             min-height: 100vh;
+            padding-top: 90px;
             background:
                 linear-gradient(135deg,
                     rgba(67, 56, 202, 0.85),
@@ -37,51 +67,17 @@
         }
 
         /* ===== LEFT BRAND ===== */
-        .brand-area {
-            color: #ffffff;
-        }
-
+        .brand-area { color: #ffffff; }
         .brand-title {
             font-size: 3.5rem;
             font-weight: 700;
             line-height: 1.15;
         }
-
         .brand-subtitle {
             font-size: 1.15rem;
             opacity: 0.9;
             max-width: 520px;
             margin-top: 18px;
-        }
-
-        .team {
-            display: flex;
-            gap: 35px;
-            margin-top: 55px;
-        }
-
-        .team-member {
-            text-align: center;
-        }
-
-        .team-member img {
-            width: 88px;
-            height: 88px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid rgba(255,255,255,0.85);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-        }
-
-        .team-name {
-            margin-top: 12px;
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-
-        .team-role {
-            font-size: 0.8rem;
-            opacity: 0.8;
         }
 
         /* ===== REGISTER PANEL ===== */
@@ -146,54 +142,47 @@
         }
 
         @media (max-width: 991px) {
-            .brand-area {
-                display: none;
-            }
+            .brand-area { display: none; }
         }
     </style>
 </head>
 
 <body>
 
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar navbar-expand-lg navbar-dark auth-navbar fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'login' %}">
+            Elite Digitizers
+        </a>
+
+        <div class="ms-auto d-flex gap-2">
+            <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm px-4 rounded-pill">
+                Login
+            </a>
+            <a href="{% url 'register' %}" class="btn btn-light btn-sm px-4 rounded-pill fw-semibold">
+                Register
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- ===== HERO SECTION ===== -->
 <section class="hero">
     <div class="container">
         <div class="row align-items-center">
 
-            <!-- LEFT: BRAND / PORTFOLIO -->
+            <!-- LEFT BRAND -->
             <div class="col-lg-7 brand-area">
-                <h1 class="brand-title">
-                    Elite <br> Digitizers
-                </h1>
-
+                <h1 class="brand-title">Elite <br> Digitizers</h1>
                 <p class="brand-subtitle">
                     Join our platform to create premium custom patches, badges, and vector designs—crafted with precision and delivered worldwide.
                 </p>
-
-                <div class="team">
-                    <div class="team-member">
-                        <img src="{% static 'images/iqbal.jpg' %}">
-                        <div class="team-name">Iqbal Hussain</div>
-                        <div class="team-role">CEO</div>
-                    </div>
-
-                    <div class="team-member">
-                        <img src="{% static 'images/dev1.jpg' %}">
-                        <div class="team-name">I</div>
-                        <div class="team-role">UI/UX Designer</div>
-                    </div>
-
-                    <div class="team-member">
-                        <img src="{% static 'images/dev2.jpg' %}">
-                        <div class="team-name">A</div>
-                        <div class="team-role">Backend Engineer</div>
-                    </div>
-                </div>
             </div>
 
-            <!-- RIGHT: REGISTER -->
+            <!-- REGISTER FORM -->
             <div class="col-lg-5">
                 <div class="register-panel">
-
                     <h4>Create Account</h4>
 
                     {% if messages %}
@@ -224,28 +213,17 @@
                         <div class="mb-3">
                             <input class="form-control" name="password2" type="password" placeholder="Confirm Password" required>
                         </div>
-<!-- this optional -->
-                        <!-- <div class="mb-3">
-                            <select name="role" id="role-select" class="form-select" required>
-                                <option value="">Select Role</option>
-                                <option value="customer">Customer</option>
-                                <option value="sales_rep">Sales Representative</option>
-                                <option value="designer">Designer</option>
-                                <option value="admin">Administrator</option>
-                            </select>
-                        </div>
 
-                        Designer assign -->
-                        <!-- <div class="mb-3" id="designer-field" style="display:none;">
+                        <div class="mb-3">
                             <select name="designer" class="form-select">
-                                <option value="">Assign Designer</option>
+                                <option value="">Assign Designer (optional)</option>
                                 {% for designer in designers %}
-                                <option value="{{ designer.id }}">
-                                    {{ designer.user.get_full_name|default:designer.user.username }}
-                                </option>
+                                    <option value="{{ designer.id }}">
+                                        {{ designer.user.get_full_name|default:designer.user.username }}
+                                    </option>
                                 {% endfor %}
                             </select>
-                        </div> --> 
+                        </div>
 
                         <button type="submit" class="btn btn-register w-100 mb-3">
                             Register
@@ -257,30 +235,24 @@
                                 <a href="{% url 'login' %}">Login here</a>
                             </small>
                         </div>
-
                     </form>
-
                 </div>
             </div>
 
         </div>
     </div>
 </section>
+<footer class="auth-footer">
+    <div class="container text-center">
+        <p class="mb-1">
+            © {% now "Y" %} <strong>Elite Digitizers</strong>. All rights reserved.
+        </p>
+        <small>
+            Crafted with precision • Delivered worldwide
+        </small>
+    </div>
+</footer>
 
-<!-- JS: Role logic -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const roleSelect = document.getElementById('role-select');
-    const designerField = document.getElementById('designer-field');
-
-    function toggleDesigner() {
-        designerField.style.display = roleSelect.value === 'customer' ? 'block' : 'none';
-    }
-
-    roleSelect.addEventListener('change', toggleDesigner);
-    toggleDesigner();
-});
-</script>
 
 </body>
 </html>

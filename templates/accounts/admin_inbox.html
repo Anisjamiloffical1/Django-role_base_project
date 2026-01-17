@@ -1,63 +1,148 @@
 {% extends 'accounts/main.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>Admin Inbox </h2>
-    {% if messages %}
-        <table class="table table-hover mt-3">
-            <thead>
-                <tr>
-                    <th>From</th>
-                    <th>Order ID</th>
-                    <th>Subject</th>
-                    <th>Attachment</th>
-                    <th>Received At</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for msg in messages %}
-                <tr class="{% if not msg.is_read %}table-warning{% endif %}">
-                    <td>{{ msg.sender.get_full_name|default:msg.sender.username }}</td>
-                    
-                    <td>
-                        {% if msg.order %}
-                            <a class="btn btn-sm btn-outline-info" href="{% url 'order_detail' msg.order.id %}">No : {{ msg.order.id }}</a>
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
+<style>
+    .sidebar {
+        background-color: #343a40;
+        min-height: 100vh;
+        color: #fff;
+        padding-top: 1rem;
+        position: sticky;
+        top: 0;
+    }
+    
+    .sidebar .nav-link {
+        color: #adb5bd;
+        font-weight: 500;
+        padding: 0.75rem 1rem;
+        transition: background-color 0.3s, color 0.3s;
+    }
+    
+    .sidebar .nav-link:hover,
+    .sidebar .nav-link.active {
+        background-color: #495057;
+        color: #fff;
+        border-radius: 0.375rem;
+    }
+    
+    main {
+        padding-top: 1.5rem;
+        padding-bottom: 2rem;
+    }
+    
+</style>
+<div class="container-fluid">
+    <div class="row">
 
-                    <td>{{ msg.subject }}</td>
+        <!-- ✅ SAME ADMIN SIDEBAR -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar">
+            <div class="sidebar-sticky px-2">
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'report_view' %}">📈 Generate Reports</a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'manage_settings' %}">⚙️ Manage Settings</a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'create_customer' %}">➕ Create Customer</a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'manage_users' %}">👥 Manage Users</a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'admin_send_message' %}">📤 Send Message</a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link active" href="{% url 'admin_inbox' %}">
+                            📥 Inbox
+                            {% if unread_count > 0 %}
+                                <span class="badge bg-danger">{{ unread_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item mb-3">
+                        <a class="nav-link" href="{% url 'admin_release_orders' %}">
+                            🚀 Admin Release Order
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
 
-                    <td>
-                        {% if msg.attachment %}
-                            <a class="btn btn-sm btn-outline-info" href="{{ msg.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-info">Download</a>
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
+        <!-- ✅ MAIN CONTENT -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="container mt-4">
+                <h2 class="mb-4">Admin Inbox</h2>
 
-                    <td>{{ msg.timestamp|date:"Y-m-d H:i" }}</td>
+                {% if messages %}
+                    <table class="table table-hover mt-3">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>From</th>
+                                <th>Order ID</th>
+                                <th>Subject</th>
+                                <th>Attachment</th>
+                                <th>Received At</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for msg in messages %}
+                            <tr class="{% if not msg.is_read %}table-warning{% endif %}">
+                                <td>{{ msg.sender.get_full_name|default:msg.sender.username }}</td>
 
-                    <td>
-                        {% if msg.is_read %}
-                            <span class="badge bg-success">Read</span>
-                        {% else %}
-                            <span class="badge bg-warning text-dark">Unread</span>
-                        {% endif %}
-                    </td>
+                                <td>
+                                    {% if msg.order %}
+                                        <a class="btn btn-sm btn-outline-info"
+                                           href="{% url 'order_detail' msg.order.id %}">
+                                            No : {{ msg.order.id }}
+                                        </a>
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
 
-                    <td>
-                        <a href="{% url 'view_message' msg.id %}" class="btn btn-sm btn-primary">View</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No messages found.</p>
-    {% endif %}
+                                <td>{{ msg.subject }}</td>
+
+                                <td>
+                                    {% if msg.attachment %}
+                                        <a class="btn btn-sm btn-outline-info"
+                                           href="{{ msg.attachment.url }}" target="_blank">
+                                            Download
+                                        </a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <td>{{ msg.timestamp|date:"Y-m-d H:i" }}</td>
+
+                                <td>
+                                    {% if msg.is_read %}
+                                        <span class="badge bg-success">Read</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Unread</span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <a href="{% url 'view_message' msg.id %}"
+                                       class="btn btn-sm btn-primary">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No messages found.</p>
+                {% endif %}
+            </div>
+        </main>
+
+    </div>
 </div>
 {% endblock %}

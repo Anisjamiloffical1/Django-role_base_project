@@ -30,6 +30,6 @@
         </tbody>
     </table>
 
-    <a href="{% url 'customer_invoices' customer.id %}" class="btn btn-secondary mt-3">Back to Invoices</a>
+    <a href="{% url 'invoice_detail' customer.id year month %}" class="btn btn-secondary mt-3">Back to Invoices</a>
 </div>
 {% endblock %}

@@ -1,32 +1,188 @@
 {% extends 'accounts/main.html' %}
+
 {% block content %}
-<div class="container mt-4">
-  <h3>{{ page_title }} for {{ customer.name }}</h3>
-  <table class="table table-bordered mt-3">
-    <thead class="table-primary">
-      <tr>
-        <th>Month</th>
-        <th>Year</th>
-        <th>Total Amount</th>
-        <th>Created At</th>
-        <th>View</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for invoice in invoices %}
-      <tr>
-        <td>{{ invoice.month }}</td>
-        <td>{{ invoice.year }}</td>
-        <td>${{ invoice.total_amount }}</td>
-        <td>{{ invoice.created_at|date:"M d, Y" }}</td>
-        <td>
-          <a href="{% url 'invoice_detail' invoice.id %}" class="btn btn-sm btn-primary">View</a>
-        </td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="5" class="text-center">No invoices found.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<style>
+    .nav-active {
+        background-color: #4f46e5;
+        color: #ffffff !important;
+        font-weight: 500;
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35);
+    }
+
+    .sidebar {
+        height: 100vh;
+        background-color: #343a40;
+        color: #fff;
+    }
+
+    .sidebar .nav-link {
+        color: #fff;
+    }
+
+    .sidebar .nav-link.active {
+        background-color: #495057;
+        font-weight: bold;
+    }
+
+    .sidebar .nav-link:hover {
+        background-color: #495057;
+        color: #fff;
+    }
+
+    .logout-link {
+        color: #fff;
+    }
+
+    .logout-link:hover {
+        color: #fff;
+        text-decoration: none;
+        background-color: #495057;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- Sidebar -->
+        <div class="col-md-2 p-0">
+            <div class="sidebar d-flex flex-column p-3">
+                <h5 class="mb-4">Customer Panel</h5>
+
+                <ul class="nav flex-column mb-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'user-page' %}">
+                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Patch' %}">
+                            <i class="fas fa-certificate me-2"></i> Patches Orders
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Digitizing' %}">
+                            <i class="fas fa-magic me-2"></i> Digitizing Orders
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Quote' %}">
+                            <i class="fas fa-file-invoice-dollar me-2"></i> Quotes Orders
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Vector' %}">
+                            <i class="fas fa-vector-square me-2"></i> Vectors Orders
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'customer_invoices' customer.id %}">
+                            <i class="fas fa-file-invoice me-2"></i> Invoices
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'account' %}">
+                            <i class="fas fa-user me-2"></i> My Profile
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Logout -->
+                <div class="mt-auto">
+                    <a class="nav-link logout-link" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10">
+            <div class="container my-4">
+
+                <h4 class="mb-4 fw-semibold">
+                    {{ page_title }} – {{ customer.name }}
+                </h4>
+
+                {% for item in invoice_data %}
+                <div class="card border-0 shadow-sm mb-4">
+
+                    <!-- Invoice Header -->
+                    <div class="card-header bg-white fw-semibold">
+                        Invoice: {{ item.invoice.month }}/{{ item.invoice.year }}
+                        <span class="text-muted ms-2">
+                            (Total: {{ item.total_order }},
+                            Delivered: {{ item.delivered }},
+                            Pending: {{ item.pending }})
+                        </span>
+                    </div>
+
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead class="text-muted border-bottom">
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Order Type</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th class="text-end">Action</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {% for order in item.orders %}
+                                    <tr>
+                                        <td>#{{ order.id }}</td>
+                                        <td>{{ order.order_type.name }}</td>
+                                        <td>
+                                            {% if order.status == 'Delivered' %}
+                                                <span class="badge bg-success">Delivered</span>
+                                            {% elif order.status == 'Pending' %}
+                                                <span class="badge bg-warning text-dark">Pending</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ order.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-muted">
+                                            {{ order.date_created|date:"M d, Y" }}
+                                        </td>
+                                        <td class="text-end fw-semibold">
+                                            <a href="{% url 'print_invoice' order.id %}"
+                                               class="btn btn-sm btn-secondary">
+                                                Invoice
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-3">
+                                            No orders found for this invoice
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+                {% empty %}
+                    <div class="text-center text-muted py-4">
+                        No invoices available
+                    </div>
+                {% endfor %}
+
+            </div>
+        </div>
+
+    </div>
 </div>
 {% endblock %}

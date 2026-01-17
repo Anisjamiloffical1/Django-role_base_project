@@ -120,14 +120,8 @@
                     <h3>{{ i.name }}</h3>
                     <span class="category">{{ i.category }}</span>
                     <p class="description">{{ i.description|truncatewords:15 }}</p>
-                    <div class="price">${{ i.price }}</div>
-                    {% if i.id %}
-                    <a href="{% url 'create_order' i.id 'Quote' %}" class="btn-quote">
-                        Get Quote <i class="fas fa-arrow-right"></i>
-                    </a>
-                    {% else %}
-                    <a href="#" class="btn-quote disabled">No Product</a>
-                    {% endif %}
+                    
+                    
                     
                 </div>
             </div>

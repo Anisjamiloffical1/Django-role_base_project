@@ -4,6 +4,7 @@ from django.db.models import Sum
 from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.core.exceptions import ValidationError
 # Create your models here.
 class Customer(models.Model):
     user = models.OneToOneField(
@@ -89,6 +90,10 @@ class Product(models.Model):
 # # this use for customer order
 
 class Order(models.Model):
+    def validate_2mb_file(value):
+        max_size = 2 * 1024 * 1024  # 2 MB
+        if value.size > max_size:
+            raise ValidationError("File size must be less than or equal to 2 MB.")
     STATUS = (
         ('Pending', 'Pending'),
         ('Out for delivery', 'Out for delivery'),
@@ -191,7 +196,7 @@ class Order(models.Model):
     date_completed = models.DateTimeField(null=True, blank=True)  # Optional: track completion time
     review_status = models.CharField(max_length=20, choices=REVIEW_STATUS, default='Pending')
     review_comment = models.TextField(blank=True, null=True)
-    design_file = models.FileField(upload_to='designs/', blank=True, null=True)# limated size 2MB
+    design_file = models.FileField(upload_to='designs/', blank=True, null=True, validators=[validate_2mb_file])# limated size 2MB
     assigned_sale_reps = models.ForeignKey(
         SalesRepresentative,
         on_delete=models.SET_NULL,
@@ -289,8 +294,8 @@ class Invoice(models.Model):
     year = models.PositiveIntegerField()
     month = models.PositiveIntegerField()
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-    date_created = models.DateTimeField(auto_now_add=True, null=True)
+    date_completed = models.DateTimeField(auto_now_add=True)
+   
 
     class Meta:
         unique_together = ('customer', 'year', 'month')  # one invoice per customer per month
@@ -300,13 +305,13 @@ class Invoice(models.Model):
         return f"Invoice: {self.customer.name} - {self.month}/{self.year}"
 
     def calculate_total(self):
-        """Calculate total from all completed orders for that month"""
         total = Order.objects.filter(
             customer=self.customer,
             status="Completed",
-            created_at__year=self.year,
-            created_at__month=self.month
+            date_completed__year=self.year,
+            date_completed__month=self.month
         ).aggregate(Sum('price'))['price__sum'] or 0
+
         self.total_amount = total
         self.save()
         return self.total_amount
