@@ -759,18 +759,21 @@ def updateOrder(request, pk):
     if request.method == 'POST':
         form = OrderForm(request.POST, request.FILES, instance=order)
         if form.is_valid():
-            form.save()
-            return redirect('customer_orders', customer.id, order.order_type.name)
+            updated_order = form.save()
+            return redirect(
+                'customer_orders',
+                updated_order.customer.id,
+                updated_order.order_type.name
+            )
     else:
         form = OrderForm(instance=order)
 
-    context = {
+    return render(request, 'accounts/order_form.html', {
         'form': form,
         'customer': customer,
-        'order': order,  # <-- MUST pass order to template
-        'order_type': order.order_type.name
-    }
-    return render(request, 'accounts/order_form.html', context)
+        'order': order,
+        'order_type': order.order_type.name,
+    })
 
 # this function is used to delete the order
 @login_required(login_url='login')
@@ -1443,36 +1446,31 @@ def upload_design(request, pk):
     if request.method == 'POST':
         form = DesignFileForm(request.POST, request.FILES)
         if form.is_valid():
-            file = request.FILES.get('design_file')  # ✅ Safely access file
+            file = request.FILES.get('design_file')
 
             # ✅ Check if file is provided
             if not file:
-                messages.error(request, "Please select a design file before uploading.")
+                messages.error(request, "Please select a file before uploading.")
                 return redirect(request.path)
 
-            # ✅ Check file size (max 5 MB)
-            max_size = 5 * 1024 * 1024  # 5 MB in bytes
+            # ✅ Check file size (max 10 MB)
+            max_size = 10 * 1024 * 1024  # 10 MB in bytes
             if file.size > max_size:
-                messages.error(request, "File too large! Maximum allowed size is 5 MB.")
+                messages.error(request, "File too large! Maximum allowed size is 10 MB.")
                 return redirect(request.path)
 
-            # ✅ Check file extension/type
-            if not file.name.lower().endswith(('.ai', '.eps', '.svg')):
-                messages.error(request, "Only AI, EPS, or SVG files are allowed!")
-                return redirect(request.path)
-
-            # ✅ Save file history
+            # ✅ Save file history (any file type allowed)
             UploadedFile.objects.create(
                 order=order,
                 file=file,
                 uploaded_by=request.user
             )
 
-            # ✅ Update order with new design file
+            # ✅ Update order with uploaded file
             order.design_file = file
             order.save()
 
-            messages.success(request, "Design uploaded successfully!")
+            messages.success(request, "File uploaded successfully!")
             return redirect('designer-dashboard')
         else:
             messages.error(request, "Please correct the errors in the form.")
@@ -1483,6 +1481,7 @@ def upload_design(request, pk):
         'form': form,
         'order': order
     })
+
 @login_required
 def designer_manage_orders(request):
     # Get all orders assigned to this designer
