@@ -1,50 +1,115 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-<div class="col-md-2 sidebar d-flex flex-column p-3">
+<style>
+    .sidebar {
+        background: linear-gradient(180deg, #1f2a30 0%, #101820 100%);
+        color: #ecf0f1;
+        min-height: 100vh;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .sidebar h5 {
+        color: #fff;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+    }
+
+    .sidebar .nav-link {
+        color: #b0bec5;
+        text-decoration: none;
+        padding: 10px 12px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        transition: background 0.25s ease, color 0.25s ease, transform 0.1s ease;
+    }
+
+    .sidebar .nav-link i {
+        width: 18px;
+        text-align: center;
+        font-size: 1rem;
+    }
+
+    .sidebar .nav-link:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        transform: translateX(2px);
+    }
+
+    .sidebar .nav-link.active {
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: #ffffff !important;
+        font-weight: 600;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    }
+
+    .sidebar .logout-link {
+        color: #ff6b6b !important;
+        font-weight: 600;
+    }
+
+    .sidebar .logout-link:hover {
+        background-color: #58151c;
+        color: #fff !important;
+    }
+</style>
+
+<div class="col-md-2 col-lg-2 sidebar d-flex flex-column p-3">
     <h5 class="mb-4">Customer Panel</h5>
 
     <ul class="nav flex-column mb-auto">
         <li class="nav-item">
-            <a class="nav-link active" href="{% url 'user-page' %}">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
+            <a class="nav-link {% if request.resolver_match.url_name == 'user-page' %}active{% endif %}"
+               href="{% url 'user-page' %}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="{% url 'customer_orders' customer.id 'Patch' %}">
-                <i class="fas fa-certificate"></i> Patches Orders
+                <i class="fas fa-certificate"></i>
+                <span>Patches Orders</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="{% url 'customer_orders' customer.id 'Digitizing' %}">
-                <i class="fas fa-magic"></i> Digitizing Orders
+                <i class="fas fa-magic"></i>
+                <span>Digitizing Orders</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="{% url 'customer_orders' customer.id 'Quote' %}">
-                <i class="fas fa-file-invoice-dollar"></i> Quotes Orders
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>Quotes Orders</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="{% url 'customer_orders' customer.id 'Vector' %}">
-                <i class="fas fa-vector-square"></i> Vectors Orders
+                <i class="fas fa-vector-square"></i>
+                <span>Vectors Orders</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="{% url 'customer_invoices' customer.id %}">
-                <i class="fas fa-file-invoice"></i> Invoices
+                <i class="fas fa-file-invoice"></i>
+                <span>Invoices</span>
             </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'account' %}">
-                <i class="fas fa-user"></i> My Profile
+            <a class="nav-link {% if request.resolver_match.url_name == 'account' %}active{% endif %}"
+               href="{% url 'account' %}">
+                <i class="fas fa-user"></i>
+                <span>My Profile</span>
             </a>
         </li>
     </ul>
 
-    <!-- Logout at Bottom -->
-    <div class="mt-auto">
+    <div class="mt-auto pt-3 border-top border-secondary-subtle">
         <a class="nav-link logout-link" href="{% url 'logout' %}">
-            <i class="fas fa-sign-out-alt"></i> Logout
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
         </a>
     </div>
 </div>

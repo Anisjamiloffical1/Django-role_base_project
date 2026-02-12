@@ -1,229 +1,331 @@
 {% load static %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
 <style>
+  .navbar {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+  }
+
   .navbar-brand {
     font-weight: 700;
-    font-size: 1.6rem;
-    letter-spacing: 3px;
+    font-size: 1.5rem;
+    letter-spacing: 1px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #0d6efd !important;
-    text-transform: uppercase;
-  }
-
-  .hello-msg {
-    font-size: 16px;
-    color: #ffc107;
-    font-weight: 600;
-    margin-left: 15px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    user-select: none;
-    white-space: nowrap;
-  }
-
-  .navbar-dark .navbar-nav .nav-link {
-    color: rgba(255, 255, 255, 0.9);
-    text-transform: capitalize;
-  }
-
-  .navbar-dark .navbar-nav .nav-link:hover {
-    color: #0d6efd;
-  }
-
-  .logout-link {
-    color: white;
-    font-weight: 500;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-
-  .logout-link:hover {
-    color: #dc3545;
-  }
-
-  /* Notification badge styling */
-  .notification-badge {
-    position: relative;
-    margin-right: 15px;
-  }
-
-  .notification-badge .badge {
-    position: absolute;
-    top: -5px;
-    right: -10px;
-    font-size: 0.7rem;
-    padding: 3px 6px;
-  }
-
-  .logo-wrapper {
     display: flex;
     align-items: center;
-    padding: 0 15px;
+    gap: 10px;
+    transition: transform 0.2s ease;
+  }
+
+  .navbar-brand:hover {
+    transform: scale(1.05);
   }
 
   .logo-img {
-    height: 60px;
+    height: 45px;
     width: auto;
-    max-height: 60px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
   .logo-text {
-    font-size: 2rem;
-    /* logo-size text */
+    font-size: 1.5rem;
     font-weight: 800;
     font-family: "Poppins", sans-serif;
-    letter-spacing: 2px;
-    background: linear-gradient(45deg, #00c6ff, #0072ff);
-    /* blue gradient */
+    letter-spacing: 1.5px;
+    background: linear-gradient(45deg, #ffffff, #e0e0e0);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    /* gradient text effect */
+    background-clip: text;
     text-transform: uppercase;
   }
 
   .logo-text .highlight {
-    background: linear-gradient(45deg, #ff512f, #dd2476);
-    /* red/pink gradient */
+    background: linear-gradient(45deg, #ff6b6b, #ffa500);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    margin: 0 0.25rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    text-transform: capitalize;
+  }
+
+  .navbar-nav .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff !important;
+    transform: translateY(-1px);
+  }
+
+  .navbar-nav .nav-link.active {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff !important;
+    font-weight: 600;
+  }
+
+  .hello-msg {
+    font-size: 15px;
+    color: #ffffff;
+    font-weight: 600;
+    margin-left: 12px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .user-profile-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    text-decoration: none !important;
+  }
+
+  .user-profile-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+  }
+
+  .user-profile-link img {
+    height: 38px;
+    width: 38px;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  .notification-badge {
+    position: relative;
+    margin-right: 10px;
+  }
+
+  .notification-badge a {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.2rem;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .notification-badge a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  .notification-badge .badge {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 0.65rem;
+    padding: 4px 6px;
+    border-radius: 10px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  .dropdown-menu {
+    background: linear-gradient(135deg, #0f2027, #203a43);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    margin-top: 8px;
+  }
+
+  .dropdown-item {
+    color: rgba(255, 255, 255, 0.9);
+    padding: 10px 20px;
+    transition: all 0.2s ease;
+  }
+
+  .dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  .dropdown-item i {
+    margin-right: 8px;
+    width: 18px;
+  }
+
+  .navbar-toggler {
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    padding: 4px 8px;
+  }
+
+  .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
   }
 </style>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
-    <img src="{% static 'images/Elite_favicon.png' %}" alt="Elite Digitizers Logo" height="40" class="mr-2">
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <a class="navbar-brand" href="{% url 'home' %}">
+    <img src="{% static 'images/Elite_favicon.png' %}" alt="Elite Digitizers Logo" class="logo-img">
     <span class="logo-text">Elite <span class="highlight">Digitizers</span></span>
   </a>
 
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav"
-    aria-expanded="false" aria-label="Toggle navigation">
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" 
+    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
 
   <div class="collapse navbar-collapse" id="navbarNav">
-    <ul class="navbar-nav">
+    <ul class="navbar-nav mr-auto">
       {% if request.user.groups.all.0.name == 'admin' %}
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'home' %}">Dashboard</a>
-      </li>
-      <li class="nav-item">
-        <a href="{% url 'services' %}" class="nav-link">Services</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'products' %}">Products</a>
-      </li>
-      <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
-          aria-haspopup="true" aria-expanded="false">
-
-        </a>
-        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-
-          <div class="mt-auto">
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" 
+             href="{% url 'home' %}">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'services' %}" class="nav-link {% if request.resolver_match.url_name == 'services' %}active{% endif %}">
+            <i class="fas fa-concierge-bell"></i> Services
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'products' %}active{% endif %}" 
+             href="{% url 'products' %}">
+            <i class="fas fa-box"></i> Products
+          </a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" 
+             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-user-cog"></i> Account
+          </a>
+          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="adminDropdown">
             <a class="dropdown-item" href="{% url 'logout' %}">
               <i class="fas fa-sign-out-alt"></i> Logout
             </a>
           </div>
-
-        </div>
-      </li>
+        </li>
 
       {% elif request.user.groups.all.0.name == 'designer' %}
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'designer-dashboard' %}">Dashboard</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'designer_inbox' %}">Messages</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'view_notifications' %}">
-          Notifications
-        </a>
-      </li>
-      
-      {% elif request.user.groups.all.0.name == 'customer' %}
-
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'user-page' %}">Dashboard</a>
-      </li>
-
-      <li class="nav-item">
-        <a href="{% url 'services' %}" class="nav-link">Services</a>
-      </li>
-
-
-      <li class="nav-item">
-        <a href="{% url 'about' %}" class="nav-link">About</a>
-      </li>
-      {% elif request.user.groups.all.0.name == 'sales_rep' %}
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'sales-dashboard' %}">Dashboard</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'sales_rep_inbox' %}">Messages</a>
-      </li>
-      <li class="nav-item dropdown">
-        <a class="nav-link dropdown" href="#" id="navbarDropdown" role="button"
-           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <i class="fas fa-sign-out-alt"></i>
-        </a>
-        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="{% url 'logout' %}">
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'designer-dashboard' %}active{% endif %}" 
+             href="{% url 'designer-dashboard' %}">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'designer_inbox' %}active{% endif %}" 
+             href="{% url 'designer_inbox' %}">
+            <i class="fas fa-envelope"></i> Messages
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'view_notifications' %}active{% endif %}" 
+             href="{% url 'view_notifications' %}">
+            <i class="fas fa-bell"></i> Notifications
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'logout' %}">
             <i class="fas fa-sign-out-alt"></i> Logout
           </a>
-        </div>
-      </li>
-
-      {% endif %}
-    </ul>
-  </div>
-
-  <div class="d-flex align-items-center">
-    {% if user.is_authenticated %}
-    {% if request.user.groups.all.0.name == 'designer' %}
-    <div class="notification-badge me-3">
-      <a href="{% url 'view_notifications' %}" class="nav-link p-0">
-        <i class="fas fa-bell fa-lg"></i>
-        {% if unread_count > 0 %}
-        <span class="badge bg-danger">{{ unread_count }}</span>
-        {% endif %}
-      </a>
+        </li>
       
-    </div>
-    {% endif %}
-
-    <!-- User Profile -->
-    {% if request.user.groups.all.0.name == 'customer' %}
-    <div class="d-flex align-items-center ms-3">
-      <a href="{% url 'account' %}" class="d-flex align-items-center text-decoration-none text-dark">
-        {% if user.customer_profile and user.customer_profile.profile_pic %}
-        <img src="{{ user.customer_profile.profile_pic.url }}" alt="{{ user.first_name }}" class="rounded-circle"
-          style="height:40px; width:40px; object-fit:cover; margin-right:10px;">
-        {% else %}
-        <img src="{{ MEDIA_URL }}profile_pics/default.png" alt="{{ user.first_name }}" class="rounded-circle"
-          style="height:40px; width:40px; object-fit:cover; margin-right:10px;">
-
-        {% endif %}
-
-        <span class="hello-msg">Hello, {{ user.first_name }}!
-          <!-- this is  optional for client -->
-
-          <!-- <div class="nav-item dropdown">
-            <a class="nav-link logout-link" href="{% url 'logout' %}">
+      {% elif request.user.groups.all.0.name == 'customer' %}
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'user-page' %}active{% endif %}" 
+             href="{% url 'user-page' %}">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'services' %}" 
+             class="nav-link {% if request.resolver_match.url_name == 'services' %}active{% endif %}">
+            <i class="fas fa-concierge-bell"></i> Services
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'about' %}" 
+             class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">
+            <i class="fas fa-info-circle"></i> About
+          </a>
+        </li>
+      
+      {% elif request.user.groups.all.0.name == 'sales_rep' %}
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'sales-dashboard' %}active{% endif %}" 
+             href="{% url 'sales-dashboard' %}">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.url_name == 'sales_rep_inbox' %}active{% endif %}" 
+             href="{% url 'sales_rep_inbox' %}">
+            <i class="fas fa-envelope"></i> Messages
+          </a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="salesDropdown" role="button"
+             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-user-circle"></i> Account
+          </a>
+          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="salesDropdown">
+            <a class="dropdown-item" href="{% url 'logout' %}">
               <i class="fas fa-sign-out-alt"></i> Logout
             </a>
-          </div> -->
+          </div>
+        </li>
+      {% endif %}
+    </ul>
 
+    <!-- Right Side: Notifications & User Profile -->
+    <div class="d-flex align-items-center ml-auto">
+      {% if user.is_authenticated %}
+        {% if request.user.groups.all.0.name == 'designer' %}
+          <div class="notification-badge">
+            <a href="{% url 'view_notifications' %}" class="nav-link">
+              <i class="fas fa-bell"></i>
+              {% if unread_count > 0 %}
+                <span class="badge bg-danger">{{ unread_count }}</span>
+              {% endif %}
+            </a>
+          </div>
+        {% endif %}
 
-        </span>
-
-      </a>
-
+        <!-- User Profile -->
+        {% if request.user.groups.all.0.name == 'customer' %}
+          <a href="{% url 'account' %}" class="user-profile-link">
+            {% if user.customer_profile and user.customer_profile.profile_pic %}
+              <img src="{{ user.customer_profile.profile_pic.url }}" 
+                   alt="{{ user.first_name }}" 
+                   class="rounded-circle">
+            {% else %}
+              <img src="{{ MEDIA_URL }}profile_pics/default.png" 
+                   alt="{{ user.first_name }}" 
+                   class="rounded-circle">
+            {% endif %}
+            <span class="hello-msg">
+              <i class="fas fa-user-circle"></i>
+              Hello, {{ user.first_name }}!
+            </span>
+          </a>
+        {% endif %}
+      {% endif %}
     </div>
-
-    {% endif %}
-
-
-
-    {% endif %}
   </div>
 
 </nav>

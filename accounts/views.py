@@ -2,7 +2,7 @@ from django.utils import timezone
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import *
 from .forms import CustomerForm, OrderForm, CreateUserForm, SiteSettingForm, DesignFileForm,DesignerMessageForm,AdminSendMessageForm, FeedbackForm, SalesRepMessageForm, CustomerProfileForm
-from django.forms import inlineformset_factory
+from django.forms import inlineformset_factory, modelform_factory
 from django.contrib import messages
 from django.utils.dateparse import parse_date
 from django.core.mail import EmailMessage
@@ -608,87 +608,74 @@ ORDER_FIELDS = {
 @allowed_users(allowed_roles=['customer', 'admin'])
 # ✅ Step 2: Create order view for all types
 def createOrder(request, pk, order_type=None):
-    """Create order dynamically for Digitizing, Vector, Patch, or Quote"""
+    """
+    Create a single order dynamically for Digitizing, Vector, Patch, or Quote.
+
+    This version uses a normal ModelForm instead of an inline formset so that
+    the shared `accounts/order_form.html` template (which expects `form`)
+    works correctly both for create and update views.
+    """
     customer = get_object_or_404(Customer, id=pk)
 
     # Normalize order_type input
     order_type = order_type.lower() if order_type else 'digitizing'
 
     # Pick correct fields based on order type (fallback to digitizing)
-    fields = ORDER_FIELDS.get(order_type, ORDER_FIELDS['digitizing'])
+    # and make sure we do NOT expose `order_type` itself in the form
+    base_fields = ORDER_FIELDS.get(order_type, ORDER_FIELDS['digitizing'])
+    fields = [f for f in base_fields if f != 'order_type']
 
-    # Create formset dynamically
-    OrderFormSet = inlineformset_factory(
-        Customer,
-        Order,
-        fields=fields,
-        extra=1,
-        can_delete=False
-    )
+    # Build a dynamic ModelForm for the chosen order type
+    DynamicOrderForm = modelform_factory(Order, fields=fields)
 
     if request.method == 'POST':
-        formset = OrderFormSet(
-            request.POST,
-            request.FILES,
-            instance=customer,
-            queryset=Order.objects.none()
-        )
+        form = DynamicOrderForm(request.POST, request.FILES)
+        if form.is_valid():
+            order = form.save(commit=False)
+            order.customer = customer
 
-        if formset.is_valid():
-            orders = formset.save(commit=False)
-            for order in orders:
-                order.customer = customer
+            # Assign actual Product object instead of a string
+            try:
+                order.order_type = Product.objects.get(name__iexact=order_type)
+            except Product.DoesNotExist:
+                messages.error(request, f"Product '{order_type}' not found in the database.")
+                return redirect('home')
 
-                # ✅ Assign actual Product object instead of string
-                try:
-                    order.order_type = Product.objects.get(name__iexact=order_type)
-                except Product.DoesNotExist:
-                    messages.error(request, f"Product '{order_type}' not found in the database.")
-                    return redirect('home')
+            # Set default values if not provided
+            order.status = order.status or 'Pending'
+            order.price = order.price or 0
+            order.payment_status = order.payment_status or 'Pending'
+            order.review_status = order.review_status or 'Pending'
+            order.save()
 
-                # ✅ Set default values if not provided
-                order.status = order.status or 'Pending'
-                order.price = order.price or 0
-                order.payment_status = order.payment_status or 'Pending'
-                order.review_status = order.review_status or 'Pending'
-                order.save()
+            # Generate invoice PDF
+            invoice_number = f"INV-{order.id:05d}"
+            html_string = render_to_string('accounts/invoice_template.html', {
+                'order': order,
+                'customer': customer,
+                'invoice_number': invoice_number
+            })
 
-                # ✅ Generate invoice PDF
-                invoice_number = f"INV-{order.id:05d}"
-                html_string = render_to_string('accounts/invoice_template.html', {
-                    'order': order,
-                    'customer': customer,
-                    'invoice_number': invoice_number
-                })
+            invoice_dir = os.path.join(settings.MEDIA_ROOT, 'invoices')
+            os.makedirs(invoice_dir, exist_ok=True)
+            pdf_path = os.path.join(invoice_dir, f"{invoice_number}.pdf")
 
-                invoice_dir = os.path.join(settings.MEDIA_ROOT, 'invoices')
-                os.makedirs(invoice_dir, exist_ok=True)
-                pdf_path = os.path.join(invoice_dir, f"{invoice_number}.pdf")
+            # Generate PDF file
+            HTML(string=html_string).write_pdf(pdf_path)
 
-                # Generate PDF file
-                HTML(string=html_string).write_pdf(pdf_path)
+            # Attach PDF to order
+            order.invoice_file.name = f"invoices/{invoice_number}.pdf"
+            order.save()
 
-                # Attach PDF to order
-                order.invoice_file.name = f"invoices/{invoice_number}.pdf"
-                order.save()
-
-            messages.success(request, "Order(s) created successfully!")
+            messages.success(request, "Order created successfully!")
             return redirect('home')
-
         else:
             messages.error(request, "There was an error creating the order. Please check the form.")
-
     else:
-        # Set order_type as initial data
-        initial_data = [{'order_type': order_type.capitalize()}]
-        formset = OrderFormSet(
-            queryset=Order.objects.none(),
-            instance=customer,
-            initial=initial_data
-        )
+        form = DynamicOrderForm()
 
     return render(request, 'accounts/order_form.html', {
-        'formset': formset,
+        'form': form,
         'order_type': order_type,
         'customer': customer
     })
@@ -1779,28 +1766,68 @@ def submit_feedback(request, order_id):
 
 
 @login_required
-def customer_invoices(request, pk):
+def customer_invoices(request, pk, filter_type='all'):
+    """
+    Show customer invoices with filtering options:
+    - 'all': Show all orders (all statuses)
+    - 'completed': Show only completed orders
+    - 'uncompleted': Show pending, active, and other non-completed orders
+    """
     customer = get_object_or_404(Customer, id=pk)
+    filter_type = filter_type.lower()
 
-    invoices = Invoice.objects.filter(customer=customer)
+    # Get all invoices for this customer
+    invoices = Invoice.objects.filter(customer=customer).order_by('-year', '-month')
 
     invoice_data = []
+    
     for invoice in invoices:
-        orders = Order.objects.filter(
+        # Base query for orders in this invoice period
+        orders_query = Order.objects.filter(
             customer=customer,
-            status="Completed",
-            date_completed__year=invoice.year,
-            date_completed__month=invoice.month
+            date_created__year=invoice.year,
+            date_created__month=invoice.month
         )
+        
+        # Apply filter based on filter_type
+        if filter_type == 'completed':
+            orders = orders_query.filter(status="Completed")
+        elif filter_type == 'uncompleted':
+            orders = orders_query.exclude(status="Completed")
+        else:  # 'all'
+            orders = orders_query.all()
+        
+        # Count orders by status for this invoice
+        total_orders = orders.count()
+        completed_count = orders.filter(status="Completed").count()
+        pending_count = orders.filter(status="Pending").count()
+        active_count = orders.filter(status="Active").count()
+        uncompleted_count = total_orders - completed_count
 
         invoice_data.append({
             "invoice": invoice,
-            "orders": orders
+            "orders": orders.order_by('-date_created'),
+            "total_order": total_orders,
+            "completed": completed_count,
+            "pending": pending_count,
+            "active": active_count,
+            "uncompleted": uncompleted_count,
         })
+
+    # Calculate totals
+    total_invoices = len(invoice_data)
+    total_all_orders = sum(item['total_order'] for item in invoice_data)
+    total_completed = sum(item['completed'] for item in invoice_data)
+    total_uncompleted = sum(item['uncompleted'] for item in invoice_data)
 
     return render(request, "accounts/customer_invoices.html", {
         "customer": customer,
         "invoice_data": invoice_data,
+        "filter_type": filter_type,
+        "total_invoices": total_invoices,
+        "total_all_orders": total_all_orders,
+        "total_completed": total_completed,
+        "total_uncompleted": total_uncompleted,
     })
 
 @login_required

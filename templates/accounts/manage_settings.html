@@ -4,34 +4,89 @@
 
 {% block content %}
 <style>
+  /* Admin sidebar */
   .sidebar {
-    background-color: #343a40;
-    min-height: 100vh;
-    color: #fff;
-    padding-top: 1rem;
-    position: sticky;
-    top: 0;
-}
+      background: linear-gradient(180deg, #1f2933 0%, #111827 100%);
+      min-height: 100vh;
+      color: #fff;
+      padding-top: 1rem;
+      position: sticky;
+      top: 0;
+  }
 
-.sidebar .nav-link {
-    color: #adb5bd;
-    font-weight: 500;
-    padding: 0.75rem 1rem;
-    transition: background-color 0.3s, color 0.3s;
-}
+  .sidebar .nav-link {
+      color: #9ca3af;
+      font-weight: 500;
+      padding: 0.75rem 1rem;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+  }
 
-.sidebar .nav-link:hover,
-.sidebar .nav-link.active {
-    background-color: #495057;
-    color: #fff;
-    border-radius: 0.375rem;
-}
+  .sidebar .nav-link:hover,
+  .sidebar .nav-link.active {
+      background-color: rgba(55, 65, 81, 0.9);
+      color: #fff;
+      transform: translateX(2px);
+  }
 
-main {
-    padding-top: 1.5rem;
-    padding-bottom: 2rem;
-}
+  main {
+      padding-top: 1.5rem;
+      padding-bottom: 2rem;
+  }
 
+  .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+  }
+
+  .settings-header h2 {
+      font-weight: 600;
+      margin: 0;
+  }
+
+  .settings-header p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #6b7280;
+  }
+
+  .settings-card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+  }
+
+  .settings-card .card-header {
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      border-radius: 12px 12px 0 0;
+  }
+
+  .settings-card .card-header h5 {
+      margin: 0;
+      font-weight: 500;
+  }
+
+  .settings-card .form-label {
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #374151;
+  }
+
+  .settings-card small.text-muted {
+      font-size: 0.8rem;
+  }
+
+  .settings-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+  }
 </style>
 <div class="container-fluid">
     <div class="row">
@@ -77,65 +132,105 @@ main {
         <!-- ✅ MAIN CONTENT -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <div class="container mt-4">
-                <h2 class="mb-4">Manage Site Settings</h2>
+                <div class="settings-header">
+                    <div>
+                        <h2><i class="fas fa-cogs text-primary"></i> Manage Site Settings</h2>
+                        <p>Configure global information, branding, and default behavior for orders.</p>
+                    </div>
+                </div>
 
-                <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm">
+                <form method="POST" enctype="multipart/form-data" class="card settings-card">
                     {% csrf_token %}
 
-                    <!-- Site Name -->
-                    <div class="mb-3">
-                        <label for="id_site_name" class="form-label">Site Name</label>
-                        {{ form.site_name }}
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-sliders-h me-2"></i> General Configuration</h5>
                     </div>
 
-                    <!-- Contact Email -->
-                    <div class="mb-3">
-                        <label for="id_contact_email" class="form-label">Contact Email</label>
-                        {{ form.contact_email }}
-                    </div>
-
-                    <!-- Logo Upload -->
-                    <div class="mb-3">
-                        <label for="id_logo" class="form-label">Site Logo</label><br>
-
-                        {% if form.instance.logo %}
-                            <div class="mb-2">
-                                <img src="{{ form.instance.logo.url }}"
-                                     alt="Current Logo"
-                                     class="img-thumbnail"
-                                     style="max-height:120px; max-width:200px;">
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <!-- Site Name -->
+                            <div class="col-md-6">
+                                <label for="id_site_name" class="form-label">Site Name</label>
+                                {{ form.site_name }}
+                                <small class="text-muted d-block mt-1">
+                                    This name appears in page titles, emails, and the admin panel.
+                                </small>
                             </div>
-                        {% else %}
-                            <div class="mb-2">
-                                <img src="{% static 'images/default_logo.png' %}"
-                                     alt="Default Logo"
-                                     class="img-thumbnail"
-                                     style="max-height:120px; max-width:200px;">
+
+                            <!-- Contact Email -->
+                            <div class="col-md-6">
+                                <label for="id_contact_email" class="form-label">Contact Email</label>
+                                {{ form.contact_email }}
+                                <small class="text-muted d-block mt-1">
+                                    Default email address used for contact and notifications.
+                                </small>
                             </div>
-                        {% endif %}
+                        </div>
 
-                        {{ form.logo }}
+                        <hr class="my-4">
+
+                        <div class="row g-4">
+                            <!-- Logo Upload -->
+                            <div class="col-md-6">
+                                <label for="id_logo" class="form-label">Site Logo</label>
+
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    {% if form.instance.logo %}
+                                        <img src="{{ form.instance.logo.url }}"
+                                             alt="Current Logo"
+                                             class="img-thumbnail"
+                                             style="max-height:120px; max-width:200px;">
+                                    {% else %}
+                                        <img src="{% static 'images/default_logo.png' %}"
+                                             alt="Default Logo"
+                                             class="img-thumbnail"
+                                             style="max-height:120px; max-width:200px;">
+                                    {% endif %}
+                                </div>
+
+                                {{ form.logo }}
+                                <small class="text-muted d-block mt-1">
+                                    Recommended size: 200x60px (PNG with transparent background).
+                                </small>
+                            </div>
+
+                            <!-- Notifications + Default Status -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.enable_notifications }}
+                                        <label class="form-check-label" for="id_enable_notifications">
+                                            Enable system notifications
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">
+                                        When enabled, important events will generate notifications for users.
+                                    </small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="id_default_order_status" class="form-label">
+                                        Default Order Status
+                                    </label>
+                                    {{ form.default_order_status }}
+                                    <small class="text-muted d-block mt-1">
+                                        New orders will start with this status unless specified otherwise.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Notifications -->
-                    <div class="form-check mb-3">
-                        {{ form.enable_notifications }}
-                        <label class="form-check-label" for="id_enable_notifications">
-                            Enable Notifications
-                        </label>
+                    <div class="card-footer bg-white">
+                        <div class="settings-actions">
+                            <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Save Settings
+                            </button>
+                        </div>
                     </div>
-
-                    <!-- Default Order Status -->
-                    <div class="mb-3">
-                        <label for="id_default_order_status" class="form-label">
-                            Default Order Status
-                        </label>
-                        {{ form.default_order_status }}
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">
-                        Save Settings
-                    </button>
                 </form>
             </div>
         </main>

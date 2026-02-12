@@ -5,276 +5,295 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 <style>
-    .nav-active {
-        background-color: #4f46e5;
-        color: #ffffff !important;
-        font-weight: 500;
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-pending { background-color: #ffc107; color: #000; }
+    .status-active { background-color: #17a2b8; color: #fff; }
+    .status-completed { background-color: #28a745; color: #fff; }
+    .status-released { background-color: #6f42c1; color: #fff; }
+    .status-delivered { background-color: #20c997; color: #fff; }
+    
+    .payment-paid { background-color: #28a745; color: #fff; }
+    .payment-pending { background-color: #ffc107; color: #000; }
+    .payment-failed { background-color: #dc3545; color: #fff; }
+    
+    .info-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: none;
+        border-radius: 12px;
+    }
+    
+    .info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+    }
+    
+    .customer-header-card {
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        color: white;
+        border-radius: 12px;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .action-btn {
+        padding: 4px 12px;
+        font-size: 0.8rem;
         border-radius: 6px;
-        padding: 0.5rem 1rem;
-        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.35);
+        transition: all 0.2s ease;
     }
-    .sidebar {
-        height: 100vh;
-        background-color: #343a40;
-        color: #fff;
-    }
-
-    .sidebar .nav-link {
-        color: #fff;
-    }
-
-    .sidebar .nav-link.active {
-        background-color: #495057;
-        font-weight: bold;
-    }
-
-    .sidebar .nav-link:hover {
-        background-color: #495057;
-        color: #fff;
-    }
-
-    .logout-link {
-        color: #fff;
-    }
-
-    .logout-link:hover {
-        color: #fff;
-        text-decoration: none;
-        background-color: #495057;
+    
+    .action-btn:hover {
+        transform: scale(1.05);
     }
 </style>
 
 <div class="container-fluid mt-4">
     <div class="row">
-
         <!-- Sidebar -->
-        <div class="col-md-2 p-0">
-            <div class="sidebar d-flex flex-column p-3">
-                <h5 class="mb-4">Customer Panel</h5>
-
-                <ul class="nav flex-column mb-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{% url 'user-page' %}">
-                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Patch' %}">
-                            <i class="fas fa-certificate me-2"></i> Patches Orders
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Digitizing' %}">
-                            <i class="fas fa-magic me-2"></i> Digitizing Orders
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Quote' %}">
-                            <i class="fas fa-file-invoice-dollar me-2"></i> Quotes Orders
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'customer_orders' customer.id 'Vector' %}">
-                            <i class="fas fa-vector-square me-2"></i> Vectors Orders
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'customer_invoices' customer.id %}">
-                            <i class="fas fa-file-invoice me-2"></i> Invoices
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'account' %}">
-                            <i class="fas fa-user me-2"></i> My Profile
-                        </a>
-                    </li>
-                </ul>
-
-                <!-- Logout at Bottom -->
-                <div class="mt-auto">
-                    <a class="nav-link logout-link" href="{% url 'logout' %}">
-                        <i class="fas fa-sign-out-alt me-2"></i> Logout
-                    </a>
-                </div>
-            </div>
-        </div>
+        {% include 'accounts/customer_sidebar.html' %}
 
         <!-- Main Content -->
-        <div class="col-md-10">
+        <div class="col-md-10 col-lg-10">
 
-            <a href="{% url 'user-page' %}" class="btn btn-outline-secondary btn-sm mb-3">
-                <i class="bi bi-arrow-left-circle"></i> Back
-            </a>
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="mb-1">
+                        <i class="fas fa-user-circle text-primary"></i>
+                        {{ customer.name }} — {{ order_type|capfirst }} Orders
+                    </h3>
+                    <p class="text-muted mb-0">Manage and view all {{ order_type|lower }} orders for this customer</p>
+                </div>
+                <a href="{% url 'user-page' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
 
-            <!-- Customer Summary -->
-            <div class="row g-3">
-                <div class="col-md">
-                    <div class="card shadow-sm">
+            <!-- Customer Summary Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card shadow-sm info-card customer-header-card">
                         <div class="card-body">
-                            <h5>Customer:</h5>
-                            <hr>
-                            <a class="btn btn-outline-info btn-sm w-100 mb-2"
-                               href="{% url 'update_customer' customer.id %}">
-                               Update Customer
-                            </a>
-                            <a class="btn btn-outline-info btn-sm w-100"
-                               href="{% url 'create_order' customer.id 'design' %}">
-                               Place Order
-                            </a>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="text-white-50 mb-2">Customer</h6>
+                                    <h5 class="mb-3">{{ customer.name }}</h5>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <a class="btn btn-light btn-sm" href="{% url 'update_customer' customer.id %}">
+                                            <i class="fas fa-edit"></i> Update
+                                        </a>
+                                        <a class="btn btn-light btn-sm" href="{% url 'create_order' customer.id order_type|lower %}">
+                                            <i class="fas fa-plus"></i> Place Order
+                                        </a>
+                                    </div>
+                                </div>
+                                <i class="fas fa-user-circle fa-3x text-white-50"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-md">
-                    <div class="card shadow-sm">
+                <div class="col-md-4">
+                    <div class="card shadow-sm info-card">
                         <div class="card-body">
-                            <h5>Contact Information</h5>
-                            <hr>
-                            <p>Email: {{ customer.email }}</p>
-                            <p>Phone: {{ customer.phone }}</p>
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-envelope text-primary"></i> Contact Information
+                            </h6>
+                            <p class="mb-2">
+                                <strong>Email:</strong><br>
+                                <a href="mailto:{{ customer.email }}">{{ customer.email|default:"—" }}</a>
+                            </p>
+                            <p class="mb-0">
+                                <strong>Phone:</strong><br>
+                                <a href="tel:{{ customer.phone }}">{{ customer.phone|default:"—" }}</a>
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-md">
-                    <div class="card shadow-sm text-center">
+                <div class="col-md-4">
+                    <div class="card shadow-sm info-card text-center">
                         <div class="card-body">
-                            <h5>Total Orders</h5>
-                            <h1 class="py-2">{{ total_order }}</h1>
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-shopping-cart text-primary"></i> Total Orders
+                            </h6>
+                            <h1 class="display-4 fw-bold text-primary mb-0">{{ total_order }}</h1>
+                            <small class="text-muted">{{ order_type|capfirst }} Orders</small>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <br>
 
             <!-- Filter/Search -->
-            <div class="row">
-                <div class="col">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <form method="get" class="row g-2">
-                                {% for field in myFilter.form %}
-                                <div class="col-md-3">
-                                    {{ field.label_tag }}
-                                    {{ field }}
-                                </div>
-                                {% endfor %}
-
-                                {% if request.user.is_staff or request.user.is_superuser %}
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button class="btn btn-primary w-100" type="submit">
-                                        Search
-                                    </button>
-                                </div>
-                                {% endif %}
-                            </form>
+            {% if myFilter %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-filter text-primary"></i> Filter Orders
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        {% for field in myFilter.form %}
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">{{ field.label }}</label>
+                            {{ field }}
                         </div>
-                    </div>
+                        {% endfor %}
+
+                        {% if request.user.is_staff or request.user.is_superuser %}
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button class="btn btn-primary w-100" type="submit">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                        {% endif %}
+                    </form>
                 </div>
             </div>
-
-            <br>
+            {% endif %}
 
             <!-- Orders Table -->
-            <div class="row">
-                <div class="col-md">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-
-                            <ul class="nav nav-tabs" role="tablist">
-                                <li class="nav-item">
-                                    <a class="nav-link active" href="   " role="tab">General Info</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link nav-active" href="{% url 'released_orders' %}">Released_orders</a>
-                                </li>
-                            </ul>
-
-                            <div class="table-responsive mt-3">
-                                <table class="table table-striped table-bordered align-middle">
-                                    <thead class="table-light text-center">
-                                        <tr>
-                                            <th>Order Name/PO</th>
-                                            <th>Order Type</th>
-                                            <th>Quantity</th>
-                                            <th>Fabric</th>
-                                            <th>Format</th>
-                                            <th>Height</th>
-                                            <th>Width</th>
-                                            <th>Colors</th>
-                                            <th>Placement</th>
-                                            <th>Payment</th>
-                                            <th>Urgent</th>
-                                            <th>Turnaround</th>
-                                            <th>Price</th>
-                                            <th>Status</th>
-                                            <th>Date Ordered</th>
-                                            <th>Date Completed</th>
-                                            <th>Sales Rep</th>
-                                            <th>Designer</th>
-                                            <th>Update</th>
-                                            <th>Remove</th>
-                                            <th>Invoice</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for order in orders %}
-                                        <tr>
-                                            <td>{{ order.Order_name_PO }}</td>
-                                            <td>{{ order.order_type }}</td>
-                                            <td>{{ order.quantity }}</td>
-                                            <td>{{ order.fabric_material }}</td>
-                                            <td>{{ order.Required_Format }}</td>
-                                            <td>{{ order.Height }}</td>
-                                            <td>{{ order.Width }}</td>
-                                            <td>{{ order.total_colors }}</td>
-                                            <td>{{ order.placement }}</td>
-
-                                            <td>
-                                                {% if order.payment_status == "Paid" %}✅ Paid
-                                                {% elif order.payment_status == "Pending" %}⏳ Pending
-                                                {% elif order.payment_status == "Failed" %}❌ Failed
-                                                {% else %}{{ order.payment_status }}{% endif %}
-                                            </td>
-
-                                            <td class="text-center">
-                                                {% if order.urgent %}✅{% else %}❌{% endif %}
-                                            </td>
-
-                                            <td>{{ order.turnaround_time }}</td>
-                                            <td>${{ order.price }}</td>
-                                            <td>{{ order.status }}</td>
-                                            <td>{{ order.date_created }}</td>
-                                            <td>{{ order.date_completed }}</td>
-                                            <td>{{ order.customer.sales_rep.name }}</td>
-                                            <td>{{ order.assigned_designer.username }}</td>
-
-                                            <td>
-                                                <a class="btn btn-sm btn-info"
-                                                   href="{% url 'update_order' order.id %}">
-                                                   Update
-                                                </a>
-                                            </td>
-                                            <td>
-                                                <a class="btn btn-sm btn-danger"
-                                                   href="{% url 'delete_order' order.id %}">
-                                                   Remove
-                                                </a>
-                                            </td>
-                                            <td>
-                                                <a class="btn btn-sm btn-secondary"
-                                                   href="{% url 'print_invoice' order.id %}">
-                                                   Invoice
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                        </div>
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list text-primary"></i> Orders List
+                    </h6>
+                    <a class="btn btn-sm btn-outline-primary" href="{% url 'released_orders' %}">
+                        <i class="fas fa-check-circle"></i> View Released Orders
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">#</th>
+                                    <th>Order Name/PO</th>
+                                    <th>Type</th>
+                                    <th class="text-center">Qty</th>
+                                    <th>Fabric</th>
+                                    <th>Format</th>
+                                    <th>Size</th>
+                                    <th class="text-center">Colors</th>
+                                    <th>Placement</th>
+                                    <th class="text-center">Payment</th>
+                                    <th class="text-center">Urgent</th>
+                                    <th>Price</th>
+                                    <th class="text-center">Status</th>
+                                    <th>Date Ordered</th>
+                                    <th>Completed</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr>
+                                    <td class="text-center fw-bold">{{ forloop.counter }}</td>
+                                    <td>
+                                        <strong>{{ order.Order_name_PO|default:"—" }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ order.order_type.name|default:order.order_type }}</span>
+                                    </td>
+                                    <td class="text-center">{{ order.quantity|default:"—" }}</td>
+                                    <td>{{ order.fabric_material|default:"—" }}</td>
+                                    <td>
+                                        <small class="badge bg-secondary">{{ order.Required_Format|default:"—" }}</small>
+                                    </td>
+                                    <td>
+                                        {% if order.Height or order.Width %}
+                                            {{ order.Height|default:"—" }} × {{ order.Width|default:"—" }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">{{ order.total_colors|default:"—" }}</td>
+                                    <td>{{ order.placement|default:"—" }}</td>
+                                    <td class="text-center">
+                                        {% if order.payment_status == "Paid" %}
+                                            <span class="status-badge payment-paid">Paid</span>
+                                        {% elif order.payment_status == "Pending" %}
+                                            <span class="status-badge payment-pending">Pending</span>
+                                        {% elif order.payment_status == "Failed" %}
+                                            <span class="status-badge payment-failed">Failed</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ order.payment_status|default:"—" }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if order.urgent %}
+                                            <span class="badge bg-danger">Rush</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Normal</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">${{ order.price|default:"0.00" }}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if order.status == "Pending" %}
+                                            <span class="status-badge status-pending">{{ order.status }}</span>
+                                        {% elif order.status == "Active" %}
+                                            <span class="status-badge status-active">{{ order.status }}</span>
+                                        {% elif order.status == "Completed" %}
+                                            <span class="status-badge status-completed">{{ order.status }}</span>
+                                        {% elif order.status == "Released" %}
+                                            <span class="status-badge status-released">{{ order.status }}</span>
+                                        {% elif order.status == "Delivered" %}
+                                            <span class="status-badge status-delivered">{{ order.status }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ order.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ order.date_created|date:"M d, Y"|default:"—" }}</small>
+                                    </td>
+                                    <td>
+                                        <small>{{ order.date_completed|date:"M d, Y"|default:"—" }}</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <a class="btn btn-sm btn-outline-primary action-btn"
+                                               href="{% url 'update_order' order.id %}"
+                                               title="Update Order">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a class="btn btn-sm btn-outline-danger action-btn"
+                                               href="{% url 'delete_order' order.id %}"
+                                               title="Delete Order"
+                                               onclick="return confirm('Are you sure you want to delete this order?');">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                            <a class="btn btn-sm btn-outline-secondary action-btn"
+                                               href="{% url 'print_invoice' order.id %}"
+                                               title="View Invoice">
+                                                <i class="fas fa-file-invoice"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="17" class="text-center text-muted py-5">
+                                        <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                        <h5>No orders found</h5>
+                                        <p class="mb-0">This customer doesn't have any {{ order_type|lower }} orders yet.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

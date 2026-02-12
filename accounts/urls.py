@@ -74,7 +74,10 @@ urlpatterns = [
     path("designer/feedback/", views.designer_feedback, name="designer_feedback"),
     path("customer/order/<int:order_id>/feedback/", views.submit_feedback, name="submit_feedback"),
     # Monthly Invoices
-    path('customer/<int:pk>/invoices/', views.customer_invoices, name='customer_invoices'),
+    path('customer/<int:pk>/invoices/', views.customer_invoices, {'filter_type': 'all'}, name='customer_invoices'),
+    path('customer/<int:pk>/invoices/all/', views.customer_invoices, {'filter_type': 'all'}, name='customer_invoices_all'),
+    path('customer/<int:pk>/invoices/completed/', views.customer_invoices, {'filter_type': 'completed'}, name='customer_invoices_completed'),
+    path('customer/<int:pk>/invoices/uncompleted/', views.customer_invoices, {'filter_type': 'uncompleted'}, name='customer_invoices_uncompleted'),
     path('customer/<int:pk>/invoices/<int:year>/<int:month>/', views.invoice_detail, name='invoice_detail'),
 
     path('customer/<int:pk>/receivable-orders/', views.customer_receivable_orders, name='customer_receivable_orders'),
